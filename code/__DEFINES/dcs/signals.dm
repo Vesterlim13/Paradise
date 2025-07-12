@@ -40,6 +40,11 @@
 ///from SSsun when the sun changes position : (azimuth)
 #define COMSIG_SUN_MOVED "sun_moved"
 
+///from SSsecurity_level on planning security level change : (previous_level_number, new_level_number)
+#define COMSIG_SECURITY_LEVEL_CHANGE_PLANNED "security_level_change_planned"
+///from SSsecurity_level when the security level changes : (previous_level_number, new_level_number)
+#define COMSIG_SECURITY_LEVEL_CHANGED "security_level_changed"
+
 //////////////////////////////////////////////////////////////////
 
 // /datum signals
@@ -53,6 +58,8 @@
 #define COMSIG_QDELETING "parent_qdeleting"
 /// generic topic handler (usr, href_list)
 #define COMSIG_TOPIC "handle_topic"
+/// Forces you to equip a hood
+#define COMSIG_EQUIP_HOOD "force_hood_equip"
 
 /// fires on the target datum when an element is attached to it (/datum/element)
 #define COMSIG_ELEMENT_ATTACH "element_attach"
@@ -765,6 +772,9 @@
 #define COMSIG_CARBON_TRY_PUT_IN_HAND "carbon_try_put_in_hand"
 	/// Can't pick up
 	#define COMPONENT_CARBON_CANT_PUT_IN_HAND (1<<0)
+#define COMSIG_ITEM_TRY_PUT_IN_HAND "carbon_try_put_in_hand"
+	/// Can't pick up
+	#define COMPONENT_ITEM_CANT_PUT_IN_HAND (1<<0)
 /// from /mob/living/carbon/enter_stamcrit()
 #define COMSIG_CARBON_ENTER_STAMCRIT "carbon_enter_stamcrit"
 ///Called from apply_overlay(cache_index, overlay)
@@ -782,6 +792,12 @@
 
 ///Called when someone attempts to cuff a carbon
 #define COMSIG_CARBON_CUFF_ATTEMPTED "carbon_attempt_cuff"
+
+///Called when checking the rituals of the devil's sacrifice
+#define COMSIG_DEVIL_SACRIFICE_CHECK "devil_sacrifice_check"
+	#define COMPONENT_SACRIFICE_VALID (1<<0)
+///Called after successfully performing the Devil Sacrifice Ritual
+#define COMSIG_DEVIL_SACRIFICE "devil_sacrifice"
 
 // /mob/living/simple_animal/hostile signals
 #define COMSIG_HOSTILE_ATTACKINGTARGET "hostile_attackingtarget"
@@ -1351,7 +1367,8 @@
 
 /// Source: /datum/component/object_possession/proc/on_move (mob/mob, new_loc, direct)
 #define COMSIG_POSSESSED_MOVEMENT "possessed_movement"
-
+/// from base of atom/obj/item/death_book
+#define COMSIG_PHANTOM_DELETE "phantom_delete"
 /// from base of atom/on_teleported(): ()
 #define COMSIG_ATOM_TELEPORT_ACT "atom_teleport_act"
 
@@ -1375,3 +1392,15 @@
 
 /// Window is fully visible and we can make fragile calls
 #define COMSIG_TGUI_WINDOW_VISIBLE "tgui_window_visible"
+
+/// /obj/item/card/id/proc/freeze_linked_account(datum/source)
+#define COMSIG_FREEZE_LINKED_ACCOUNT "nigga_freeze"
+
+#define COMSIG_GET_PULL_SLOWDOWN_MODIFIERS "get_pull_slowdown_modifiers"
+#define COMSIG_GET_GRAB_SPEED_MODIFIERS "get_grab_speed_modifiers"
+#define COMSIG_GET_MELEE_DAMAGE_DELTAS "get_melee_damage_deltas"
+#define COMSIG_GET_ICON_RENDER_KEY_INFO "get_icon_render_key_info"
+#define COMSIG_MOB_EXERCISED "mob_exercised"
+#define COMSIG_GET_ORGAN_ICON_STATE "get_organ_icon_state"
+#define COMSIG_STRENGTH_BORDER_UPDATE "strength_border_update"
+#define COMSIG_CRYOPOD_DESPAWN "cryopod_despawn"

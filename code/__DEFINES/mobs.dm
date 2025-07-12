@@ -244,8 +244,8 @@
 #define SPECIES_GOLEM_PLASMA "Плазменный Голем"
 #define SPECIES_GOLEM_DIAMOND "Алмазный Голем"
 #define SPECIES_GOLEM_GOLD "Золотой Голем"
-#define SPECIES_GOLEM_SILVER "Серебрянный Голем"
-#define SPECIES_GOLEM_PLASTEEL "Пласталиевый Голем"
+#define SPECIES_GOLEM_SILVER "Серебряный Голем"
+#define SPECIES_GOLEM_PLASTEEL "Пласталевый Голем"
 #define SPECIES_GOLEM_TITANIUM "Титановый Голем"
 #define SPECIES_GOLEM_PLASTITANIUM "Пластитановый Голем"
 #define SPECIES_GOLEM_ALLOY "Голем из инопланетных сплавов"
@@ -290,6 +290,9 @@
 #define SPECIES_VOX_ARMALIS "Vox Armalis"
 #define SPECIES_VULPKANIN "Vulpkanin"
 #define SPECIES_WRYN "Wryn"
+
+// not race
+#define SPECIES_OTHER "Other"
 
 #define isanimal(A)		(istype((A), /mob/living/simple_animal) || istype(A, /mob/living/basic))
 #define iscat(A)		(istype((A), /mob/living/simple_animal/pet/cat))
@@ -398,6 +401,8 @@
 #define STANDING_UP 0
 /// Mob is lying down, usually associated with lying_angle values of 90 or 270.
 #define LYING_DOWN 1
+
+#define IS_HORIZONTAL(x) (x.body_position == LYING_DOWN)
 
 ///How much a mob's sprite should be moved when they're lying down
 #define PIXEL_Y_OFFSET_LYING -6

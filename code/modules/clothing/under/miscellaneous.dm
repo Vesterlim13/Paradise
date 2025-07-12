@@ -124,7 +124,7 @@
 	item_color = "centcom"
 
 /obj/item/clothing/under/rank/centcom/officer
-	desc = "Gold trim on space-black cloth, this uniform displays the rank of \"Lieutenant-Commander\" and bears \"N.A.V. Trurl \" on the left shoulder. Worn exclusively by officers of the Nanotrasen Navy. It's got exotic materials for protection."
+	desc = "Gold trim on space-black cloth, this uniform displays the rank of \"Lieutenant-Commander\" and bears АКН Трурль on the left shoulder. Worn exclusively by officers of the Nanotrasen Navy. It's got exotic materials for protection."
 	name = "\improper Nanotrasen Naval Officer Uniform"
 	icon_state = "navy_gold"
 	item_state = "navy_gold"
@@ -133,7 +133,7 @@
 	displays_id = 0
 
 /obj/item/clothing/under/rank/centcom/officer/skirt
-	desc = "Gold trim on space-black cloth, this skirt displays the rank of \"Lieutenant-Commander\" and bears \"N.A.V. Trurl \" on the left shoulder. Worn exclusively by officers of the Nanotrasen Navy. It's got exotic materials for protection."
+	desc = "Gold trim on space-black cloth, this skirt displays the rank of \"Lieutenant-Commander\" and bears АКН Трурль on the left shoulder. Worn exclusively by officers of the Nanotrasen Navy. It's got exotic materials for protection."
 	name = "\improper Nanotrasen Naval Officer Skirt"
 	icon_state = "navy_goldf"
 	item_state = "navy_goldf"
@@ -151,7 +151,7 @@
 		)
 
 /obj/item/clothing/under/rank/centcom/captain
-	desc = "Gold trim on space-black cloth, this uniform displays the rank of \"Captain\" and bears \"N.A.V. Trurl \" on the left shoulder. Worn exclusively by officers of the Nanotrasen Navy. It's got exotic materials for protection."
+	desc = "Gold trim on space-black cloth, this uniform displays the rank of \"Captain\" and bears АКН Трурль on the left shoulder. Worn exclusively by officers of the Nanotrasen Navy. It's got exotic materials for protection."
 	name = "\improper Nanotrasen Naval Captain Uniform"
 	icon_state = "navy_gold"
 	item_state = "navy_gold"
@@ -987,7 +987,19 @@
 
 /obj/item/clothing/under/medigown
 	name = "medical gown"
-	desc = "a flimsy examination gown, the back ties never close."
+	desc = "Халат, предназначенный для использования медицинским персоналом. \
+			Изготовлен из лёгкой ткани с минимальной защитой от биологических загрязнений. \
+			Застёжки на спине слабые и не застёгиваются должным образом, \
+			что делает этот халат не самым популярным выбором среди остальной униформы."
+	ru_names = list(
+		NOMINATIVE = "медицинский халат",
+		GENITIVE = "медицинского халата",
+		DATIVE = "медицинскому халату",
+		ACCUSATIVE = "медицинский халат",
+		INSTRUMENTAL = "медицинским халатом",
+		PREPOSITIONAL = "медицинском халате"
+	)
+	gender = MALE
 	icon_state = "medicalgown"
 	item_state = "medicalgown"
 	item_color = "medicalgown"
@@ -1252,3 +1264,90 @@
 		SPECIES_NEARA = 'icons/mob/clothing/species/monkey/uniform.dmi',
 		SPECIES_STOK = 'icons/mob/clothing/species/monkey/uniform.dmi'
 		)
+
+/obj/item/clothing/under/martialsuit/masterli
+	name = "Master Li clothes"
+	desc = "Одеяние великого воина — жаль, что это всего лишь копия. Оригинал хранится в одном из дворцов династии Чанг."
+	ru_names = list(
+		NOMINATIVE = "костюм Мастера Ли",
+		GENITIVE = "костюма Мастера Ли",
+		DATIVE = "костюму Мастера Ли",
+		ACCUSATIVE = "костюм Мастера Ли",
+		INSTRUMENTAL = "костюмом Мастера Ли",
+		PREPOSITIONAL = "костюме Мастера Ли"
+	)
+	over_shoes = FALSE
+	can_adjust = FALSE
+	icon_state = "masterli"
+	item_state = "masterli"
+	species_restricted = list(SPECIES_HUMAN, SPECIES_MACNINEPERSON, SPECIES_SKRELL, SPECIES_SLIMEPERSON, SPECIES_TAJARAN, SPECIES_NUCLEATION)
+
+/obj/item/clothing/under/martialsuit/masterdragon
+	name = "Gold dragon master clothes"
+	desc = "Надевая этот костюм, вы чувствуете прилив социальных кредитов, вкус риса и родство с таярой."
+	ru_names = list(
+		NOMINATIVE = "костюм мастера Золотого дракона",
+		GENITIVE = "костюма мастера Золотого дракона",
+		DATIVE = "костюму мастера Золотого дракона",
+		ACCUSATIVE = "костюм мастера Золотого дракона",
+		INSTRUMENTAL = "костюмом мастера Золотого дракона",
+		PREPOSITIONAL = "костюме мастера Золотого дракона"
+	)
+	over_shoes = TRUE
+	can_adjust = FALSE
+	icon_state = "masterdragon"
+	item_state = "masterdragon"
+	species_restricted = list(SPECIES_HUMAN, SPECIES_MACNINEPERSON, SPECIES_SKRELL, SPECIES_SLIMEPERSON, SPECIES_TAJARAN, SPECIES_NUCLEATION)
+
+/obj/item/clothing/under/martialsuit/redkunoichi
+	name = "Red Kunoichi clothes"
+	desc = "Раньше этот костюм был синим, но теперь он приобрёл злодейский вид. Курьер прошёл долгий и кровавый путь, чтобы доставить его."
+	ru_names = list(
+		NOMINATIVE = "красный костюм Куноичи",
+		GENITIVE = "красного костюма Куноичи",
+		DATIVE = "красному костюму Куноичи",
+		ACCUSATIVE = "красный костюм Куноичи",
+		INSTRUMENTAL = "красным костюмом Куноичи",
+		PREPOSITIONAL = "красном костюме Куноичи"
+	)
+	over_shoes = TRUE
+	can_adjust = FALSE
+	icon_state = "redkunoichi"
+	item_state = "redkunoichi"
+	species_restricted = list(SPECIES_HUMAN, SPECIES_MACNINEPERSON, SPECIES_SKRELL, SPECIES_SLIMEPERSON, SPECIES_TAJARAN, SPECIES_NUCLEATION)
+
+/obj/item/clothing/under/martialsuit/bluekunoichi
+	name = "Blue Kunoichi clothes"
+	desc = "Костюм сделан из высококачественных нитей для лучшего контроля чакры! На бирке указано: \"Made in Chang\""
+	ru_names = list(
+		NOMINATIVE = "голубой костюм Куноичи",
+		GENITIVE = "голубого костюма Куноичи",
+		DATIVE = "голубому костюму Куноичи",
+		ACCUSATIVE = "голубой костюм Куноичи",
+		INSTRUMENTAL = "голубым костюмом Куноичи",
+		PREPOSITIONAL = "голубом костюме Куноичи"
+	)
+	over_shoes = TRUE
+	can_adjust = FALSE
+	icon_state = "bluekunoichi"
+	item_state = "bluekunoichi"
+	species_restricted = list(SPECIES_HUMAN, SPECIES_MACNINEPERSON, SPECIES_SKRELL, SPECIES_SLIMEPERSON, SPECIES_TAJARAN, SPECIES_NUCLEATION)
+
+/obj/item/clothing/under/martialsuit/random
+	name = "Random martial arts suit"
+	icon_state = "masterli"
+	ru_names = list(
+		NOMINATIVE = "случайный костюм боевых искусств",
+		GENITIVE = "случайного костюма боевых искусств",
+		DATIVE = "случайному костюму боевых искусств",
+		ACCUSATIVE = "случайный костюм боевых искусств",
+		INSTRUMENTAL = "случайным костюмом боевых искусств",
+		PREPOSITIONAL = "случайном костюме боевых искусств"
+	)
+
+/obj/item/clothing/under/martialsuit/random/Initialize()
+	. = ..()
+	var/suit = pick(subtypesof(/obj/item/clothing/under/martialsuit))
+	new suit(loc)
+	qdel(src)
+
