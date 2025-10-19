@@ -313,8 +313,6 @@ GLOBAL_LIST_INIT(diseases_carrier_reagents, list(
 	name = "Вода из унитаза"
 	id = "toiletwater"
 	description = "Грязная вода, которую взяли из унитаза. Абсолютно отвратительно."
-	reagent_state = LIQUID
-	color = "#757547"
 	taste_description = "жидкого дерьма"
 
 /datum/reagent/fishwater/toiletwater/reaction_mob(mob/living/M, method=REAGENT_TOUCH, volume) //For shennanigans
@@ -469,8 +467,7 @@ GLOBAL_LIST_INIT(diseases_carrier_reagents, list(
 /datum/reagent/fuel/unholywater		//if you somehow managed to extract this from someone, dont splash it on yourself and have a smoke
 	name = "Нечестивая вода"
 	id = "unholywater"
-	description = "Что-то, не должно существовать в этой реальности."
-	process_flags = ORGANIC | SYNTHETIC //ethereal means everything processes it.
+	description = "Что-то, что не должно существовать в этой реальности."
 	metabolization_rate = 2.5 * REAGENTS_METABOLISM
 	taste_description = "серы"
 
@@ -481,6 +478,7 @@ GLOBAL_LIST_INIT(diseases_carrier_reagents, list(
 		M.AdjustParalysis(-2 SECONDS)
 		M.AdjustStunned(-4 SECONDS)
 		M.AdjustWeakened(-4 SECONDS)
+		M.AdjustKnockdown(-4 SECONDS)
 		update_flags |= M.adjustToxLoss(-2, FALSE)
 		update_flags |= M.adjustFireLoss(-2, FALSE)
 		update_flags |= M.adjustOxyLoss(-2, FALSE)
@@ -573,7 +571,6 @@ GLOBAL_LIST_INIT(diseases_carrier_reagents, list(
 	name = "Креатин"
 	id = "creatine"
 	description = "Вещество участвующее в энергетическом обмене в мышечных и нервных клетках."
-	reagent_state = SOLID
 	color = "#dcbf00"
 	taste_description = "соды"
 	status_effect_type = /datum/status_effect/sport_reagents/creatine
@@ -591,7 +588,6 @@ GLOBAL_LIST_INIT(diseases_carrier_reagents, list(
 	name = "Экстракт гуараны"
 	id = "guarana"
 	description = "Вещество временно стимулирующее мышечную активность."
-	reagent_state = SOLID
 	color = "#dc3b00"
 	taste_description = "горечи"
 	status_effect_type = /datum/status_effect/sport_reagents/guarana
