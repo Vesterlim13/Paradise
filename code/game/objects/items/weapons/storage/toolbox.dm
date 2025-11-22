@@ -31,7 +31,7 @@
 		DATIVE = "ящику для инструментов",
 		ACCUSATIVE = "ящик для инструментов",
 		INSTRUMENTAL = "ящиком для инструментов",
-		PREPOSITIONAL = "ящике для инструментов"
+		PREPOSITIONAL = "ящике для инструментов",
 	)
 
 /obj/item/storage/toolbox/Initialize(mapload)
@@ -61,7 +61,11 @@
 
 /// Check if we can use tools inside toolbox via radial menu
 /obj/item/storage/toolbox/proc/check_for_radial_menu_availability(atom/object, mob/living/user, proximity)
+	if(user.incapacitated())
+		return FALSE
+
 	if(!proximity)
+		balloon_alert(user, "слишком далеко!")
 		return FALSE
 
 	if(ismob(object))
@@ -100,8 +104,15 @@
 
 	playsound(user, 'sound/items/handling/toolbox_open.ogg', 50)
 
-	var/obj/item/picked_item = show_radial_menu(user, src, choices, custom_check = CALLBACK(src, PROC_REF(check_menu), user), require_near = TRUE, anim_speed = 0.1)
+	var/obj/item/picked_item = show_radial_menu(user, src, choices, custom_check = CALLBACK(src, PROC_REF(check_menu), user, object), require_near = TRUE, anim_speed = 0.1)
 	if(!picked_item)
+		return
+
+	if(user.incapacitated())
+		return
+
+	if(!user.Adjacent(object))
+		balloon_alert(user, "слишком далеко!")
 		return
 
 	var/obj/item/selected
@@ -123,12 +134,13 @@
  * Runs a series of pre-checks before opening the radial menu to the user.
  *
  * Arguments:
- * * user - the mob trying to open the radial menu.
+ * * user - the mob trying to open the radial menu
+ * * object - atom we interact with
  */
-/obj/item/storage/toolbox/proc/check_menu(mob/living/user)
+/obj/item/storage/toolbox/proc/check_menu(mob/living/user, atom/object)
 	if(!istype(user))
 		return FALSE
-	if(user.incapacitated() || !user.Adjacent(src))
+	if(user.incapacitated() || !user.Adjacent(object))
 		return FALSE
 	return TRUE
 
@@ -164,7 +176,7 @@
 		DATIVE = "экстренному ящику для инструментов",
 		ACCUSATIVE = "экстренный ящик для инструментов",
 		INSTRUMENTAL = "экстренным ящиком для инструментов",
-		PREPOSITIONAL = "экстренном ящике для инструментов"
+		PREPOSITIONAL = "экстренном ящике для инструментов",
 	)
 
 /obj/item/storage/toolbox/emergency/populate_contents()
@@ -188,7 +200,7 @@
 		DATIVE = "ржавому ящику для инструментов",
 		ACCUSATIVE = "ржавый ящик для инструментов",
 		INSTRUMENTAL = "ржавым ящиком для инструментов",
-		PREPOSITIONAL = "ржавом ящике для инструментов"
+		PREPOSITIONAL = "ржавом ящике для инструментов",
 	)
 
 /obj/item/storage/toolbox/mechanical
@@ -203,7 +215,7 @@
 		DATIVE = "ящику для механических инструментов",
 		ACCUSATIVE = "ящик для механических инструментов",
 		INSTRUMENTAL = "ящиком для механических инструментов",
-		PREPOSITIONAL = "ящике для механических инструментов"
+		PREPOSITIONAL = "ящике для механических инструментов",
 	)
 
 /obj/item/storage/toolbox/mechanical/populate_contents()
@@ -216,11 +228,9 @@
 
 /obj/item/storage/toolbox/mechanical/greytide
 
-
 /obj/item/storage/toolbox/mechanical/greytide/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NODROP, INNATE_TRAIT)
-
 
 /obj/item/storage/toolbox/mechanical/old
 	name = "rusty toolbox"
@@ -233,7 +243,7 @@
 		DATIVE = "ржавому ящику для инструментов",
 		ACCUSATIVE = "ржавый ящик для инструментов",
 		INSTRUMENTAL = "ржавым ящиком для инструментов",
-		PREPOSITIONAL = "ржавом ящике для инструментов"
+		PREPOSITIONAL = "ржавом ящике для инструментов",
 	)
 
 /obj/item/storage/toolbox/electrical
@@ -248,7 +258,7 @@
 		DATIVE = "ящику для электромонтажных инструментов",
 		ACCUSATIVE = "ящик для электромонтажных инструментов",
 		INSTRUMENTAL = "ящиком для электромонтажных инструментов",
-		PREPOSITIONAL = "ящике для электромонтажных инструментов"
+		PREPOSITIONAL = "ящике для электромонтажных инструментов",
 	)
 
 /obj/item/storage/toolbox/electrical/populate_contents()
@@ -282,7 +292,7 @@
 		DATIVE = "подозрительному ящику для инструментов",
 		ACCUSATIVE = "подозрительный ящик для инструментов",
 		INSTRUMENTAL = "подозрительным ящиком для инструментов",
-		PREPOSITIONAL = "подозрительном ящике для инструментов"
+		PREPOSITIONAL = "подозрительном ящике для инструментов",
 	)
 
 /obj/item/storage/toolbox/syndicate/populate_contents()
@@ -312,7 +322,7 @@
 		DATIVE = "очень подозрительному ящику для инструментов",
 		ACCUSATIVE = "очень подозрительный ящик для инструментов",
 		INSTRUMENTAL = "очень подозрительным ящиком для инструментов",
-		PREPOSITIONAL = "очень подозрительном ящике для инструментов"
+		PREPOSITIONAL = "очень подозрительном ящике для инструментов",
 	)
 
 /obj/item/storage/toolbox/syndisuper/populate_contents()
@@ -337,7 +347,7 @@
 		DATIVE = "подозрительному ящику для инструментов",
 		ACCUSATIVE = "подозрительный ящик для инструментов",
 		INSTRUMENTAL = "подозрительным ящиком для инструментов",
-		PREPOSITIONAL = "подозрительном ящике для инструментов"
+		PREPOSITIONAL = "подозрительном ящике для инструментов",
 	)
 
 /obj/item/storage/toolbox/drone
@@ -375,7 +385,7 @@
 		DATIVE = "латунному ящику",
 		ACCUSATIVE = "латунный ящик",
 		INSTRUMENTAL = "латунным ящиком",
-		PREPOSITIONAL = "латунном ящике"
+		PREPOSITIONAL = "латунном ящике",
 	)
 
 /obj/item/storage/toolbox/brass/prefilled/populate_contents()
@@ -408,7 +418,8 @@
 		/obj/item/roller/holo,
 		/obj/item/stack/nanopaste,
 		/obj/item/healthanalyzer,
-		/obj/item/robotanalyzer)
+		/obj/item/robotanalyzer,
+	)
 
 /obj/item/storage/toolbox/surgery/get_ru_names()
 	return list(
@@ -417,7 +428,7 @@
 		DATIVE = "хирургическому набору",
 		ACCUSATIVE = "хирургический набор",
 		INSTRUMENTAL = "хирургическим набором",
-		PREPOSITIONAL = "хирургическом наборе"
+		PREPOSITIONAL = "хирургическом наборе",
 	)
 
 /obj/item/storage/toolbox/surgery/populate_contents()
@@ -458,7 +469,7 @@
 		DATIVE = "продвинутому хирургическому набору",
 		ACCUSATIVE = "продвинутый хирургический набор",
 		INSTRUMENTAL = "продвинутым хирургическим набором",
-		PREPOSITIONAL = "продвинутом хирургическом наборе"
+		PREPOSITIONAL = "продвинутом хирургическом наборе",
 	)
 
 /obj/item/storage/toolbox/surgery/advanced/empty/populate_contents()
@@ -477,7 +488,7 @@
 		DATIVE = "инородному хирургическому набору",
 		ACCUSATIVE = "инородный хирургический набор",
 		INSTRUMENTAL = "инородным хирургическим набором",
-		PREPOSITIONAL = "инородном хирургическом наборе"
+		PREPOSITIONAL = "инородном хирургическом наборе",
 	)
 
 /obj/item/storage/toolbox/surgery/alien/populate_contents()
@@ -511,7 +522,7 @@
 		DATIVE = "хирургическому саквояжу",
 		ACCUSATIVE = "хирургический саквояж",
 		INSTRUMENTAL = "хирургическим саквояжем",
-		PREPOSITIONAL = "хирургическом саквояже"
+		PREPOSITIONAL = "хирургическом саквояже",
 	)
 
 /obj/item/storage/toolbox/surgery/ashwalker/populate_contents()
@@ -543,5 +554,5 @@
 		DATIVE = "артистическому ящику для инструментов",
 		ACCUSATIVE = "артистический ящик для инструментов",
 		INSTRUMENTAL = "артистическим ящиком для инструментов",
-		PREPOSITIONAL = "артистическом ящике для инструментов"
+		PREPOSITIONAL = "артистическом ящике для инструментов",
 	)
