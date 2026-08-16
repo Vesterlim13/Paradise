@@ -1,10 +1,12 @@
 SUBSYSTEM_DEF(demo)
 	name = "Demo"
 	wait = 1
-	flags = SS_TICKER | SS_BACKGROUND
+	ss_flags = SS_NO_INIT // SS_TICKER | SS_BACKGROUND
 	///Adding Lobby to the runlevel because we want it to start writing before the game starts since there's a of atoms queued to be written during init
 	runlevels = RUNLEVELS_DEFAULT | RUNLEVEL_LOBBY
-	init_order = INIT_ORDER_DEMO
+	dependencies = list(
+		/datum/controller/subsystem/atoms,
+	)
 
 	// loading_points = 12.6 SECONDS // Yogs -- loading times
 
@@ -75,7 +77,7 @@ SUBSYSTEM_DEF(demo)
 
 /datum/controller/subsystem/demo/Initialize()
 	if(!CONFIG_GET(flag/demos_enabled))
-		flags |= SS_NO_FIRE
+		ss_flags |= SS_NO_FIRE
 		can_fire = FALSE
 		marked_dirty.Cut()
 		marked_new.Cut()
@@ -176,7 +178,7 @@ SUBSYSTEM_DEF(demo)
 	if(!length(src.marked_new) && !length(src.marked_dirty) && !length(src.marked_turfs) && !length(src.del_list))
 		return // nothing to do
 
-	last_queued = length(src.marked_new) + length(src.marked_dirty) + src.marked_turfs.len
+	last_queued = length(src.marked_new) + length(src.marked_dirty) + length(src.marked_turfs)
 	last_completed = 0
 
 	write_time()
@@ -430,10 +432,12 @@ SUBSYSTEM_DEF(demo)
 
 /datum/controller/subsystem/demo/get_metrics()
 	. = ..()
-	.["remaining_turfs"] = marked_turfs.len
-	.["remaining_new"] = marked_new.len
-	.["remaining_updated"] = marked_dirty.len
-	.["remaining_deleted"] = del_list.len
+	var/list/custom_data = list()
+	custom_data["remaining_turfs"] = length(marked_turfs)
+	custom_data["remaining_new"] = length(marked_new)
+	custom_data["remaining_updated"] = length(marked_dirty)
+	custom_data["remaining_deleted"] = length(del_list)
+	.["custom"] = custom_data
 
 /datum/controller/subsystem/demo/proc/mark_turf(turf/T)
 	if(!can_fire)

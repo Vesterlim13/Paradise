@@ -1,8 +1,8 @@
 /datum/data/pda/app/messenger
-	name = "Messenger"
-	icon = "comments-o"
+	name = "Мессенджер"
+	icon = "comments"
 	notify_icon = "comments"
-	title = "SpaceMessenger V4.1.0"
+	title = "Космический мессенджер V4.1.0"
 	template = "pda_messenger"
 
 	var/toff = 0 //If 1, messenger disabled
@@ -57,6 +57,9 @@
 
 		if(pda.cartridge)
 			data["charges"] = pda.cartridge.charges ? pda.cartridge.charges : 0
+
+	data["ringtone"] = pda.ttone
+	data["ringtone_list"] = pda.ttone_sound
 
 /datum/data/pda/app/messenger/ui_act(action, list/params)
 	if(..())
@@ -170,7 +173,7 @@
 		if(!isobserver(mob) || !mob.client || !HASBIT(mob.client.prefs.toggles, PREFTOGGLE_CHAT_GHOSTPDA))
 			continue
 
-		var/ghost_message = "[span_name("[pda.owner]")] ([ghost_follow_link(pda, ghost = mob)]) [span_gamesay("Сообщение на КПК")] --> [span_name("[recipient_pda.owner]")] ([ghost_follow_link(recipient_pda, ghost = mob)]): [span_message("[message]")]"
+		var/ghost_message = "([ghost_follow_link(pda, ghost = mob)]) [span_name("[pda.owner]")] [span_gamesay("Сообщение на КПК")] --> ([ghost_follow_link(recipient_pda, ghost = mob)]) [span_name("[recipient_pda.owner]")]: [span_message("[message]")]"
 		to_chat(mob, "[ghost_message]")
 
 /datum/data/pda/app/messenger/proc/can_send_message(message, sender, recipient_pda, useMS)

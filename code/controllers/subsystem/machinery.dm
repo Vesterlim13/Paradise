@@ -5,11 +5,11 @@
 
 SUBSYSTEM_DEF(machines)
 	name = "Machines"
-	init_order = INIT_ORDER_MACHINES
-	flags = SS_KEEP_TIMING
-	offline_implications = "Machinery will no longer process. Shuttle call recommended."
-	cpu_display = SS_CPUDISPLAY_HIGH
-	ss_id = "machines"
+	dependencies = list(
+		/datum/controller/subsystem/atoms,
+	)
+	ss_flags = SS_KEEP_TIMING
+	wait = 2 SECONDS
 
 	/// Associative list of all machines that exist.
 	VAR_PRIVATE/list/machines_by_type = list()
@@ -60,6 +60,12 @@ SUBSYSTEM_DEF(machines)
 		var/list/found_machines = machines_by_type[next_type]
 		if(found_machines)
 			. |= found_machines
+
+/datum/controller/subsystem/machines/get_metrics()
+	. = ..()
+	var/list/custom_data = list()
+	custom_data["processing"] = length(processing)
+	.["custom"] = custom_data
 
 /datum/controller/subsystem/machines/proc/makepowernets()
 	for(var/datum/powernet/PN in powernets)
@@ -121,7 +127,7 @@ SUBSYSTEM_DEF(machines)
 		else
 			processing -= thing
 			if(!QDELETED(thing))
-				thing.isprocessing = FALSE
+				thing.datum_flags &= ~DF_ISPROCESSING
 		if(MC_TICK_CHECK)
 			return
 

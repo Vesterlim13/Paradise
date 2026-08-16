@@ -15,16 +15,6 @@
 	var/refined_type = null //What this ore defaults to being refined into
 	var/list/stack_overlays
 
-/obj/item/stack/ore/get_ru_names()
-	return list(
-		NOMINATIVE = "камень",
-		GENITIVE = "камня",
-		DATIVE = "камню",
-		ACCUSATIVE = "камень",
-		INSTRUMENTAL = "камнем",
-		PREPOSITIONAL = "камне",
-	)
-
 /obj/item/stack/ore/update_overlays()
 	. = ..()
 
@@ -48,17 +38,17 @@
 	else
 		for(var/i in 1 to difference)
 			var/mutable_appearance/newore = mutable_appearance(icon, icon_state)
-			newore.pixel_x = rand(-8,8)
-			newore.pixel_y = rand(-8,8)
+			newore.pixel_w = rand(-8,8)
+			newore.pixel_z = rand(-8,8)
 			stack_overlays += newore
 
 	if(length(stack_overlays))
 		. += stack_overlays
 
-/obj/item/stack/ore/Initialize(mapload, new_amount , merge = TRUE)
+/obj/item/stack/ore/Initialize(mapload, new_amount, merge = TRUE)
 	. = ..()
-	pixel_x = rand(0, 16) - 8
-	pixel_y = rand(0, 8) - 8
+	pixel_x = base_pixel_x + rand(0, 16) - 8
+	pixel_y = base_pixel_y + rand(0, 8) - 8
 
 /obj/item/stack/ore/welder_act(mob/user, obj/item/I)
 	. = TRUE
@@ -71,24 +61,7 @@
 	balloon_alert(usr, "переплавлено!")
 	qdel(src)
 
-/obj/item/stack/ore/on_movable_entered_occupied_turf(atom/movable/arrived)
-	if(!istype(loc, /turf/simulated/floor/plating/asteroid) || (!ishuman(arrived) && !isrobot(arrived)))
-		return ..()
-
-	var/mob/arrived_mob = arrived
-	for(var/obj/item/storage/bag/ore/bag in arrived_mob.get_equipped_items(INCLUDE_POCKETS | INCLUDE_HELD))
-		for(var/obj/item/item as anything in loc)
-			if(!bag.can_be_inserted(item, stop_messages = TRUE))
-				continue
-
-			item.do_pickup_animation(arrived_mob)
-			bag.handle_item_insertion(item, prevent_warning = TRUE)
-
-		// Then, if the user is dragging an ore box, empty the satchel into the box.
-		if(istype(arrived_mob.pulling, /obj/structure/ore_box))
-			arrived_mob.pulling.attackby(bag, arrived)
-
-/obj/item/stack/ore/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume, global_overlay = TRUE)
+/obj/item/stack/ore/fire_act(exposed_temperature, exposed_volume)
 	. = ..()
 	if(isnull(refined_type))
 		return
@@ -110,7 +83,7 @@
 	materials = list(MAT_URANIUM=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/uranium/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "урановая руда",
 		GENITIVE = "урановой руды",
 		DATIVE = "урановой руде",
@@ -128,7 +101,7 @@
 	materials = list(MAT_METAL=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/iron/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "железная руда",
 		GENITIVE = "железной руды",
 		DATIVE = "железной руде",
@@ -146,7 +119,7 @@
 	materials = list(MAT_GLASS=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/glass/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "песок",
 		GENITIVE = "песка",
 		DATIVE = "песку",
@@ -198,28 +171,13 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	desc = "Можно нанести на балку, чтобы создать ложную каменную стену"
 
 /obj/item/stack/ore/glass/basalt/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "вулканический пепел",
 		GENITIVE = "вулканического пепла",
 		DATIVE = "вулканическому пеплу",
 		ACCUSATIVE = "вулканический пепел",
 		INSTRUMENTAL = "вулканическим пеплом",
 		PREPOSITIONAL = "вулканическом пепле",
-	)
-
-/obj/item/stack/ore/glass/basalt/ancient
-	name = "ancient sand"
-	item_state = "volcanic_sand"
-	singular_name = "ancient sand pile"
-
-/obj/item/stack/ore/glass/basalt/ancient/get_ru_names()
-	return list(
-		NOMINATIVE = "древний песок",
-		GENITIVE = "древнего песка",
-		DATIVE = "древнему песку",
-		ACCUSATIVE = "древний песок",
-		INSTRUMENTAL = "древним песком",
-		PREPOSITIONAL = "древнем песке",
 	)
 
 /obj/item/stack/ore/plasma
@@ -232,7 +190,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	materials = list(MAT_PLASMA=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/plasma/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "плазменная руда",
 		GENITIVE = "плазменной руды",
 		DATIVE = "плазменной руде",
@@ -251,7 +209,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	materials = list(MAT_SILVER=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/silver/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "серебряная руда",
 		GENITIVE = "серебряной руды",
 		DATIVE = "серебряной руде",
@@ -270,7 +228,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	materials = list(MAT_GOLD=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/gold/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "золотая руда",
 		GENITIVE = "золотой руды",
 		DATIVE = "золотой руде",
@@ -289,7 +247,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	materials = list(MAT_DIAMOND=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/diamond/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "алмазная руда",
 		GENITIVE = "алмазной руды",
 		DATIVE = "алмазной руде",
@@ -297,6 +255,9 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 		INSTRUMENTAL = "алмазной рудой",
 		PREPOSITIONAL = "алмазной руде",
 	)
+
+/obj/item/stack/ore/diamond/ten
+	amount = 10
 
 /obj/item/stack/ore/bananium
 	name = "bananium ore"
@@ -308,7 +269,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	materials = list(MAT_BANANIUM=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/bananium/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "бананиумная руда",
 		GENITIVE = "бананиумной руды",
 		DATIVE = "бананиумной руде",
@@ -327,7 +288,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	materials = list(MAT_TRANQUILLITE=MINERAL_MATERIAL_AMOUNT)
 
 /obj/item/stack/ore/tranquillite/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "транквиллитовая руда",
 		GENITIVE = "транквиллитовой руды",
 		DATIVE = "транквиллитовой руде",
@@ -345,7 +306,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	refined_type = /obj/item/stack/sheet/mineral/titanium
 
 /obj/item/stack/ore/titanium/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "титановая руда",
 		GENITIVE = "титановой руды",
 		DATIVE = "титановой руде",
@@ -361,7 +322,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	singular_name = "slag chunk"
 
 /obj/item/stack/ore/slag/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "шлак",
 		GENITIVE = "шлака",
 		DATIVE = "шлаку",
@@ -384,8 +345,12 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	var/attacher = UNKNOWN_STATUS_RUS
 	var/datum/wires/explosive/gibtonite/wires
 
+/obj/item/twohanded/required/gibtonite/Initialize(mapload)
+	. = ..()
+	ADD_TRAIT(src, TRAIT_CAN_ATTACH_TO_TRIPWIRE, INNATE_TRAIT)
+
 /obj/item/twohanded/required/gibtonite/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "гибтонит",
 		GENITIVE = "гибтонита",
 		DATIVE = "гибтониту",
@@ -458,7 +423,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 		wires.Interact(user)
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
-	if(I.force >= 10 || istype(I, /obj/item/pickaxe) || istype(I, /obj/item/resonator))
+	if(I.tool_behaviour == TOOL_MINING || I.force >= 10 || istype(I, /obj/item/pickaxe) || istype(I, /obj/item/resonator))
 		GibtoniteReaction(user)
 		return ATTACK_CHAIN_BLOCKED_ALL
 
@@ -544,6 +509,13 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 			if(!QDELETED(src))
 				qdel(src)
 
+/obj/item/twohanded/required/gibtonite/on_tripwire_trigger(obj/item/tripwire/base, mob/user)
+	var/turf/turf = get_turf(base)
+	forceMove(turf)
+	GibtoniteReaction(null, 1)
+	base.attached_item = null
+	base.UnregisterSignal(base, COMSIG_TRIPWIRE_TRIGGERED)
+
 /obj/item/stack/ore/ex_act(severity, target)
 	if(!severity || severity <= EXPLODE_HEAVY)
 		return
@@ -569,7 +541,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	var/credits = 10
 
 /obj/item/coin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "монета",
 		GENITIVE = "монеты",
 		DATIVE = "монете",
@@ -578,14 +550,17 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 		PREPOSITIONAL = "монете",
 	)
 
-/obj/item/coin/New()
-	..()
-	pixel_x = rand(0,16)-8
-	pixel_y = rand(0,8)-8
+/obj/item/coin/Initialize(mapload)
+	. = ..()
+	pixel_x = base_pixel_x + rand(-8, 8)
+	pixel_y = base_pixel_y + rand(-8, 8)
 
 	icon_state = "coin_[cmineral]_[sideslist[1]]"
 	if(cmineral && name_by_cmineral)
 		name = "[cmineral] coin"
+
+/obj/item/coin/get_item_credit_value()
+	return credits
 
 /obj/item/coin/gold
 	cmineral = "gold"
@@ -622,6 +597,10 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	icon_state = "coin_uranium_heads"
 	materials = list(MAT_URANIUM = 400)
 	credits = 160
+
+/obj/item/coin/uranium/ComponentInitialize()
+	. = ..()
+	AddElement(/datum/element/radioactive, chance = URANIUM_IRRADIATION_CHANCE)
 
 /obj/item/coin/clown
 	cmineral = "bananium"
@@ -660,7 +639,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	credits = 600
 
 /obj/item/coin/twoheaded/thief/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "монета Гильдии Воров",
 		GENITIVE = "монеты Гильдии Воров",
 		DATIVE = "монете Гильдии Воров",
@@ -679,7 +658,7 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	name_by_cmineral = FALSE
 
 /obj/item/coin/antagtoken/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "антаг токен",
 		GENITIVE = "антаг токена",
 		DATIVE = "антаг токену",
@@ -693,14 +672,61 @@ GLOBAL_LIST_INIT(sand_recipes, list(\
 	credits = 160
 
 /obj/item/coin/antagtoken/syndicate/get_ru_names()
-	return list(
-		NOMINATIVE = "монета Синдиката",
-		GENITIVE = "монеты Синдиката",
-		DATIVE = "монете Синдиката",
-		ACCUSATIVE = "монету Синдиката",
-		INSTRUMENTAL = "монетой Синдиката",
-		PREPOSITIONAL = "монете Синдиката",
+	return alist(
+		NOMINATIVE = "монета \"Синдиката\"",
+		GENITIVE = "монеты \"Синдиката\"",
+		DATIVE = "монете \"Синдиката\"",
+		ACCUSATIVE = "монету \"Синдиката\"",
+		INSTRUMENTAL = "монетой \"Синдиката\"",
+		PREPOSITIONAL = "монете \"Синдиката\"",
 	)
+
+/obj/item/coin/magic
+	name = "magical coin"
+	cmineral = "gold"
+	icon_state = "coin_gold_heads"
+	name_by_cmineral = FALSE
+	materials = list(MAT_GOLD = 9999)
+	credits = 9999
+	COOLDOWN_DECLARE(COIN_SUMMON_COOLDOWN)
+
+/obj/item/coin/magic/get_ru_names()
+	return alist(
+		NOMINATIVE = "волшебная монета",
+		GENITIVE = "волшебной монеты",
+		DATIVE = "волшебной монете",
+		ACCUSATIVE = "волшебную монету",
+		INSTRUMENTAL = "волшебной монетой",
+		PREPOSITIONAL = "волшебной монете"
+	)
+
+/obj/item/coin/magic/examine(mob/user)
+	. = ..()
+	if(COOLDOWN_FINISHED(src, COIN_SUMMON_COOLDOWN))
+		. += span_notice("[capitalize(declent_ru(NOMINATIVE))] ярко блестит!")
+
+/obj/item/coin/magic/attack_self(mob/user)
+	. = ..()
+	if(!COOLDOWN_FINISHED(src, COIN_SUMMON_COOLDOWN))
+		return
+	to_chat(user, span_warning("Вы подкидываете [declent_ru(ACCUSATIVE)] в руке, и та начинает нагреваться"))
+	COOLDOWN_START(src, COIN_SUMMON_COOLDOWN, 10 SECONDS)
+	var/list/mob/dead/observer/candidates = SSghost_spawns.poll_candidates("Вы хотите поиграть играть за слугу [user.real_name]?", ROLE_WIZARD, role_cleanname = "слугу", poll_time = 10 SECONDS, source = image('icons/mob/simple_human.dmi', "butler"))
+	if(!LAZYLEN(candidates))
+		to_chat(user, span_warning("[capitalize(declent_ru(NOMINATIVE))] остывает у вас в руке. Возможно, стоит попробовать позже."))
+		return
+
+	var/mob/living/carbon/human/servant = new(user.loc)
+	servant.equipOutfit(/datum/outfit/butler)
+	servant.forceMove(user)
+	var/mob/dead/observer/chosen = pick(candidates)
+	message_admins("[ADMIN_LOOKUPFLW(chosen)] was spawned as Dice Servant")
+	servant.possess_by_player(chosen.key)
+	var/datum/antagonist/servant/serv = new /datum/antagonist/servant(user)
+	servant.mind.add_antag_datum(serv)
+	to_chat(servant, span_notice("Вы слуга [user.real_name]. Вы должны сделать всё, что в ваших силах, чтобы выполнить [GEND_HIS_HER(user)] приказы."))
+	to_chat(user, span_warning("Нечто принимает вашу плату в обмен на вечную службу."))
+	qdel(src)
 
 /obj/item/coin/update_overlays()
 	. = ..()

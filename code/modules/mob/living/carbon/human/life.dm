@@ -17,6 +17,8 @@
 	if(.) // not dead
 		handle_pain()
 		handle_heartbeat()
+		// Handles liver failure effects, if we lack a liver
+		handle_liver(seconds)
 		dna.species.handle_life(src)
 
 		if(!client)
@@ -77,22 +79,19 @@
 		force_cryo_human(src)
 
 /mob/living/carbon/human/calculate_affecting_pressure(pressure)
-	var/pressure_difference = abs( pressure - ONE_ATMOSPHERE )
-
-	// Determines how much the clothing you are wearing protects you in percent.
-	var/pressure_adjustment_coefficient = 1
 	if(isclothing(wear_suit) && isclothing(head))
 		var/obj/item/clothing/suit = wear_suit
 		var/obj/item/clothing/helmet = head
 		// Complete set of pressure-proof suit worn, assume fully sealed.
-		if((suit.clothing_flags & STOPSPRESSUREDMAGE) && (helmet.clothing_flags & STOPSPRESSUREDMAGE))
-			pressure_adjustment_coefficient = 0
-	pressure_adjustment_coefficient = max(pressure_adjustment_coefficient,0) //So it isn't less than 0
-	pressure_difference = pressure_difference * pressure_adjustment_coefficient
-	if(pressure > ONE_ATMOSPHERE)
-		return ONE_ATMOSPHERE + pressure_difference
-	else
-		return ONE_ATMOSPHERE - pressure_difference
+		if((suit.clothing_flags & STOPSPRESSUREDAMAGE) && (helmet.clothing_flags & STOPSPRESSUREDAMAGE))
+			return ONE_ATMOSPHERE
+
+	if(ismovable(loc))
+		/// If we're in a space with 0.5 content pressure protection, it averages the values, for example.
+		var/atom/movable/occupied_space = loc
+		return (occupied_space.contents_pressure_protection * ONE_ATMOSPHERE + (1 - occupied_space.contents_pressure_protection) * pressure)
+
+	return pressure
 
 /mob/living/carbon/human/handle_disabilities()
 	//Vision //god knows why this is here
@@ -161,100 +160,11 @@
 				if(3)
 					emote("drool")
 
-/mob/living/carbon/human/handle_mutations_and_radiation()
-	for(var/datum/dna/gene/gene as anything in GLOB.dna_genes)
-		if(gene.is_active(src))
-			gene.OnMobLife(src)
-	if(!ignore_gene_stability && gene_stability < GENETIC_DAMAGE_STAGE_1)
-		var/instability = DEFAULT_GENE_STABILITY - gene_stability
-		if(prob(instability * 0.1))
-			adjustFireLoss(min(5, instability * 0.67))
-			to_chat(src, span_danger("Вы ощущаете, как ваша кожа горит и покрывается волдырями!"))
-		if(gene_stability < GENETIC_DAMAGE_STAGE_2)
-			if(prob(instability * 0.83))
-				adjustCloneLoss(min(4, instability * 0.05))
-				to_chat(src, span_danger("Вам кажется, что ваше тело теряет свою форму."))
-			if(prob(instability * 0.1))
-				adjustToxLoss(min(5, instability * 0.67))
-				to_chat(src, span_danger("Вы чувствуете слабость и тошноту."))
-			if(gene_stability < GENETIC_DAMAGE_STAGE_3 && prob(1))
-				to_chat(src, span_biggerdanger("Вам невероятно плохо... Что-то не так!"))
-				spawn(300)
-					if(gene_stability < GENETIC_DAMAGE_STAGE_3)
-						gib()
-
-	if(radiation)
-		if(isnucleation(src))
-			radiation = clamp(radiation, 0, 800) // Типа кристаллы СМ лучше вбирают радиацию и поэтому у нуклей больший запас, а так — что бы эффекты снизу вообще работали
-			switch(radiation)
-				if(1 to 399)
-					radiation = max(radiation-1, 0) // Что бы не копилась бесконечно малое кол-во, но все ещё можно было получать эффект снизу при достаточном облучении
-					return
-				if(400 to INFINITY)
-					if(prob(50))
-						reagents.add_reagent("radium", 1)
-						radiation = max(radiation-50, 0)
-						return
-
-		if(!HAS_TRAIT(src, TRAIT_RADIMMUNE))
-			radiation = clamp(radiation, 0, 200)
-
-			var/autopsy_damage = 0
-			switch(radiation)
-				if(1 to 49)
-					radiation = max(radiation-1, 0)
-					if(prob(25))
-						apply_damages(burn = 1, tox = 1, spread_damage = TRUE)
-						autopsy_damage = 2
-
-				if(50 to 74)
-					radiation = max(radiation-2, 0)
-					apply_damages(burn = 1, tox = 1, spread_damage = TRUE)
-					autopsy_damage = 2
-					if(prob(5))
-						radiation = max(radiation-5, 0)
-						Weaken(6 SECONDS)
-						to_chat(src, span_danger("Вы чувствуете слабость."))
-						emote("collapse")
-
-				if(75 to 100)
-					radiation = max(radiation-2, 0)
-					apply_damages(burn = 2, tox = 2, spread_damage = TRUE)
-					autopsy_damage = 4
-					if(prob(2))
-						to_chat(src, span_danger("Вы мутируете!"))
-						randmutb(src)
-						check_genes()
-
-				if(101 to 150)
-					radiation = max(radiation-3, 0)
-					apply_damages(burn = 3, tox = 2, spread_damage = TRUE)
-					autopsy_damage = 5
-					if(prob(4))
-						to_chat(src, span_danger("Вы мутируете!"))
-						randmutb(src)
-						check_genes()
-
-				if(151 to INFINITY)
-					radiation = max(radiation-3, 0)
-					apply_damages(burn = 3, tox = 2, spread_damage = TRUE)
-					autopsy_damage = 5
-					if(prob(6))
-						to_chat(src, span_danger("Вы мутируете!"))
-						randmutb(src)
-						check_genes()
-
-			if(autopsy_damage)
-				var/obj/item/organ/external/chest/chest = get_organ(BODY_ZONE_CHEST)
-				if(chest)
-					chest.add_autopsy_data("Radiation Poisoning", autopsy_damage)
-
 /mob/living/carbon/human/breathe()
 	if(!dna.species.breathe(src))
 		..()
 
 /mob/living/carbon/human/check_breath(datum/gas_mixture/breath)
-
 	var/obj/item/organ/internal/lungs = get_organ_slot(INTERNAL_ORGAN_LUNGS)
 
 	if(!lungs || (lungs && lungs.is_dead()))
@@ -285,13 +195,13 @@
 	// Health is in deep shit and we're not already dead
 	return health <= HEALTH_THRESHOLD_CRIT && stat != DEAD
 
-/mob/living/carbon/human/handle_environment(datum/gas_mixture/environment)
-	if(!environment)
+/mob/living/carbon/human/handle_environment(datum/gas_mixture/readonly_environment)
+	if(!readonly_environment)
 		return
 
-	SEND_SIGNAL(src, COMSIG_HUMAN_EARLY_HANDLE_ENVIRONMENT, environment)
+	SEND_SIGNAL(src, COMSIG_HUMAN_EARLY_HANDLE_ENVIRONMENT, readonly_environment)
 
-	var/loc_temp = get_temperature(environment)
+	var/loc_temp = get_temperature(readonly_environment)
 //	to_chat(world, "Loc temp: [loc_temp] - Body temp: [bodytemperature] - Fireloss: [getFireLoss()] - Thermal protection: [get_main_thermal_protection()] - Fire protection: [thermal_protection + add_fire_protection(loc_temp)] - Heat capacity: [environment_heat_capacity] - Location: [loc] - src: [src]")
 
 	//Body temperature is adjusted in two steps. Firstly your body tries to stabilize itself a bit.
@@ -314,7 +224,7 @@
 				adjust_bodytemperature(min((1-thermal_protection) * ((loc_temp - bodytemperature) / BODYTEMP_HEAT_DIVISOR), BODYTEMP_HEATING_MAX))
 
 	// +/- 50 degrees from 310.15K is the 'safe' zone, where no damage is dealt.
-	if(bodytemperature > dna.species.heat_level_1)
+	if(bodytemperature > dna.species.heat_level_1 && !HAS_TRAIT(src, TRAIT_RESIST_HEAT))
 		//Body temperature is too hot.
 		if(HAS_TRAIT(src, TRAIT_GODMODE))
 			return TRUE	//godmode
@@ -382,7 +292,7 @@
 	// Account for massive pressure differences.  Done by Polymorph
 	// Made it possible to actually have something that can protect against high pressure... Done by Errorage. Polymorph now has an axe sticking from his head for his previous hardcoded nonsense!
 
-	var/pressure = environment.return_pressure()
+	var/pressure = readonly_environment.return_pressure()
 	var/adjusted_pressure = calculate_affecting_pressure(pressure) //Returns how much pressure actually affects the mob.
 	if(HAS_TRAIT(src, TRAIT_GODMODE))
 		return TRUE	//godmode
@@ -408,6 +318,26 @@
 			var/pressure_damage = LOW_PRESSURE_DAMAGE * physiology.pressure_mod * physiology.brute_mod
 			take_overall_damage(brute = pressure_damage, used_weapon = "Low Pressure")
 			throw_alert("pressure", /atom/movable/screen/alert/lowpressure, 2)
+
+	handle_gas_interaction(src, readonly_environment)
+
+/**
+ *	Handles exposure to the skin of various gases.
+ */
+/mob/living/carbon/human/proc/handle_gas_interaction(mob/living/carbon/human/human, datum/gas_mixture/environment)
+	/// Some non-clothing items may end up in these slots, e.g. flowers worn on the head, so we should consider clothing_flags as potentially nonexistant as a var.
+	/// Otherwise we will get a very spammy runtime.
+	var/suit_flags = astype(human?.wear_suit, /obj/item/clothing)?.clothing_flags
+	var/head_flags = astype(human?.head, /obj/item/clothing)?.clothing_flags
+
+	if((suit_flags & STOPSPRESSUREDAMAGE) && (head_flags & STOPSPRESSUREDAMAGE))
+		return
+
+	for(var/gas_id, gas_amount in environment.get_interesting())
+		switch(gas_id)
+			if(TLV_ANTINOBLIUM) // Antinoblium - irradiates the target.
+				if(gas_amount >= MOLES_GAS_VISIBLE && prob(min(gas_amount, 100)))
+					SSradiation.irradiate(human)
 
 ///FIRE CODE
 /mob/living/carbon/human/handle_fire()
@@ -737,7 +667,6 @@
 				if(prob(5))
 					emote(pick("faint", "collapse", "cry", "moan", "gasp", "shudder", "shiver"))
 				SetStuttering(10 SECONDS)
-				EyeBlurry(10 SECONDS)
 				if(prob(7))
 					AdjustConfused(4 SECONDS)
 				if(prob(5))
@@ -836,12 +765,20 @@
 						icon_num = 4
 					if(damage > (comparison*4))
 						icon_num = 5
+					var/exists_bleeding = bodypart.bleeding_amount > 0 && bodypart.bleeding_amount > bodypart.bleedsuppress
 					if(istype(bodypart, /obj/item/organ/external/tail) && bodypart.dna?.species.tail)
 						new_overlays += "[bodypart.dna.species.tail][icon_num]"
+						if(exists_bleeding)
+							new_overlays += "[bodypart.dna.species.tail]_b"
+
 					if(istype(bodypart, /obj/item/organ/external/wing) && bodypart.dna?.species.tail)
 						new_overlays += "[bodypart.dna.species.wing][icon_num]"
+
 					else
 						new_overlays += "[bodypart.limb_zone][icon_num]"
+						if(exists_bleeding)
+							new_overlays += "[bodypart.limb_zone]_b"
+
 				healthdoll.add_overlay(new_overlays - cached_overlays)
 				healthdoll.cut_overlay(cached_overlays - new_overlays)
 				healthdoll.cached_healthdoll_overlays = new_overlays
@@ -858,14 +795,14 @@
 		for(var/obj/item/thing in bodypart.embedded_objects)
 			if(prob(thing.embedded_pain_chance))
 				apply_damage(thing.w_class * thing.embedded_pain_multiplier, def_zone = bodypart)
-				to_chat(src, span_userdanger("[capitalize(thing.declent_ru(NOMINATIVE))] в ваш[GEND_EM_EI_EM_IH(bodypart)] [GLOB.body_zone[bodypart.limb_zone][PREPOSITIONAL]] причиняет боль!"))
+				to_chat(src, span_userdanger("[DECLENT_RU_CAP(thing, NOMINATIVE)] в ваш[GEND_EM_EI_EM_IH(bodypart)] [GLOB.body_zone[bodypart.limb_zone][PREPOSITIONAL]] причиняет боль!"))
 
 			if(prob(thing.embedded_fall_chance))
 				bodypart.remove_embedded_object(thing)
 				apply_damage(thing.w_class * thing.embedded_fall_pain_multiplier, def_zone = bodypart)
 				visible_message(
-					span_danger("[capitalize(thing.declent_ru(NOMINATIVE))] выпадает из [GLOB.body_zone[bodypart.limb_zone][GENITIVE]] [name]!"),
-					span_danger("[capitalize(thing.declent_ru(NOMINATIVE))] выпадает из [GEND_YOURS(bodypart)] [GLOB.body_zone[bodypart.limb_zone][GENITIVE]]!"),
+					span_danger("[DECLENT_RU_CAP(thing, NOMINATIVE)] выпадает из [GLOB.body_zone[bodypart.limb_zone][GENITIVE]] [name]!"),
+					span_danger("[DECLENT_RU_CAP(thing, NOMINATIVE)] выпадает из [GEND_YOURS(bodypart)] [GLOB.body_zone[bodypart.limb_zone][GENITIVE]]!"),
 				)
 
 /mob/living/carbon/human/proc/handle_pulse(times_fired)

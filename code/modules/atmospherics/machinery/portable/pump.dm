@@ -9,7 +9,7 @@
 /obj/machinery/portable_atmospherics/pump
 	name = "Portable Air Pump"
 	icon = 'icons/obj/pipes_and_stuff/atmospherics/atmos.dmi'
-	icon_state = "psiphon:0"
+	icon_state = "psiphon_off"
 	density = TRUE
 	volume = 1000
 	/// If the pump is turned on or off.
@@ -20,14 +20,14 @@
 	var/target_pressure = 101.325
 
 /obj/machinery/portable_atmospherics/pump/update_icon_state()
-	icon_state = "psiphon:[on]"
+	icon_state = "psiphon_[on ? "on" : "off"]"
 
 /obj/machinery/portable_atmospherics/pump/update_overlays()
 	. = ..()
 	if(holding)
-		. += "siphon-open"
+		. += "siphon_open"
 	if(connected_port)
-		. += "siphon-connector"
+		. += "siphon_connector"
 
 /obj/machinery/portable_atmospherics/pump/emp_act(severity)
 	if(stat & (BROKEN|NOPOWER))
@@ -47,49 +47,53 @@
 
 /obj/machinery/portable_atmospherics/pump/process_atmos()
 	..()
-	if(on)
-		var/datum/gas_mixture/environment
-		if(holding)
-			environment = holding.air_contents
-		else
-			environment = loc.return_air()
-		if(direction == DIRECTION_OUT)
-			var/pressure_delta = target_pressure - environment.return_pressure()
-			//Can not have a pressure delta that would cause environment pressure > tank pressure
+	var/datum/milla_safe/portable_pump_process/milla = new()
+	milla.invoke_async(src)
 
-			var/transfer_moles = 0
-			if(air_contents.temperature > 0)
-				transfer_moles = pressure_delta*environment.volume/(air_contents.temperature * R_IDEAL_GAS_EQUATION)
+/datum/milla_safe/portable_pump_process
 
-				//Actually transfer the gas
-				var/datum/gas_mixture/removed = air_contents.remove(transfer_moles)
+/datum/milla_safe/portable_pump_process/on_run(obj/machinery/portable_atmospherics/pump/pump)
+	if(!pump.on)
+		return
 
-				if(holding)
-					environment.merge(removed)
-				else
-					loc.assume_air(removed)
-					air_update_turf()
-		else
-			var/pressure_delta = target_pressure - air_contents.return_pressure()
-			//Can not have a pressure delta that would cause environment pressure > tank pressure
+	var/datum/gas_mixture/environment
 
-			var/transfer_moles = 0
-			if(environment.temperature > 0)
-				transfer_moles = pressure_delta*air_contents.volume/(environment.temperature * R_IDEAL_GAS_EQUATION)
+	if(pump.holding)
+		environment = pump.holding.air_contents
+	else
+		var/turf/turf = get_turf(pump)
+		environment = get_turf_air(turf)
 
-				//Actually transfer the gas
-				var/datum/gas_mixture/removed
-				if(holding)
-					removed = environment.remove(transfer_moles)
-				else
-					removed = loc.remove_air(transfer_moles)
-					air_update_turf()
+	if(pump.direction == DIRECTION_OUT)
+		var/pressure_delta = pump.target_pressure - environment.return_pressure()
+		//Can not have a pressure delta that would cause environment pressure > tank pressure
 
-				air_contents.merge(removed)
+		var/transfer_moles = 0
+		if(pump.air_contents.temperature() > 0)
+			transfer_moles = pressure_delta * environment.volume / (pump.air_contents.temperature() * R_IDEAL_GAS_EQUATION)
 
-	return
+			//Actually transfer the gas
+			var/datum/gas_mixture/removed = pump.air_contents.remove(transfer_moles)
 
-/obj/machinery/portable_atmospherics/pump/return_air()
+			environment.merge(removed)
+		return
+	var/pressure_delta = pump.target_pressure - pump.air_contents.return_pressure()
+	//Can not have a pressure delta that would cause environment pressure > tank pressure
+
+	var/transfer_moles = 0
+	if(environment.temperature() <= 0)
+		return
+
+	transfer_moles = pressure_delta * pump.air_contents.volume / (environment.temperature() * R_IDEAL_GAS_EQUATION)
+
+	//Actually transfer the gas
+	var/datum/gas_mixture/removed
+	removed = environment.remove(transfer_moles)
+
+	pump.air_contents.merge(removed)
+
+/obj/machinery/portable_atmospherics/pump/return_obj_air()
+	RETURN_TYPE(/datum/gas_mixture)
 	return air_contents
 
 /obj/machinery/portable_atmospherics/pump/replace_tank(mob/living/user, close_valve)
@@ -130,6 +134,10 @@
 		"target_pressure" = round(target_pressure, 0.001),
 		"tank_pressure" = air_contents.return_pressure() > 0 ? round(air_contents.return_pressure(), 0.001) : 0
 	)
+
+	data["hasHypernobCrystal"] = !!nob_crystal_inserted
+	data["reactionSuppressionEnabled"] = !!suppress_reactions
+
 	if(holding)
 		data["has_holding_tank"] = TRUE
 		data["holding_tank"] = list("name" = holding.name, "tank_pressure" = holding.air_contents.return_pressure() > 0 ? round(holding.air_contents.return_pressure(), 0.001) : 0)
@@ -169,6 +177,15 @@
 		if("set_pressure")
 			target_pressure = clamp(text2num(params["pressure"]), 0, MAX_TARGET_PRESSURE)
 			return TRUE
+
+		if("reaction_suppression")
+			if(!nob_crystal_inserted)
+				stack_trace("[usr] tried to toggle reaction suppression on a pump without a noblium crystal inside, possible href exploit attempt.")
+				return
+			suppress_reactions = !suppress_reactions
+			message_admins("[ADMIN_LOOKUPFLW(usr)] turned [suppress_reactions ? "on" : "off"] the [src] reaction suppression.")
+			usr.investigate_log("turned [suppress_reactions ? "on" : "off"] the [src] reaction suppression.", INVESTIGATE_ATMOS)
+			. = TRUE
 
 	add_fingerprint(usr)
 

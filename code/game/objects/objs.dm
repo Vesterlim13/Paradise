@@ -1,46 +1,66 @@
 /obj
-	var/obj_flags = NONE
-	var/origin_tech = null	//Used by R&D to determine what research bonuses it grants.
-	var/crit_fail = FALSE
+	abstract_type = /obj
 	animate_movement = SLIDE_STEPS
-	var/sharp = FALSE		// whether this object cuts
-	var/in_use = FALSE // If we have a user using us, this will be set on. We will check if the user has stopped using us, and thus stop updating and LAGGING EVERYTHING!
-	var/damtype = "brute"
+	var/obj_flags = NONE
+	/// Used by R&D to determine what research bonuses it grants.
+	var/origin_tech = null
+	var/crit_fail = FALSE
+	/// Can this object cut?
+	var/sharp = FALSE
+	/// If we have a user using us, this will become `TRUE`. We will check if the user has stopped using us, and thus stop updating and LAGGING EVERYTHING!
+	var/in_use = FALSE
+	/// What type of damage does this object deal?
+	var/damtype = BRUTE
+	/// How much damage this object does in melee.
 	var/force = 0
 	// You can define armor as a list in datum definition (e.g. `armor = list("fire" = 80, "brute" = 10)`),
 	// which would be converted to armor datum during initialization.
 	// Setting `armor` to a list on an *existing* object would inevitably runtime. Use `getArmor()` instead.
 	var/datum/armor/armor
-	var/obj_integrity	//defaults to max_integrity
+	/// Health of the object. If unspecified, defaults to `max_integrity`.
+	var/obj_integrity
+	/// Maximum health of the object, and default value of `obj_integrity`.
 	var/max_integrity = 500
-	var/integrity_failure = 0 //0 if we have no special broken behavior
-	///Damage under this value will be completely ignored
+	/// Health threshold below which the object will break. Defaults to 0 for no special broken behavior.
+	var/integrity_failure = 0
+	/// Damage under this value will be completely ignored.
 	var/damage_deflection = 0
-
-	var/resistance_flags = NONE // INDESTRUCTIBLE
-	/// Update_fire_overlay will check if a different icon state should be used
+	/// If provided, a custom overlay representing being the object being on fire.
 	var/custom_fire_overlay
-
-	var/acid_level = 0 //how much acid is on that obj
-
+	/// How much acid is on this object?
+	var/acid_level = 0
+	/// Is this object currently being zapped by lightning?
 	var/being_shocked = FALSE
+	/// Should this object speed process? Greatly increases the frequency of process events (5 times more frequent).
 	var/speed_process = FALSE
-
-	var/on_blueprints = FALSE //Are we visible on the station blueprints at roundstart?
-	var/suicidal_hands = FALSE // Does it requires you to hold it to commit suicide with it?
-
-	var/multitool_menu_type = null // Typepath of a datum/multitool_menu subtype or null.
+	/// Are we visible on the station blueprints at roundstart?
+	var/on_blueprints = FALSE
+	/// Does this object require you to hold it to commit suicide with it?
+	var/suicidal_hands = FALSE
+	/// Typepath of a datum/multitool_menu subtype or null.
+	var/multitool_menu_type = null
 	var/datum/multitool_menu/multitool_menu
 
 	/// Amount of multiplicative slowdown applied if pulled/pushed. >1 makes you slower, <1 makes you faster.
 	var/pull_push_slowdown = 0
 
+	/// List of accesses needed to use this object: The user must possess all accesses in this list in order to use the object.
+	/// Example: If req_access = list(ACCESS_ENGINE, ACCESS_CE)- then the user must have both ACCESS_ENGINE and ACCESS_CE in order to use the object.
 	var/list/req_access
 	var/check_one_access = TRUE
 
 	/// Icon to use as a 32x32 preview in crafting menus and such
 	var/icon_preview
 	var/icon_state_preview
+
+	/// Is this object emagged?
+	var/emagged = FALSE
+
+/obj/vv_edit_var(var_name, var_value)
+	if(var_name == NAMEOF(src, obj_flags))
+		if((obj_flags & DANGEROUS_POSSESSION) && !(var_value & DANGEROUS_POSSESSION))
+			return FALSE
+	return ..()
 
 /obj/Initialize(mapload)
 	. = ..()
@@ -53,13 +73,23 @@
 	else if(!istype(armor, /datum/armor))
 		stack_trace("Invalid type [armor.type] found in .armor during /obj Initialize()")
 	if(sharp)
-		AddComponent(/datum/component/surgery_initiator)
+		AddElement(/datum/element/surgery_initiator)
 
 	if(on_blueprints && isturf(loc))
 		var/turf/T = loc
 		T.add_blueprints_preround(src)
 
 	add_debris_element()
+
+/obj/Destroy(force)
+	if(!ismachinery(src))
+		if(!speed_process)
+			STOP_PROCESSING(SSobj, src) // TODO: Have a processing bitflag to reduce on unnecessary loops through the processing lists
+		else
+			STOP_PROCESSING(SSfastprocess, src)
+	SStgui.close_uis(src)
+	QDEL_NULL(multitool_menu)
+	return ..()
 
 /obj/Topic(href, href_list, nowindow = FALSE, datum/ui_state/state = GLOB.default_state)
 	// Calling Topic without a corresponding window open causes runtime errors
@@ -83,16 +113,6 @@
 	// Nada
 	return
 
-/obj/Destroy(force)
-	if(!ismachinery(src))
-		if(!speed_process)
-			STOP_PROCESSING(SSobj, src) // TODO: Have a processing bitflag to reduce on unnecessary loops through the processing lists
-		else
-			STOP_PROCESSING(SSfastprocess, src)
-	SStgui.close_uis(src)
-	QDEL_NULL(multitool_menu)
-	return ..()
-
 //user: The mob that is suiciding
 //damagetype: The type of damage the item will inflict on the user
 //BRUTELOSS = 1
@@ -104,35 +124,24 @@
 
 //Output a creative message and then return the damagetype done
 /obj/proc/suicide_act(mob/user)
-	return FALSE
+	return NONE
 
-/obj/assume_air(datum/gas_mixture/giver)
-	if(loc)
-		return loc.assume_air(giver)
-	else
-		return null
-
-/obj/remove_air(amount)
-	if(loc)
-		return loc.remove_air(amount)
-	else
-		return null
-
-/obj/return_air()
-	if(loc)
-		return loc.return_air()
-	else
-		return null
-
-/obj/proc/handle_internal_lifeform(mob/lifeform_inside_me, breath_request)
+/obj/proc/handle_internal_lifeform(mob/lifeform_inside_me, breath_request, datum/gas_mixture/environment)
 	//Return: (NONSTANDARD)
 	//		null if object handles breathing logic for lifeform
 	//		datum/air_group to tell lifeform to process using that breath return
 	//DEFAULT: Take air from turf to give to have mob process
 	if(breath_request > 0)
-		var/datum/gas_mixture/environment = return_air()
-		var/breath_percentage = BREATH_VOLUME / environment.return_volume()
-		return remove_air(environment.total_moles() * breath_percentage)
+		var/datum/gas_mixture/air = return_obj_air()
+
+		if(isnull(air))
+			air = environment
+
+		if(isnull(air))
+			return
+
+		var/breath_percentage = BREATH_VOLUME / air.return_volume()
+		return air.remove(air.total_moles() * breath_percentage)
 	else
 		return null
 
@@ -144,7 +153,7 @@
 			if(M.client && M.machine == src)
 				is_in_use = TRUE
 				src.attack_hand(M)
-		if(istype(usr, /mob/living/silicon/ai) || istype(usr, /mob/living/silicon/robot))
+		if(isAI(usr) || isrobot(usr))
 			if(!(usr in nearby))
 				if(usr.client && usr.machine==src) // && M.machine == src is omitted because if we triggered this by using the dialog, it doesn't matter if our machine changed in between triggering it and this - the dialog is probably still supposed to refresh.
 					is_in_use = TRUE
@@ -185,6 +194,7 @@
 
 /mob/proc/unset_machine()
 	if(machine)
+		UnregisterSignal(machine, COMSIG_QDELETING)
 		machine.on_unset_machine(src)
 		machine = null
 
@@ -198,16 +208,16 @@
 	src.machine = O
 	if(istype(O))
 		O.in_use = TRUE
+		RegisterSignal(O, COMSIG_QDELETING, PROC_REF(unset_machine))
 
 /obj/item/proc/updateSelfDialog()
 	var/mob/M = src.loc
 	if(istype(M) && M.client && M.machine == src)
 		src.attack_self(M)
 
-/obj/proc/hide(h)
-	return
-
-/obj/proc/hear_talk(mob/M, list/message_pieces)
+/obj/proc/hear_talk(mob/speaker, list/message_pieces)
+	SHOULD_CALL_PARENT(TRUE)
+	SEND_SIGNAL(src, COMSIG_MOVABLE_HEAR, speaker, message_pieces)
 	return
 
 /obj/proc/hear_message(mob/M, text)
@@ -224,7 +234,8 @@
 		return
 	var/time = max(50 * (1 - obj_integrity / max_integrity), 5)
 	WELDER_ATTEMPT_REPAIR_MESSAGE
-	if(I.use_tool(src, user, time, volume = I.tool_volume))
+	CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+	if(I.use_tool(src, user, time * construction_mod, volume = I.tool_volume))
 		WELDER_REPAIR_SUCCESS_MESSAGE
 		update_integrity(max_integrity)
 		update_icon()
@@ -240,8 +251,9 @@
 	if(!I.tool_use_check(user, 0))
 		return FALSE
 	if(!(obj_flags & NODECONSTRUCT))
+		CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
 		to_chat(user, span_notice("Now [anchored ? "un" : ""]securing [name]."))
-		if(I.use_tool(src, user, time, volume = I.tool_volume))
+		if(I.use_tool(src, user, time * construction_mod, volume = I.tool_volume))
 			to_chat(user, span_notice("You've [anchored ? "un" : ""]secured [name]."))
 			set_anchored(!anchored)
 		return TRUE
@@ -252,13 +264,12 @@
 	extinguish()
 	acid_level = 0
 
-/obj/singularity_pull(S, current_size)
+/obj/singularity_pull(atom/singularity, current_size)
 	..()
+	if(move_resist == INFINITY)
+		return
 	if(!anchored || current_size >= STAGE_FIVE)
-		step_towards(src, S)
-
-/obj/proc/container_resist(mob/living)
-	return
+		step_towards(src, singularity)
 
 /obj/proc/on_mob_move(mob/user, dir)
 	return
@@ -277,15 +288,6 @@
 	START_PROCESSING(SSobj, src)
 	STOP_PROCESSING(SSfastprocess, src)
 
-/obj/vv_get_dropdown()
-	. = ..()
-	.["Delete all of type"] = "byond://?_src_=vars;delall=[UID()]"
-	if(!speed_process)
-		.["Make speed process"] = "byond://?_src_=vars;makespeedy=[UID()]"
-	else
-		.["Make normal process"] = "byond://?_src_=vars;makenormalspeed=[UID()]"
-	.["Modify armor values"] = "byond://?_src_=vars;modifyarmor=[UID()]"
-
 /obj/proc/check_uplink_validity()
 	return TRUE
 
@@ -294,6 +296,16 @@
 
 /obj/proc/cult_reveal() //Called by cult reveal spell and chaplain's bible
 	return
+
+/obj/proc/set_cult_veil(veiled)
+	if(veiled)
+		ADD_TRAIT(src, TRAIT_CULT_CONCEALED, CULT_TRAIT)
+		SET_PLANE_IMPLICIT(src, CULT_VEIL_PLANE)
+		mouse_opacity = MOUSE_OPACITY_TRANSPARENT
+		return
+	REMOVE_TRAIT(src, TRAIT_CULT_CONCEALED, CULT_TRAIT)
+	SET_PLANE_IMPLICIT(src, initial(plane))
+	mouse_opacity = initial(mouse_opacity)
 
 /obj/proc/is_mob_spawnable() //Called by spawners_menu methods to determine if you can use an object through spawn-menu
 	//just override it to return TRUE in your object if you want to use it through spawn menu
@@ -306,7 +318,7 @@
 	sharp = new_sharp_val
 	SEND_SIGNAL(src, COMSIG_ATOM_UPDATE_SHARPNESS)
 	if(!sharp && new_sharp_val)
-		AddComponent(/datum/component/surgery_initiator)
+		AddElement(/datum/element/surgery_initiator)
 
 /obj/proc/force_eject_occupant(mob/target)
 	// This proc handles safely removing occupant mobs from the object if they must be teleported out (due to being SSD/AFK, by admin teleport, etc) or transformed.
@@ -328,20 +340,56 @@
 
 	return locate(/obj) in A
 
-#define CARBON_DAMAGE_FROM_OBJECTS_MODIFIER 0.75
+#define MOB_DAMAGE_FROM_OBJECTS_MODIFIER 0.75
 
-/obj/hit_by_thrown_carbon(mob/living/carbon/human/C, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
-	damage *= CARBON_DAMAGE_FROM_OBJECTS_MODIFIER
+/obj/hit_by_thrown_mob(mob/living/throwned_mob, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
+	damage *= MOB_DAMAGE_FROM_OBJECTS_MODIFIER
 	playsound(src, 'sound/weapons/punch1.ogg', 35, TRUE)
 	if(mob_hurt) //Density check probably not needed, one should only bump into something if it is dense, and blob tiles are not dense, because of course they are not.
 		return
-	C.visible_message(
-		span_danger("[capitalize(C.declent_ru(NOMINATIVE))] с размаху вреза[PLUR_ET_YUT(C)]ся в [declent_ru(ACCUSATIVE)]!"),
+	throwned_mob.visible_message(
+		span_danger("[DECLENT_RU_CAP(throwned_mob, NOMINATIVE)] с размаху вреза[PLUR_ET_UT(throwned_mob)]ся в [declent_ru(ACCUSATIVE)]!"),
 		span_userdanger("Вы с размаху врезаетесь в [declent_ru(ACCUSATIVE)]!")
 	)
-	C.take_organ_damage(damage)
+	throwned_mob.take_organ_damage(damage)
 	if(!self_hurt)
 		take_damage(damage, BRUTE)
-	C.Knockdown(3 SECONDS)
+	throwned_mob.Knockdown(3 SECONDS)
 
-#undef CARBON_DAMAGE_FROM_OBJECTS_MODIFIER
+#undef MOB_DAMAGE_FROM_OBJECTS_MODIFIER
+
+/obj/proc/return_obj_air()
+	RETURN_TYPE(/datum/gas_mixture)
+	if(isobj(loc))
+		var/obj/object = loc
+		return object.return_obj_air()
+	else
+		return null
+
+/// Use this proc if you need to get special shorter variations of item's name.
+/// ImageButton element in TGUI, for example
+/obj/proc/get_short_name()
+	return declent_ru(NOMINATIVE)
+
+/**
+ * Returns a list of obj's that should be displayed in the uplink purchase log.
+ * Override for specific types.
+ */
+/obj/proc/get_uplink_log_items()
+	RETURN_TYPE(/list)
+	SHOULD_CALL_PARENT(FALSE)
+	return list(src)
+
+/// Adds icons of contents (with get_uplink_log_items()) into uplink
+/obj/proc/log_contents_to_uplink(obj/item/uplink/target_uplink)
+	if(!target_uplink || QDELETED(target_uplink))
+		return
+
+	var/new_purchase_logs = ""
+	var/list/items_to_log = get_uplink_log_items()
+	if(!length(items_to_log))
+		return
+
+	for(var/atom/atom_to_display in items_to_log)
+		new_purchase_logs += span_fontsize4(icon2base64html(atom_to_display))
+	target_uplink.purchase_log += new_purchase_logs

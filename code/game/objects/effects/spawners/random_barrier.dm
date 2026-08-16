@@ -18,8 +18,7 @@
 	. = ..()
 	var/turf/T = get_turf(src)
 	if(!T)
-		log_runtime(EXCEPTION("Barrier spawner placed in nullspace!"), src)
-		return
+		CRASH("Barrier spawner placed in nullspace!")
 	var/thing_to_place = pickweight(result)
 	if(ispath(thing_to_place, /turf))
 		T.ChangeTurf(thing_to_place)
@@ -76,13 +75,4 @@
 		/obj/structure/grille = 2,
 		/obj/structure/grille/broken = 8,
 		/turf/simulated/floor/plating = 5,
-	)
-
-/obj/effect/spawner/random_spawners/rock_50
-	name = "rock maybe"
-	icon_state = "rock"
-	result = list(
-		/turf/simulated/mineral/ancient = 10,
-		/obj/structure/falsewall/mineral_ancient = 1,
-		/turf/simulated/floor/plating = 9,
 	)

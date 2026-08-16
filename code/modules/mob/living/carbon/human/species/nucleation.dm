@@ -11,7 +11,7 @@
 	and produces a calming effect on the individual. Nucleations are highly stigmatized, and are treated much in the same \
 	way as lepers were back on Earth."
 	language = LANGUAGE_SOL_COMMON
-	blood_color = "#ada776"
+	blood_color = BLOOD_COLOR_NUCLEATION
 	burn_mod = 4 // holy shite, poor guys wont survive half a second cooking smores
 	brute_mod = 2 // damn, double wham, double dam
 
@@ -22,23 +22,26 @@
 		TRAIT_NO_SCAN,
 		TRAIT_NO_PAIN,
 		TRAIT_NO_PAIN_HUD,
-		TRAIT_RADIMMUNE,
+		TRAIT_NO_RADIATION_EFFECTS,
 		TRAIT_VIRUSIMMUNE,
 		TRAIT_NO_GERMS,
 		TRAIT_IGNOREDAMAGESLOWDOWN,
-		TRAIT_SUPERMATTERIMMUNE,
+		TRAIT_SUPERMATTER_IMMUNE,
+		TRAIT_LIVERLESS_METABOLISM,
+		TRAIT_RAD_HEAL,
 	)
 	bodyflags = HAS_BODY_MARKINGS
 	dies_at_threshold = TRUE
 	ignore_critical_condition = TRUE // Nucleations do not suffer from complex critical condition
 	var/touched_supermatter = FALSE
+	max_radiation = NUCLEATION_MAX_RADIATION
 
 	speciesbox = /obj/item/storage/box/survival/species/nucleation
 
 	//Default styles for created mobs.
 	default_hair = "Nucleation Crystals"
 
-	reagent_tag = PROCESS_ORG
+	reagent_tag = ORGANIC
 	has_organ = list(
 		INTERNAL_ORGAN_HEART = /obj/item/organ/internal/heart,
 		INTERNAL_ORGAN_BRAIN = /obj/item/organ/internal/brain/crystal,
@@ -57,28 +60,30 @@
 		JOB_MIN_AGE_COMMAND = 30,
 	)
 
+	max_select_skills = list(
+		/datum/skill/general/cooking = 1,
+		/datum/skill/medical/surgery = 1,
+		/datum/skill/medical/heal = 1,
+		/datum/skill/medical/genetic = 0,
+		/datum/skill/medical/virusology = 0,
+	)
+	bonus_skill_free_points = 2
+
 /datum/species/nucleation/on_species_gain(mob/living/carbon/human/H)
 	. = ..()
-	H.light_color = "#afaf21"
-	H.set_light_range(2)
+	H.light_color = COLOR_NUCLEATION_LIGHT
+	H.set_light_range(NUCLEATION_LIGHT_RANGE)
+	H.set_light_on(TRUE)
+	H.AddElement(/datum/element/radiation_healing)
 
 /datum/species/nucleation/on_species_loss(mob/living/carbon/human/H)
 	. = ..()
 	H.light_color = null
-	H.set_light_on(FALSE)
-
-/datum/species/nucleation/handle_reagents(mob/living/carbon/human/H, datum/reagent/R)
-	if(R.id == "radium")
-		if(R.volume >= 1)
-			H.heal_overall_damage(3, 3)
-			H.reagents.remove_reagent(R.id, 1)
-			if(H.radiation < 80)
-				H.apply_effect(4, IRRADIATE, negate_armor = 1)
-			return FALSE //Что бы не выводилось больше одного, который уже вывелся за счет прока
-	return ..()
+	H.set_light_on(FALSE) // turn off light after species loss
+	H.RemoveElement(/datum/element/radiation_healing)
 
 /datum/species/nucleation/handle_death(gibbed, mob/living/carbon/human/human)
-	if(human.health <= HEALTH_THRESHOLD_DEAD || !length(human.surgeries)) // Needed to prevent brain gib on surgery debrain
+	if(human.health <= HEALTH_THRESHOLD_DEAD) // Needed to prevent brain gib on surgery debrain
 		death_explosion(human)
 		return
 

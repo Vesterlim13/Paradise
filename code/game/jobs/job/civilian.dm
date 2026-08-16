@@ -1,57 +1,61 @@
-#define SALARY_FOR_NISHEBROD 60
-
 /datum/job/civilian
 	title = JOB_TITLE_CIVILIAN
 	flag = JOB_FLAG_CIVILIAN
 	department_flag = JOBCAT_SUPPORT
-	total_positions = -1
-	spawn_positions = -1
-	supervisors = "the head of personnel"
+	department = STATION_DEPARTMENT_CIVILIAN
+	total_positions = JOB_UNLIMITED_POSITION
+	spawn_positions = JOB_UNLIMITED_POSITION
+	supervisors = "Главой персонала"
 	department_head = list(JOB_TITLE_HOP)
 	selection_color = "#e6e6e6"
-	access = list(ACCESS_MAINT_TUNNELS)
-	minimal_access = list(ACCESS_MAINT_TUNNELS)
-	alt_titles = list("Tourist","Businessman","Trader","Assistant")
+	access = list()
+	minimal_access = list()
+	alt_titles = list(
+		ALT_JOB_TITLE_RU_TOURIST,
+		ALT_JOB_TITLE_RU_ASSISTANT,
+		ALT_JOB_TITLE_RU_WORKER,
+		ALT_JOB_TITLE_RU_GENERAL_INTERN,
+	)
 	outfit = /datum/outfit/job/assistant
 	insurance_type = INSURANCE_TYPE_BUDGETARY
-
-	min_start_money = 100
-	max_start_money = 300
+	paycheck = PAYCHECK_MIN
+	skill_levels = list(
+		/datum/skill/general/mod_use = SKILL_LEVEL_BEGINNER,
+		/datum/skill/service/cleaning = SKILL_LEVEL_BEGINNER,
+		/datum/skill/general/cooking = SKILL_LEVEL_BEGINNER,
+	)
+	base_free_skill_point = ADVANCED_SKILL_POINTS_COUNT
 
 /datum/outfit/job/assistant
-	name = "Civilian"
+	name = JOB_TITLE_RU_CIVILIAN
 	jobtype = /datum/job/civilian
 
 	uniform = /obj/item/clothing/under/color/random
+
+/datum/outfit/job/assistant/pre_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
+	. = ..()
+	if(!HAS_TRAIT(SSstation, STATION_TRAIT_CLASSIC_ASSISTANTS))
+		return
+
+	uniform = /obj/item/clothing/under/color/grey
+	mask = /obj/item/clothing/mask/gas
+	gloves = /obj/item/clothing/gloves/color/yellow/fake
 
 /datum/job/civilian/prisoner
 	title = JOB_TITLE_PRISONER
 	flag = JOB_FLAG_PRISONER
 	total_positions = ROLE_PRISONERS_MAX_COUNT
 	spawn_positions = ROLE_PRISONERS_MAX_COUNT
-	supervisors = "the warden"
+	supervisors = "составом службы безопасности"
 	department_head = list(JOB_TITLE_WARDEN)
 	access = list()
 	minimal_access = list()
-	alt_titles = list("Arrestee")
+	alt_titles = list(
+		ALT_JOB_TITLE_RU_ARRESTEE,
+		ALT_JOB_TITLE_RU_CONVICT,
+	)
 	outfit = /datum/outfit/job/assistant/prisoner
 	insurance_type = INSURANCE_TYPE_NONE
-	min_start_money = 10
-	max_start_money = 50
-
-/datum/outfit/job/assistant/prisoner
-	name = "Заключенный"
-	allow_loadout = FALSE
-	jobtype = /datum/job/civilian/prisoner
-	id = /obj/item/card/id/prisoner/random
-	head = /obj/item/clothing/head/prison
-	uniform = /obj/item/clothing/under/prison
-	shoes = /obj/item/clothing/shoes/prison
-	l_ear = /obj/item/radio/headset/prisoner
-	pda = null
-	box = null
-	allow_backbag_choice = FALSE
-	back = null
 
 /datum/job/civilian/prisoner/after_spawn(mob/living/carbon/human/human)
 	. = ..()
@@ -62,7 +66,7 @@
 	record.fields["last_modifier_level"] = LAW_LEVEL_MAGISTRATE
 	var/crimes = generate_prisoner_role_crimes()
 	human.mind.store_memory("Меня посадили за: [crimes]")
-	record.fields["comments"] += "Заключён[GEND_A_O_Y(human)] в пермабриг за: [crimes]"
+	record.fields["comments"] += "Заключен[GEND_A_O_Y(human)] в пермабриг за: [crimes]"
 
 /datum/job/civilian/prisoner/proc/generate_prisoner_role_crimes()
 	var/list/major_crimes = list("400", "402", "407")
@@ -75,4 +79,16 @@
 		. += ", [crime]"
 	. += "."
 
-#undef SALARY_FOR_NISHEBROD
+/datum/outfit/job/assistant/prisoner
+	name = JOB_TITLE_RU_PRISONER
+	allow_loadout = FALSE
+	jobtype = /datum/job/civilian/prisoner
+	id = /obj/item/card/id/prisoner/random
+	head = /obj/item/clothing/head/prison
+	uniform = /obj/item/clothing/under/prison
+	shoes = /obj/item/clothing/shoes/prison
+	l_ear = /obj/item/radio/headset/prisoner
+	pda = null
+	box = null
+	allow_backbag_choice = FALSE
+	back = null

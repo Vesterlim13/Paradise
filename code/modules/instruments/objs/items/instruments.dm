@@ -3,7 +3,7 @@
 	desc = "A wooden musical instrument with four strings and a bow. \"The devil went down to space, he was looking for an assistant to grief.\""
 	icon_state = "violin"
 	item_state = "violin"
-	hitsound = "swing_hit"
+	hitsound = SFX_SWING_HIT
 	allowed_instrument_ids = "violin"
 
 /obj/item/instrument/violin/golden
@@ -13,16 +13,19 @@
 	item_state = "golden_violin"
 	resistance_flags = LAVA_PROOF | FIRE_PROOF | ACID_PROOF
 
-/obj/item/instrument/piano_synth
-	name = "synthesizer"
-	desc = "An advanced electronic synthesizer that can be used as various instruments."
-	icon_state = "synth"
-	item_state = "synth"
-	allowed_instrument_ids = "piano"
+/obj/item/instrument/violin/golden/rock
+	name = "rock violin"
+	desc = "Золотая виолончель великого рок-виолончель музыканта. Говорят её до сих пор ищут целыми системами!"
 
-/obj/item/instrument/piano_synth/Initialize(mapload)
-	. = ..()
-	song.allowed_instrument_ids = SSinstruments.synthesizer_instrument_ids
+/obj/item/instrument/violin/golden/rock/get_ru_names()
+	return alist(
+		NOMINATIVE = "золотая рок-виолончель",
+		GENITIVE = "золотой рок-виолончели",
+		DATIVE = "золотой рок-виолончели",
+		ACCUSATIVE = "золотую рок-виолончель",
+		INSTRUMENTAL = "золотой рок-виолончелью",
+		PREPOSITIONAL = "золотой рок-виолончели",
+	)
 
 /obj/item/instrument/banjo
 	name = "banjo"

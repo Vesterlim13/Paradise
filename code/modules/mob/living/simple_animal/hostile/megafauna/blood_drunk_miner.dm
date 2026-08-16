@@ -1,4 +1,4 @@
-#define MINER_DASH_RANGE 4
+
 
 /*
 
@@ -64,7 +64,7 @@ Difficulty: Medium
 	)
 
 /mob/living/simple_animal/hostile/megafauna/blood_drunk_miner/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кровожадный шахтёр",
 		GENITIVE = "кровожадного шахтёра",
 		DATIVE = "кровожадному шахтёру",
@@ -72,18 +72,22 @@ Difficulty: Medium
 		INSTRUMENTAL = "кровожадным шахтёром",
 		PREPOSITIONAL = "кровожадном шахтёре",
 	)
+/mob/living/simple_animal/hostile/megafauna/blood_drunk_miner/Initialize(mapload)
+	. = ..()
+	miner_saw = new /obj/item/melee/energy/cleaving_saw/miner(src)
+	AddComponent(/datum/component/boss_music, 'sound/music/boss/bdm_boss.ogg', COMSIG_HOSTILE_FOUND_TARGET)
 
 /* New costume */
 
 /obj/item/clothing/suit/hooded/explorer/blood
 	name = "empowered explorer suit"
 	desc = "Бронированный костюм, созданный для исследования и работы в суровых условиях. Сладкая кровь, ох-х, как она поёт для тебя."
-	armor = list(MELEE = 55, BULLET = 35, LASER = 25, ENERGY = 25, BOMB = 75, BIO = 100, RAD = 50, FIRE = 100, ACID = 100)
+	armor = list(MELEE = 55, BULLET = 35, LASER = 25, ENERGY = 25, BOMB = 75, BIO = 100, FIRE = 100, ACID = 100)
 	hoodtype = /obj/item/clothing/head/hooded/explorer/blood
 	var/obj/effect/proc_holder/spell/blood_suit/blood_spell
 
 /obj/item/clothing/suit/hooded/explorer/blood/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "усиленный костюм исследователя",
 		GENITIVE = "усиленного костюма исследователя",
 		DATIVE = "усиленному костюму исследователя",
@@ -95,10 +99,10 @@ Difficulty: Medium
 /obj/item/clothing/head/hooded/explorer/blood
 	name = "empowered explorer hood"
 	desc = "Бронированный капюшон, созданный для исследования и работы в суровых условиях. Сладкая кровь, ох-х, как она поёт для тебя."
-	armor = list(MELEE = 55, BULLET = 35, LASER = 25, ENERGY = 25, BOMB = 75, BIO = 100, RAD = 50, FIRE = 100, ACID = 100)
+	armor = list(MELEE = 55, BULLET = 35, LASER = 25, ENERGY = 25, BOMB = 75, BIO = 100, FIRE = 100, ACID = 100)
 
 /obj/item/clothing/head/hooded/explorer/blood/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "усиленный капюшон исследователя",
 		GENITIVE = "усиленного капюшона исследователя",
 		DATIVE = "усиленному капюшону исследователя",
@@ -168,29 +172,25 @@ Difficulty: Medium
 	LAZYREMOVE(user.mob_spell_list, blood_spell)
 	blood_spell.action.Remove(user)
 
-/mob/living/simple_animal/hostile/megafauna/blood_drunk_miner/Initialize(mapload)
-	. = ..()
-	miner_saw = new /obj/item/melee/energy/cleaving_saw/miner(src)
-
 /datum/action/innate/megafauna_attack/dash
 	name = "Рывок к цели"
 	button_icon = 'icons/mob/actions/actions.dmi'
 	button_icon_state = "sniper_zoom"
-	chosen_message = span_colossus("Вы рывком движетесь к цели.")
+	chosen_message = span_colossus_alt("Вы рывком движетесь к цели.")
 	chosen_attack_num = 1
 
 /datum/action/innate/megafauna_attack/kinetic_accelerator
 	name = "Стрелять из кинетического ускорителя"
 	button_icon = 'icons/obj/weapons/energy.dmi'
 	button_icon_state = "kineticgun"
-	chosen_message = span_colossus("Вы стреляете из кинетического ускорителя.")
+	chosen_message = span_colossus_alt("Вы стреляете из кинетического ускорителя.")
 	chosen_attack_num = 2
 
 /datum/action/innate/megafauna_attack/transform_weapon
 	name = "Трансформировать оружие"
 	button_icon = 'icons/obj/lavaland/artefacts.dmi'
 	button_icon_state = "cleaving_saw"
-	chosen_message = span_colossus("Вы трансформируете своё оружие.")
+	chosen_message = span_colossus_alt("Вы трансформируете своё оружие.")
 	chosen_attack_num = 3
 
 /mob/living/simple_animal/hostile/megafauna/blood_drunk_miner/OpenFire()
@@ -223,15 +223,6 @@ Difficulty: Medium
 		priority = INFINITY,
 	)
 	return ..()
-
-/obj/projectile/kinetic/miner
-	damage = 20
-	speed = 0.9
-	icon_state = "ka_tracer"
-	range = MINER_DASH_RANGE
-
-/obj/projectile/kinetic/miner/enraged
-	damage = 35
 
 /mob/living/simple_animal/hostile/megafauna/blood_drunk_miner/adjustHealth(
 	amount = 0,
@@ -276,7 +267,7 @@ Difficulty: Medium
 		var/mob/living/L = target
 		if(L.stat == DEAD)
 			visible_message(
-				span_danger("[capitalize(declent_ru(NOMINATIVE))] разрубает [L.declent_ru(ACCUSATIVE)]!"),
+				span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] разрубает [L.declent_ru(ACCUSATIVE)]!"),
 				span_userdanger("Вы разрубаете [L.declent_ru(ACCUSATIVE)], восстанавливая своё здоровье!")
 			)
 			if(!is_station_level(z) || client) //NPC monsters won't heal while on station
@@ -396,13 +387,13 @@ Difficulty: Medium
 	if(time_until_next_transform <= world.time)
 		miner_saw.transform_cooldown = 0
 		miner_saw.transform_weapon(src, TRUE)
-		if(!miner_saw.active)
+		if(!HAS_TRAIT(miner_saw, TRAIT_ITEM_ACTIVE))
 			rapid_melee = 5 // 4 deci cooldown before changes, npcpool subsystem wait is 20, 20/4 = 5
 		else
 			rapid_melee = 3 // same thing but halved (slightly rounded up)
 		transform_stop_attack = TRUE
-		icon_state = "miner[miner_saw.active ? "_transformed":""]"
-		icon_living = "miner[miner_saw.active ? "_transformed":""]"
+		icon_state = "miner[HAS_TRAIT(miner_saw, TRAIT_ITEM_ACTIVE) ? "_transformed":""]"
+		icon_living = "miner[HAS_TRAIT(miner_saw, TRAIT_ITEM_ACTIVE) ? "_transformed":""]"
 		time_until_next_transform = world.time + rand(50, 100)
 
 /obj/effect/temp_visual/dir_setting/miner_death
@@ -433,5 +424,3 @@ Difficulty: Medium
 	. = ..()
 	if(. && prob(enraged ? 40 : 12))
 		INVOKE_ASYNC(src, PROC_REF(dash))
-
-#undef MINER_DASH_RANGE

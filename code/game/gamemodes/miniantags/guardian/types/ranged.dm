@@ -1,9 +1,3 @@
-/obj/projectile/guardian
-	name = "crystal spray"
-	icon_state = "guardian"
-	damage = 20
-	armour_penetration = 100
-
 /mob/living/simple_animal/hostile/guardian/ranged
 	friendly = "quietly assesses"
 	melee_damage_lower = 10
@@ -94,7 +88,7 @@
 
 /mob/living/simple_animal/hostile/guardian/ranged/verb/Snare()
 	set name = "Установить ловушку"
-	set category = STATPANEL_GUARDIAN
+	set category = VERB_CATEGORY_GUARDIAN
 	set desc = "Установите невидимую ловушку, которая оповестит вас, когда по ней пройдут живые существа. Максимум 5"
 	if(length(snares) <6)
 		var/turf/snare_loc = get_turf(loc)
@@ -107,7 +101,7 @@
 
 /mob/living/simple_animal/hostile/guardian/ranged/verb/DisarmSnare()
 	set name = "Удалить ловушку"
-	set category = STATPANEL_GUARDIAN
+	set category = VERB_CATEGORY_GUARDIAN
 	set desc = "Обезвреживание нежелательных ловушек слежения."
 	var/picked_snare = tgui_input_list(src, "Выберите ловушку для обезвреживания", "Уничтожить ловушку", snares)
 	if(picked_snare)
@@ -144,6 +138,6 @@
 /obj/effect/snare/singularity_act()
 	return
 
-/obj/effect/snare/singularity_pull()
+/obj/effect/snare/singularity_pull(atom/singularity, current_size)
 	return
 

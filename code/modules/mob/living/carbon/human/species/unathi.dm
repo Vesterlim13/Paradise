@@ -39,8 +39,9 @@
 
 	blood_species = "Unathi"
 	flesh_color = "#34AF10"
-	reagent_tag = PROCESS_ORG
+	reagent_tag = ORGANIC
 	base_color = "#066000"
+	blood_color = BLOOD_COLOR_LIZARD
 
 	speciesbox = /obj/item/storage/box/survival/species/unathi
 
@@ -113,6 +114,12 @@
 		"ч" = list("щ", "щщ", "щщщ"),
 	)
 	autohiss_exempt = list("Синт'Унати")
+
+	max_select_skills = list(
+		/datum/skill/combat/fists = 3,
+		/datum/skill/medical/heal = 1,
+		/datum/skill/medical/genetic = 1,
+	)
 
 /datum/species/unathi/handle_death(gibbed, mob/living/carbon/human/H)
 	H.stop_tail_wagging()
@@ -390,3 +397,6 @@ They're basically just lizards with all-around marginally better stats and fire 
 	. = "находится где-то на "
 	. += dir2rustext(get_dir(owner.loc, selected_poi.loc))
 	. += "e."
+
+/datum/species/unathi/compressor_grind(location)
+	new /obj/item/stack/sheet/animalhide/lizard(location)

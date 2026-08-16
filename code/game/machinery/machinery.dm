@@ -95,8 +95,10 @@
 	pass_flags_self = PASSMACHINE|LETPASSCLICKS
 	pull_push_slowdown = 1.3
 	interaction_flags_click = NEED_HANDS | ALLOW_RESTING
+	interaction_flags_atom = INTERACT_ATOM_ATTACK_HAND | INTERACT_ATOM_UI_INTERACT
+	blocks_emissive = EMISSIVE_BLOCK_GENERIC
+
 	var/stat = 0
-	var/emagged = 0
 	var/use_power = IDLE_POWER_USE
 		//0 = dont run the auto
 		//1 = run auto, use idle
@@ -105,9 +107,6 @@
 	var/active_power_usage = 0
 	var/power_channel = EQUIP //EQUIP,ENVIRON or LIGHT
 	var/list/component_parts = null //list of all the parts used to build it, if made from certain kinds of frames.
-	var/uid
-	var/manual = 0
-	var/global/gl_uid = 1
 	var/custom_aghost_alerts=0
 	var/panel_open = 0
 	var/area/myArea
@@ -128,7 +127,7 @@
 
 /obj/machinery/Initialize(mapload)
 	if(!armor)
-		armor = list(melee = 25, bullet = 10, laser = 10, energy = 0, bomb = 0, bio = 0, rad = 0, fire = 50, acid = 70)
+		armor = list(melee = 25, bullet = 10, laser = 10, energy = 0, bomb = 0, bio = 0, fire = 50, acid = 70)
 	. = ..()
 	SSmachines.register_machine(src)
 
@@ -152,7 +151,7 @@
 	return ..()
 
 /obj/machinery/add_debris_element()
-	AddElement(/datum/element/debris, null, -40, 8, 0.7)
+	generate_debris_handler(null, -40, 8, 0.7)
 
 /*
  * reimp, attempts to flicker this machinery if the behavior is supported.
@@ -172,12 +171,10 @@
 	if(myArea == get_area(src))
 		return
 	LAZYREMOVE(myArea.machinery_cache, src)
-	//message_admins("[src] exited [myArea]") Uncomment for debugging
 	myArea = get_area(src)
 	if(!myArea)
 		return
 	LAZYADD(myArea.machinery_cache, src)
-	//message_admins("[src] entered [myArea]")
 	power_change()
 
 /// Helper proc for telling a machine to start processing with the subsystem type that is located in its `subsystem_type` var.
@@ -226,7 +223,9 @@
 /obj/machinery/process() // If you dont use process or power why are you here
 	return PROCESS_KILL
 
-/obj/machinery/proc/process_atmos() //If you dont use process why are you here
+/obj/machinery/proc/process_atmos(seconds) //If you dont use process why are you here
+	// Any proc that wants MILLA to be synchronous should not sleep.
+	SHOULD_NOT_SLEEP(TRUE)
 	return PROCESS_KILL
 
 /obj/machinery/emp_act(severity)
@@ -297,7 +296,7 @@
 		return attack_hand(user)
 
 /obj/machinery/attack_hand(mob/user)
-	if(istype(user, /mob/dead/observer))
+	if(isobserver(user))
 		return FALSE
 
 	if(user.incapacitated())
@@ -337,10 +336,6 @@
 /obj/machinery/proc/RefreshParts() //Placeholder proc for machines that are built using frames.
 	return
 
-/obj/machinery/proc/assign_uid()
-	uid = gl_uid
-	gl_uid++
-
 /obj/machinery/deconstruct(disassembled = TRUE)
 	if(!(obj_flags & NODECONSTRUCT))
 		on_deconstruction()
@@ -365,11 +360,12 @@
 	if(!(obj_flags & NODECONSTRUCT))
 		stat |= BROKEN
 
-/obj/machinery/proc/default_deconstruction_crowbar(user, obj/item/I, ignore_panel = 0)
+/obj/machinery/proc/default_deconstruction_crowbar(mob/user, obj/item/I, ignore_panel = 0)
 	add_fingerprint(user)
 	if(I.tool_behaviour != TOOL_CROWBAR)
 		return FALSE
-	if(!I.use_tool(src, user, 0, volume = 0))
+	CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+	if(!I.use_tool(src, user, 1 SECONDS * construction_mod, volume = 0))
 		return FALSE
 	if((panel_open || ignore_panel) && !(obj_flags & NODECONSTRUCT))
 		deconstruct(TRUE)
@@ -382,7 +378,8 @@
 	add_fingerprint(user)
 	if(I.tool_behaviour != TOOL_SCREWDRIVER)
 		return FALSE
-	if(!I.use_tool(src, user, 0, volume = 0))
+	CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+	if(!I.use_tool(src, user, 1 SECONDS * construction_mod, volume = 0))
 		return FALSE
 	if(!(obj_flags & NODECONSTRUCT))
 		var/prev_icon_state = icon_state
@@ -419,15 +416,15 @@
 	if(.)
 		power_change()
 
-/obj/machinery/attackby(obj/item/I, mob/user, params)
-	if(has_prints() && !(istype(I, /obj/item/detective_scanner)))
+/obj/machinery/attackby(obj/item/item, mob/living/user, list/modifiers)
+	if(has_prints() && !(istype(item, /obj/item/detective_scanner)))
 		add_fingerprint(user)
 
 	if(user.a_intent == INTENT_HARM)
 		return ..()
 
-	if(istype(I, /obj/item/stack/nanopaste))
-		var/obj/item/stack/nanopaste/nanopaste = I
+	if(istype(item, /obj/item/stack/nanopaste))
+		var/obj/item/stack/nanopaste/nanopaste = item
 		if(stat & BROKEN)
 			to_chat(user, span_notice("[src] is too damaged to be fixed with nanopaste!"))
 			return ATTACK_CHAIN_PROCEED
@@ -439,9 +436,10 @@
 		if(nanopaste.get_amount() < 1)
 			to_chat(user, span_warning("You don't have enough to complete this task!"))
 			return ATTACK_CHAIN_PROCEED
-		to_chat(user, span_notice("You start applying [I] to [src]."))
+		to_chat(user, span_notice("You start applying [nanopaste] to [src]."))
 		being_repaired = TRUE
-		var/result = do_after(user, 3 SECONDS, src, category = DA_CAT_TOOL)
+		CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+		var/result = do_after(user, 3 SECONDS * construction_mod, src, category = DA_CAT_TOOL)
 		being_repaired = FALSE
 		if(!result || QDELETED(nanopaste))
 			return ATTACK_CHAIN_PROCEED
@@ -450,8 +448,8 @@
 			return ATTACK_CHAIN_PROCEED
 		update_integrity(min(obj_integrity + 50, max_integrity))
 		user.visible_message(
-			span_notice("[user] applied some [I.name] at [src]'s damaged areas."),
-			span_notice("You apply some [I.name] at [src]'s damaged areas."),
+			span_notice("[user] applied some [nanopaste.name] at [src]'s damaged areas."),
+			span_notice("You apply some [nanopaste.name] at [src]'s damaged areas."),
 		)
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
@@ -525,6 +523,12 @@
 	if((user.research_scanner || user.check_smart_brain()) && component_parts)
 		. += display_parts(user)
 
+/obj/machinery/examine_descriptor(mob/user)
+	return "машинерия"
+
+/obj/machinery/examine_descriptor_gender()
+	return "female"
+
 /obj/machinery/proc/on_assess_perp(mob/living/carbon/human/perp)
 	return 0
 
@@ -584,7 +588,8 @@
 /obj/machinery/proc/shock(mob/living/user, prb)
 	if(!istype(user) || inoperable())
 		return FALSE
-	if(!prob(prb))
+	CALCULATE_SKILL_MOD(user, ELECTRICITY_NEGATIVE_CHANCE_MOD, prob_mod)
+	if(!prob(prb * prob_mod))
 		return FALSE
 	do_sparks(5, TRUE, src)
 	if(electrocute_mob(user, get_area(src), src, siemens_strength, TRUE))
@@ -636,3 +641,45 @@
 /obj/machinery/extinguish_light(force = FALSE)
 	if(light_on)
 		set_light_on(FALSE)
+
+
+/**
+ * Makes sure the user is allowed to interact with the machine when they use a shortcut, like Control or Alt-clicking.
+ *
+ * Arguments:
+ * * user - the mob who is trying to interact with the machine.
+ */
+/obj/machinery/proc/can_use_shortcut(mob/living/user)
+	if(user.incapacitated())
+		to_chat(user, span_warning("You can't do that right now!"))
+		return FALSE
+
+	if(ishuman(user) && in_range(src, user))
+		return TRUE
+
+	if(issilicon(user))
+		return TRUE
+
+	return FALSE
+
+///Called when we want to change the value of the `panel_open` variable. Boolean.
+/obj/machinery/proc/set_panel_open(new_value)
+	SHOULD_NOT_OVERRIDE(TRUE)
+
+	if(panel_open == new_value)
+		return
+	var/old_value = panel_open
+	panel_open = new_value
+	on_set_panel_open(old_value)
+
+///Called when the value of `panel_open` changes, so we can react to it.
+/obj/machinery/proc/on_set_panel_open(old_value)
+	PROTECTED_PROC(TRUE)
+
+	return
+
+/// Toggles the panel_open var. Defined for convienience
+/obj/machinery/proc/toggle_panel_open()
+	SHOULD_NOT_OVERRIDE(TRUE)
+
+	set_panel_open(!panel_open)

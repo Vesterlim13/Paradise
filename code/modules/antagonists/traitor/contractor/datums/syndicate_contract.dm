@@ -32,7 +32,7 @@
 		/obj/item/toy/nuke,
 		/obj/item/toy/plushie/nukeplushie,
 		/obj/item/toy/sword,
-		/obj/item/toy/syndicateballoon,
+		/obj/item/toy/balloon/syndicate,
 	)
 	/// The base credits reward upon completion. Multiplied by the two lower bounds below.
 	var/credits_base = 100
@@ -108,6 +108,15 @@
 	contract.owner = owner
 	contract.target_blacklist = target_blacklist
 	generate(target_override)
+
+/datum/syndicate_contract/Destroy(force)
+	owning_hub = null
+	contract = null
+	pod = null
+	extraction_flare = null
+	QDEL_LIST(victim_belongings)
+	QDEL_LIST(temp_objs)
+	return ..()
 
 /**
  * Fills the contract with valid data to be used.
@@ -192,7 +201,7 @@
 		return
 	var/final_tc_reward = reward_tc[chosen_difficulty]
 	if(target_dead)
-		final_tc_reward = CEILING(final_tc_reward * owning_hub.dead_penalty, 1)
+		final_tc_reward = ceil(final_tc_reward * owning_hub.dead_penalty)
 	// Notify the Hub
 	owning_hub.on_completion(final_tc_reward, reward_credits)
 	// Finalize
@@ -354,7 +363,7 @@
 		return
 
 	if(user == victim)
-		to_chat(user, span_warning("Вы не хотите лезть в непонятную капсулу с символикой Синдиката!"))
+		to_chat(user, span_warning("Вы не хотите лезть в непонятную капсулу с символикой \"Синдиката\"!"))
 		return
 
 	return COMPONENT_CLIMB
@@ -449,6 +458,11 @@
 			continue
 
 		stuff_to_transfer += implant
+
+	if(victim.back) //Lets not bork modsuits in funny ways.
+		var/obj/modsuit_safety = victim.back
+		if(victim.drop_item_ground(modsuit_safety))
+			stuff_to_transfer += modsuit_safety
 
 	// Regular items get removed in second
 	for(var/obj/item/item in victim.contents)
@@ -653,7 +667,7 @@
 			victim.take_overall_damage(RETURN_BRUISE_DAMAGE)
 
 	// Return them a bit confused.
-	victim.visible_message(span_notice("[capitalize(victim.declent_ru(NOMINATIVE))] исчеза[PLUR_ET_YUT(victim)]..."))
+	victim.visible_message(span_notice("[DECLENT_RU_CAP(victim, NOMINATIVE)] исчеза[PLUR_ET_YUT(victim)]..."))
 	victim.Paralyse(3 SECONDS)
 	victim.EyeBlurry(5 SECONDS)
 	victim.AdjustConfused(5 SECONDS)
@@ -668,7 +682,7 @@
 	var/datum/feed_message/news_message = new
 	news_message.author = NEWS_CHANNEL_NYX
 	news_message.admin_locked = TRUE
-	news_message.body = "В системе зафиксирована подозрительная активность, предположительно связанная с Синдикатом. Появились слухи о том, что [record?.fields["rank"] || victim?.mind.assigned_role || UNKNOWN_STATUS_RUS] на борту [SSmapping.map_datum.station_name] стал жертвой похищения.\n\n" +\
+	news_message.body = "В системе зафиксирована подозрительная активность, предположительно связанная с \"Синдикатом\". Появились слухи о том, что [record?.fields["rank"] || victim?.mind.assigned_role || UNKNOWN_STATUS_RUS] на борту [SSmapping.map_datum.station_name] стал жертвой похищения.\n\n" +\
 				"Надёжный источник сообщил следующее: Была найдена записка с инициалами жертвы — \"[initials]\", а также каракулями, гласящими: \"[fluff_message]\""
 	GLOB.news_network.get_channel_by_name("Никс Дейли")?.add_message(news_message)
 
@@ -679,7 +693,7 @@
 		var/datum/feed_message/second_news_message = new
 		second_news_message.author = NEWS_CHANNEL_NYX
 		second_news_message.admin_locked = TRUE
-		second_news_message.body = "Совет по управлению активами Нанотрейзен сегодня ушёл в отставку после серии похищений на борту [SSmapping.map_datum.station_name]." +\
+		second_news_message.body = "Совет по управлению активами \"Нанотрейзен\" сегодня ушёл в отставку после серии похищений на борту [SSmapping.map_datum.station_name]." +\
 					"Один из бывших членов совета заявил: – Я больше не могу этого выносить. Как одна смена на этой проклятой станции может обойтись нам более чем в десять миллионов кредитов в виде выкупов? Неужели на борту совсем нет службы безопасности?!\""
 		GLOB.news_network.get_channel_by_name("Никс Дейли")?.add_message(second_news_message)
 
@@ -702,7 +716,7 @@
  */
 /datum/syndicate_contract/proc/clean_up(clean_pod = TRUE)
 	QDEL_NULL(extraction_flare)
-	if(clean_pod)
+	if(clean_pod && pod)
 		pod.reversing = FALSE
 		pod.startExitSequence(pod)
 	deltimer(extraction_timer_handle)

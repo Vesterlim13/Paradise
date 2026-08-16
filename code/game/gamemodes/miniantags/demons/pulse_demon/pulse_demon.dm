@@ -32,7 +32,7 @@
 	speed = -0.5
 	mob_size = MOB_SIZE_TINY
 	density = FALSE
-	light_system = MOVABLE_LIGHT
+	light_system = OVERLAY_LIGHT
 	attacktext = "electrocutes"
 	attack_sound = SFX_SPARKS
 	harm_intent_damage = 0
@@ -239,11 +239,11 @@
 	if(current_bot)
 		current_bot.hijacked = FALSE
 	current_bot = null
-	if(istype(old_location, /obj/item/stock_parts/cell))
+	if(iscell(old_location))
 		var/obj/item/stock_parts/cell/C = old_location
 		// only set rigged if there are no remaining demons in the cell
 		C.rigged = !(locate(/mob/living/simple_animal/demon/pulse_demon) in old_location)
-	if(istype(loc, /obj/item/stock_parts/cell))
+	if(iscell(loc))
 		var/obj/item/stock_parts/cell/C = loc
 		C.rigged = FALSE
 
@@ -267,7 +267,7 @@
 	tampermach.owner = mind
 	greeting.Add(mind.prepare_announce_objectives(FALSE))
 	greeting.Add(span_motd("С полной информацией вы можете ознакомиться на вики: <a href=\"[CONFIG_GET(string/wikiurl)]/index.php/Pulse_Demon\">Электродемон</a>"))
-	to_chat(src, chat_box_yellow(greeting.Join("<br>")))
+	to_chat(src, custom_boxed_message("yellow_box", greeting.Join("<br>")))
 	SSticker.mode.traitors |= mind
 	return
 
@@ -417,7 +417,7 @@
 
 /mob/living/simple_animal/demon/pulse_demon/move_up()
 	set name = "Подняться"
-	set category = STATPANEL_IC
+	set category = VERB_CATEGORY_IC
 
 	var/turf/current_turf = get_turf(src)
 	if(!locate(/obj/structure/cable/multiz) in current_turf)
@@ -434,7 +434,7 @@
 
 /mob/living/simple_animal/demon/pulse_demon/move_down()
 	set name = "Опуститься"
-	set category = STATPANEL_IC
+	set category = VERB_CATEGORY_IC
 
 	var/turf/current_turf = get_turf(src)
 	if(!locate(/obj/structure/cable/multiz) in current_turf)
@@ -560,7 +560,7 @@
 	for(var/i = 1 to 10)
 		. += pick("!", "@", "#", "$", "%", "^", "&", "*")
 
-/mob/living/simple_animal/demon/pulse_demon/say(message, verb, sanitize = TRUE, ignore_speech_problems = FALSE, ignore_atmospherics = FALSE, ignore_languages = FALSE)
+/mob/living/simple_animal/demon/pulse_demon/say(message, verb = "говор[PLUR_IT_YAT(src)]", sanitize = TRUE, ignore_speech_problems = FALSE, ignore_atmospherics = FALSE, ignore_languages = FALSE, ignore_emotes = FALSE)
 	if(check_mute(ckey, MUTE_IC))
 		to_chat(src, span_danger("You cannot speak in IC (Muted)."))
 		return FALSE
@@ -709,7 +709,7 @@
 
 /mob/living/simple_animal/demon/pulse_demon/proc/is_under_tile()
 	var/turf/T = get_turf(src)
-	return (T.transparent_floor == TURF_TRANSPARENT) || T.intact || HAS_TRAIT(T, TRAIT_TURF_COVERED)
+	return T.underfloor_accessibility != UNDERFLOOR_INTERACTABLE || HAS_TRAIT(T, TRAIT_TURF_COVERED)
 
 // cable (and hijacked APC) view helper
 /mob/living/simple_animal/demon/pulse_demon/proc/update_cableview()
@@ -771,7 +771,7 @@
 		do_attack_animation(L)
 		try_shock_mob(L)
 
-/mob/living/simple_animal/demon/pulse_demon/OnUnarmedAttack(atom/A)
+/mob/living/simple_animal/demon/pulse_demon/OnUnarmedAttack(atom/A, proximity_flag, list/modifiers)
 	if(isliving(A))
 		try_attack_mob(A)
 	else if(isitem(A) && !is_under_tile())
@@ -846,10 +846,10 @@
 	SEND_SIGNAL(src, COMSIG_ATOM_HITBY, AM, skipcatch, hitpush, blocked, throwingdatum)
 	return
 
-/mob/living/simple_animal/demon/pulse_demon/experience_pressure_difference()
-	return // no thanks
+/mob/living/simple_animal/demon/pulse_demon/experience_pressure_difference(flow_x, flow_y)
+	return // Immune to gas flow.
 
-/mob/living/simple_animal/demon/pulse_demon/singularity_pull()
+/mob/living/simple_animal/demon/pulse_demon/singularity_pull(atom/singularity, current_size)
 	return
 
 /mob/living/simple_animal/demon/pulse_demon/mob_negates_gravity()
@@ -883,7 +883,7 @@
 /obj/item/organ/internal/heart/demon/pulse/on_life()
 	if(!owner)
 		return
-	for(var/obj/item/stock_parts/cell/cell_to_charge in owner.GetAllContents())
+	for(var/obj/item/stock_parts/cell/cell_to_charge in owner.get_all_contents())
 		var/newcharge = min(0.05 * cell_to_charge.maxcharge + cell_to_charge.charge, cell_to_charge.maxcharge)
 		if(cell_to_charge.charge < newcharge)
 			cell_to_charge.charge = newcharge

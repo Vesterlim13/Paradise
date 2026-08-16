@@ -13,9 +13,10 @@
 	resistance_flags = null
 	interact_offline = 1
 	max_integrity = 350
-	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 100, BOMB = 0, BIO = 100, RAD = 100, FIRE = 30, ACID = 30)
+	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 100, BOMB = 0, BIO = 100, FIRE = 30, ACID = 30)
 	vent_movement = VENTCRAWL_CAN_SEE
 	flags = PREVENT_CLICK_UNDER | IGNORE_TURF_PIXEL_OFFSET
+	interaction_flags_mouse_drop = NEED_DEXTERITY
 	var/temperature_archived
 	var/mob/living/carbon/occupant
 	/// A separate effect for the occupant, as you can't animate overlays reliably and constantly removing and adding overlays is spamming the subsystem.
@@ -32,7 +33,7 @@
 	var/running_bob_animation = 0 // This is used to prevent threads from building up if update_icons is called multiple times
 
 /obj/machinery/atmospherics/unary/cryo_cell/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "криогенная капсула",
 		GENITIVE = "криогенной капсулы",
 		DATIVE = "криогенной капсуле",
@@ -46,7 +47,7 @@
 	if(stat & (BROKEN|NOPOWER))
 		set_light_on(FALSE)
 	else
-		set_light(2)
+		set_light(1.5, 1, LIGHT_COLOR_CYAN)
 
 /obj/machinery/atmospherics/unary/cryo_cell/examine(mob/user)
 	. = ..()
@@ -82,9 +83,6 @@
 	component_parts += new /obj/item/stack/sheet/glass(null)
 	component_parts += new /obj/item/stack/cable_coil(null, 1)
 	RefreshParts()
-
-/obj/machinery/atmospherics/unary/cryo_cell/on_construction()
-	..(dir,dir)
 
 /obj/machinery/atmospherics/unary/cryo_cell/RefreshParts()
 	var/C
@@ -129,7 +127,7 @@
 		beaker.forceMove(drop_location())
 		beaker = null
 
-/obj/machinery/atmospherics/unary/cryo_cell/MouseDrop_T(atom/movable/O, mob/living/user, params)
+/obj/machinery/atmospherics/unary/cryo_cell/mouse_drop_receive(atom/movable/O, mob/living/user, params)
 	if(O.loc == user) //no you can't pull things out of your ass
 		return
 	if(user.incapacitated() || HAS_TRAIT(user, TRAIT_HANDS_BLOCKED)) //are you cuffed, dying, lying, stunned or other
@@ -138,36 +136,36 @@
 		return
 	if(!ismob(O)) //humans only
 		return
-	if(isanimal(O) || istype(O, /mob/living/silicon)) //animals and robutts dont fit
+	if(isanimal(O) || issilicon(O)) //animals and robutts dont fit
 		return
 	if(!ishuman(user) && !isrobot(user)) //No ghosts or mice putting people into the sleeper
 		return
 	if(user.loc==null) // just in case someone manages to get a closet into the blue light dimension, as unlikely as that seems
 		return
-	if(!istype(user.loc, /turf) || !istype(O.loc, /turf)) // are you in a container/closet/pod/etc?
+	if(!isturf(user.loc) || !isturf(O.loc)) // are you in a container/closet/pod/etc?
 		return
 	if(occupant)
 		balloon_alert(user, "внутри кто-то есть!")
-		return TRUE
+		return
 	var/mob/living/L = O
 	if(!istype(L) || L.buckled)
 		return
 	if(L.abiotic())
 		balloon_alert(user, "руки субъекта заняты!")
-		return TRUE
+		return
 	if(L.has_buckled_mobs()) //mob attached to us
 		to_chat(user, span_warning("[L] не помест[PLUR_IT_YAT(L)]ся в [declent_ru(ACCUSATIVE)], пока на [GEND_ON_IN_HIM(L)] сидит слайм!"))
-		return TRUE
-	. = TRUE
-	if(put_mob(L))
-		if(L == user)
-			visible_message("[user] начинает[PLUR_ET_YUT(user)] залезать в [declent_ru(ACCUSATIVE)].")
-		else
-			visible_message("[user] начина[PLUR_ET_YUT(user)] укладывать [L] в [declent_ru(ACCUSATIVE)].")
-			add_attack_logs(user, L, "put into a cryo cell at [COORD(src)].", ATKLOG_ALL)
-			if(user.pulling == L)
-				user.stop_pulling()
-		SStgui.update_uis(src)
+		return
+	if(!put_mob(L))
+		return
+	if(L == user)
+		visible_message("[user] начинает[PLUR_ET_YUT(user)] залезать в [declent_ru(ACCUSATIVE)].")
+	else
+		visible_message("[user] начина[PLUR_ET_YUT(user)] укладывать [L] в [declent_ru(ACCUSATIVE)].")
+		add_attack_logs(user, L, "put into a cryo cell at [COORD(src)].", ATKLOG_ALL)
+		if(user.pulling == L)
+			user.stop_pulling()
+	SStgui.update_uis(src)
 
 /obj/machinery/atmospherics/unary/cryo_cell/process()
 	..()
@@ -186,19 +184,19 @@
 
 	return TRUE
 
-/obj/machinery/atmospherics/unary/cryo_cell/process_atmos()
-	..()
+/obj/machinery/atmospherics/unary/cryo_cell/process_atmos(seconds)
 	if(!node)
-		return
+		return FALSE
+
 	if(!on)
-		return
+		return FALSE
 
 	if(air_contents)
-		temperature_archived = air_contents.temperature
+		temperature_archived = air_contents.temperature()
 		heat_gas_contents()
 
-	if(abs(temperature_archived-air_contents.temperature) > 1)
-		parent.update = 1
+	if(abs(temperature_archived-air_contents.temperature()) > 1)
+		parent.update = TRUE
 
 /obj/machinery/atmospherics/unary/cryo_cell/AllowDrop()
 	return FALSE
@@ -251,11 +249,11 @@
 		occupantData["bodyTemperature"] = occupant.bodytemperature
 	data["occupant"] = occupantData
 
-	data["cellTemperature"] = round(air_contents.temperature)
+	data["cellTemperature"] = round(air_contents.temperature())
 	data["cellTemperatureStatus"] = "good"
-	if(air_contents.temperature > T0C) // if greater than 273.15 kelvin (0 celcius)
+	if(air_contents.temperature() > T0C) // if greater than 273.15 kelvin (0 celcius)
 		data["cellTemperatureStatus"] = "bad"
-	else if(air_contents.temperature > TCRYO)
+	else if(air_contents.temperature() > TCRYO)
 		data["cellTemperatureStatus"] = "average"
 
 	data["isBeakerLoaded"] = beaker ? TRUE : FALSE
@@ -315,7 +313,7 @@
 	if(exchange_parts(user, I))
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
-	if(istype(I, /obj/item/reagent_containers/glass))
+	if(isglassreagentcontainer(I))
 		add_fingerprint(user)
 		var/obj/item/reagent_containers/glass/glass = I
 		if(beaker)
@@ -377,12 +375,12 @@
 		occupant_overlay.icon = occupant.icon
 		occupant_overlay.icon_state = occupant.icon_state
 		occupant_overlay.overlays = occupant.overlays
-		occupant_overlay.pixel_y = OCCUPANT_PIXEL_BOUNCE_LOW
+		occupant_overlay.pixel_z = OCCUPANT_PIXEL_BOUNCE_LOW
 		occupant_overlay.layer = layer + 0.01
 
 		if(on)
-			animate(occupant_overlay, time = 3 SECONDS, loop = -1, easing = QUAD_EASING, pixel_y = OCCUPANT_PIXEL_BOUNCE_HIGH)
-			animate(time = 3 SECONDS, loop = -1, easing = QUAD_EASING, pixel_y = OCCUPANT_PIXEL_BOUNCE_LOW)
+			animate(occupant_overlay, time = 3 SECONDS, loop = -1, easing = QUAD_EASING, pixel_z = OCCUPANT_PIXEL_BOUNCE_HIGH)
+			animate(time = 3 SECONDS, loop = -1, easing = QUAD_EASING, pixel_z = OCCUPANT_PIXEL_BOUNCE_LOW)
 
 		. += mutable_appearance(icon = icon, icon_state = "lid[on]", layer = occupant_overlay.layer + 0.01)
 
@@ -395,7 +393,7 @@
 			var/stun_time = (max(5 / efficiency, (1 / occupant.bodytemperature) * 2000/efficiency)) STATUS_EFFECT_CONSTANT
 			occupant.Sleeping(stun_time)
 			occupant.Paralyse(stun_time)
-			if(air_contents.oxygen > 2)
+			if(air_contents.oxygen() > 2)
 				if(occupant.getOxyLoss())
 					occupant.adjustOxyLoss(-6)
 			else
@@ -419,11 +417,11 @@
 	if(!occupant)
 		return
 	var/cold_protection = 0
-	var/temperature_delta = air_contents.temperature - occupant.bodytemperature // The only semi-realistic thing here: share temperature between the cell and the occupant.
+	var/temperature_delta = air_contents.temperature() - occupant.bodytemperature // The only semi-realistic thing here: share temperature between the cell and the occupant.
 
 	if(ishuman(occupant))
 		var/mob/living/carbon/human/H = occupant
-		cold_protection = H.get_cold_protection(air_contents.temperature)
+		cold_protection = H.get_cold_protection(air_contents.temperature())
 
 	if(abs(temperature_delta) > 1)
 		var/air_heat_capacity = air_contents.heat_capacity()
@@ -431,7 +429,7 @@
 		var/heat = (1 - cold_protection) * conduction_coefficient * temperature_delta * \
 			(air_heat_capacity * current_heat_capacity / (air_heat_capacity + current_heat_capacity))
 
-		air_contents.temperature = clamp(air_contents.temperature - heat / air_heat_capacity, TCMB, INFINITY)
+		air_contents.set_temperature(clamp(air_contents.temperature() - heat / air_heat_capacity, TCMB, INFINITY))
 		occupant.adjust_bodytemperature(heat / current_heat_capacity, TCMB)
 
 /obj/machinery/atmospherics/unary/cryo_cell/proc/go_out()
@@ -498,7 +496,7 @@
 
 /obj/machinery/atmospherics/unary/cryo_cell/verb/move_eject()
 	set name = "Извлечь пациента"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in oview(1)
 
 	if(usr == occupant)//If the user is inside the tube...
@@ -531,7 +529,7 @@
 
 /obj/machinery/atmospherics/unary/cryo_cell/verb/move_inside()
 	set name = "Залезть внутрь"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in oview(1)
 
 	if(usr.has_buckled_mobs()) //mob attached to us

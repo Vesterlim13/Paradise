@@ -43,7 +43,7 @@
 	var/list/mice = list()
 	for(var/HM in .)
 		//Yum a tasty mouse
-		if(istype(HM, /mob/living/simple_animal/mouse))
+		if(ismouse(HM))
 			mice += HM
 		if(isliving(HM))
 			living_mobs += HM
@@ -55,7 +55,7 @@
 	return mice
 
 /mob/living/simple_animal/hostile/retaliate/poison/snake/AttackingTarget()
-	if(istype(target, /mob/living/simple_animal/mouse))
+	if(ismouse(target))
 		visible_message(span_notice("[name] consumes [target] in a single gulp!"), span_notice("You consume [target] in a single gulp!"))
 		QDEL_NULL(target)
 		adjustHealth(-2)
@@ -65,7 +65,7 @@
 //Уникальный питомец Офицера Телекомов. Спрайты от Элл Гуда
 /mob/living/simple_animal/hostile/retaliate/poison/snake/rouge
 	name = "Руж"
-	desc = "Уникальная трёхголовая змея Офицера Телекоммуникаций синдиката. Выращена в лаборатории. У каждой головы свой характер!"
+	desc = "Уникальная трёхголовая змея Офицера Телекоммуникаций \"Синдиката\". Выращена в лаборатории. У каждой головы свой характер!"
 	icon = 'icons/mob/pets.dmi'
 	blood_volume = BLOOD_VOLUME_NORMAL
 	gender = FEMALE
@@ -92,7 +92,7 @@
 /mob/living/simple_animal/hostile/retaliate/poison/snake/rouge/verb/chasetail()
 	set name = "Гоняться за хвостом"
 	set desc = "d'awwww."
-	set category = STATPANEL_ANIMAL
+	set category = VERB_CATEGORY_ANIMAL
 
 	visible_message("[src] [pick("dances around", "chases [p_their()] tail")].", "[pick("You dance around", "You chase your tail")].")
 	spin(20, 1)
@@ -234,8 +234,8 @@
 		if(stat || resting) //без сознания или отдыхает
 			head_icon = SF.get_overlay()
 			if(stat)
-				head_icon.pixel_y = -2
-				head_icon.pixel_x = -2
+				head_icon.pixel_z = -2
+				head_icon.pixel_w = -2
 		else
 			head_icon = SF.get_overlay()
 
@@ -255,7 +255,7 @@
 	unique_pet = TRUE
 
 /mob/living/simple_animal/hostile/retaliate/poison/snake/riraha/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "доктор Рираха",
 		GENITIVE = "доктора Рираха",
 		DATIVE = "доктору Рираху",

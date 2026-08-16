@@ -6,7 +6,14 @@
 	death = FALSE
 	allow_tts_pick = FALSE
 	banType = ROLE_THUNDERDOME
+	skills_ref_job = JOB_TITLE_OFFICER
+	use_antag_skills = TRUE
 	var/datum/mini_game/thunderdome_battle/thunderdome
+
+/obj/effect/mob_spawn/human/thunderdome/Destroy()
+	thunderdome?.fighters -= src
+	thunderdome = null
+	return ..()
 
 /obj/effect/mob_spawn/human/thunderdome/attack_ghost(mob/dead/observer/user)
 	if(SSticker.current_state != GAME_STATE_PLAYING || !loc || !ghost_usable)
@@ -15,7 +22,7 @@
 		to_chat(user, span_warning("You are jobanned!"))
 		return
 	if(CONFIG_GET(flag/use_exp_restrictions) && min_hours)
-		if(user.client.get_exp_type_num(exp_type) < min_hours * 60 && !check_rights(R_ADMIN|R_MOD, 0, usr))
+		if(user.client.get_exp_type_num(exp_type) < min_hours * 60 && !check_rights(R_ADMIN|R_MOD, FALSE, usr))
 			to_chat(user, span_warning("У вас недостаточно часов для игры на этой роли. Требуется набрать [min_hours] час[DECL_CREDIT(min_hours)] типа [exp_type] для доступа к ней."))
 			return
 	var/mob_use_prefs = FALSE
@@ -43,6 +50,7 @@
 	name = "CQC Thunderdome Brawler"
 	mob_name = "Fighter"
 	icon = 'icons/mob/thunderdome_previews.dmi'
+	icon_state = "thunderman_preview_CqC"
 	flavour_text = "Станьте лучшим бойцом арены среди любителей ближнего боя!"
 	outfit = /datum/outfit/thunderdome/cqc
 
@@ -50,6 +58,7 @@
 	name = "Ranged Thunderdome Brawler"
 	mob_name = "Ranger"
 	icon = 'icons/mob/thunderdome_previews.dmi'
+	icon_state = "thunderman_preview_Ranged"
 	flavour_text = "Станьте лучшим бойцом арены среди любителей дальнего боя!"
 	outfit = /datum/outfit/thunderdome/ranged
 
@@ -57,5 +66,6 @@
 	name = "Mixed Thunderdome Brawler"
 	mob_name = "Gladiator"
 	icon = 'icons/mob/thunderdome_previews.dmi'
+	icon_state = "thunderman_preview_Mixed"
 	flavour_text = "Станьте лучшим бойцом арены среди любителей любого боя!"
 	outfit = /datum/outfit/thunderdome/mixed

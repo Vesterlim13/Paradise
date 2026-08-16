@@ -31,12 +31,12 @@
 		TRAIT_TOXIC_FUEL_PROTECTED,
 	)
 	clothing_flags = HAS_UNDERWEAR | HAS_UNDERSHIRT | HAS_SOCKS //Species-fitted 'em all.
-	bodyflags = HAS_ICON_SKIN_TONE | HAS_TAIL | TAIL_WAGGING | TAIL_OVERLAPPED | HAS_BODY_MARKINGS | HAS_TAIL_MARKINGS | HAS_SKIN_COLOR
+	bodyflags = HAS_ICON_SKIN_TONE | HAS_TAIL | TAIL_WAGGING | TAIL_OVERLAPPED | HAS_BODY_MARKINGS | HAS_TAIL_MARKINGS | HAS_SKIN_COLOR | HAS_HAIR
 
 	silent_steps = TRUE
 
 	blood_species = "Vox"
-	blood_color = "#2299FC"
+	blood_color = BLOOD_COLOR_VOX
 	flesh_color = "#808D11"
 	//Default styles for created mobs.
 	default_hair = "Short Vox Quills"
@@ -44,7 +44,7 @@
 	default_hair_colour = "#614f19" //R: 97, G: 79, B: 25
 	butt_sprite = "vox"
 
-	reagent_tag = PROCESS_ORG | PROCESS_SYN
+	reagent_tag = ORGANIC | SYNTHETIC
 	scream_verb = "скрип%(ит,ят)%"
 	male_scream_sound = list('sound/voice/shriek1.ogg')
 	female_scream_sound = list('sound/voice/shriek1.ogg')
@@ -53,14 +53,14 @@
 	male_sneeze_sound = list('sound/voice/shrieksneeze.ogg')
 	female_sneeze_sound = list('sound/voice/shrieksneeze.ogg')
 
-	icon_skin_tones = list(
+	icon_skin_tones = alist(
 		1 = "Default Green",
 		2 = "Dark Green",
 		3 = "Brown",
 		4 = "Grey",
 		5 = "Emerald",
 		6 = "Azure"
-		)
+	)
 
 	has_organ = list(
 		INTERNAL_ORGAN_HEART = /obj/item/organ/internal/heart/vox,
@@ -119,6 +119,13 @@
 	)
 	autohiss_exempt = list("Вокс-пиджин")
 
+	max_select_skills = list(
+		/datum/skill/general/carrying = 1,
+		/datum/skill/combat/fists = 1,
+		/datum/skill/engineering/electrician = 3,
+		/datum/skill/engineering/atmos = 3,
+	)
+
 /datum/species/vox/handle_death(gibbed, mob/living/carbon/human/H)
 	H.stop_tail_wagging()
 
@@ -127,6 +134,7 @@
 	add_verb(H, /mob/living/carbon/human/proc/emote_wag)
 	add_verb(H, /mob/living/carbon/human/proc/emote_swag)
 	add_verb(H, /mob/living/carbon/human/proc/emote_quill)
+	H.faction |= list("Vox")
 
 /datum/species/vox/gain_muscles(mob/living/target, default, max_level, can_become_stronger)
 	..(target, default, STRENGTH_LEVEL_STRONG, can_become_stronger)
@@ -136,6 +144,7 @@
 	remove_verb(H, /mob/living/carbon/human/proc/emote_wag)
 	remove_verb(H, /mob/living/carbon/human/proc/emote_swag)
 	remove_verb(H, /mob/living/carbon/human/proc/emote_quill)
+	H.faction -= "Vox"
 
 /datum/species/vox/after_equip_job(datum/job/J, mob/living/carbon/human/H)
 	if(!H.mind || !H.mind.assigned_role || H.mind.assigned_role != JOB_TITLE_CLOWN && H.mind.assigned_role != JOB_TITLE_MIME)
@@ -238,7 +247,7 @@
 	bodyflags = HAS_TAIL
 	dies_at_threshold = TRUE
 
-	reagent_tag = PROCESS_ORG
+	reagent_tag = ORGANIC
 
 	tail = "armalis_tail"
 	icon_template = 'icons/mob/human_races/r_armalis.dmi'
@@ -274,3 +283,6 @@
 	. = ..()
 	if(/mob/living/carbon/human/proc/emote_quill in H.verbs)
 		remove_verb(H, /mob/living/carbon/human/proc/emote_quill)
+
+/datum/species/vox/compressor_grind(location)
+	new /obj/item/reagent_containers/food/snacks/fried_vox(location)

@@ -19,7 +19,7 @@ GLOBAL_LIST_EMPTY(safes)
  */
 /obj/structure/safe
 	name = "safe"
-	desc = "Огромный кусок металла со встроенным в него циферблатом. Мелким шрифтом на циферблате написано: \"Сейф от \"Скарборо Армс\" надёжно защитит ваши ценные вещи от любых посягательств, включая любопытных ассистентов\"."
+	desc = "Огромный кусок металла со встроенным в него циферблатом. Мелким шрифтом на циферблате написано: \"Сейф от концерна \"Скарборо\" надёжно защитит ваши ценные вещи от любых посягательств, включая любопытных ассистентов\"."
 	gender = MALE
 	icon_state = "safe"
 	anchored = TRUE
@@ -66,7 +66,7 @@ GLOBAL_LIST_EMPTY(safes)
 	var/driller_UID
 
 /obj/structure/safe/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сейф",
 		GENITIVE = "сейфа",
 		DATIVE = "сейфу",
@@ -75,19 +75,32 @@ GLOBAL_LIST_EMPTY(safes)
 		PREPOSITIONAL = "сейфе",
 	)
 
+/obj/structure/safe/ComponentInitialize()
+	. = ..()
+	if(!density)
+		return
+	AddElement(/datum/element/climbable)
+	AddElement(/datum/element/elevation, pixel_shift = 26)
+
 /obj/structure/safe/Initialize(mapload)
 	. = ..()
 	GLOB.safes += src
 	// Combination generation
 	for(var/i in 1 to number_of_tumblers)
 		tumblers.Add(rand(0, 99))
+	if(mapload)
+		END_OF_TICK(CALLBACK(src, PROC_REF(take_contents)))
+
+/obj/structure/safe/proc/take_contents()
 	// Put as many items on our turf inside as possible
-	for(var/obj/item/I in loc)
+	for(var/obj/item/item in loc)
+		if(item.density || item.anchored)
+			continue
 		if(space >= maxspace)
-			return
-		if(I.w_class + space <= maxspace)
-			space += I.w_class
-			I.forceMove(src)
+			break
+		if(item.w_class + space <= maxspace)
+			space += item.w_class
+			item.forceMove(src)
 
 /obj/structure/safe/Destroy()
 	GLOB.safes -= src
@@ -144,7 +157,9 @@ GLOBAL_LIST_EMPTY(safes)
 	if(istype(drill, /obj/item/thermal_drill))
 		var/drill_icon = istype(drill, /obj/item/thermal_drill/diamond_drill) ? "d" : "h"
 		var/state = "[initial(icon_state)]_[drill_icon]-drill-[drill_timer ? "on" : "off"]"
-		drill_overlay = image(icon = 'icons/effects/drill.dmi', icon_state = state, pixel_x = drill_x_offset, pixel_y = drill_y_offset)
+		drill_overlay = image(icon = 'icons/effects/drill.dmi', icon_state = state)
+		drill_overlay.pixel_w = drill_x_offset
+		drill_overlay.pixel_z = drill_y_offset
 		. += drill_overlay
 
 /obj/structure/safe/attack_ghost(mob/user)
@@ -282,7 +297,7 @@ GLOBAL_LIST_EMPTY(safes)
 	var/canhear = FALSE
 	if(ishuman(usr))
 		var/mob/living/carbon/human/H = usr
-		if(H.can_hear() && H.is_type_in_hands(/obj/item/clothing/accessory/stethoscope))
+		if(!HAS_TRAIT(H, TRAIT_DEAF) && H.is_type_in_hands(/obj/item/clothing/accessory/stethoscope))
 			canhear = TRUE
 
 	. = TRUE
@@ -446,7 +461,7 @@ GLOBAL_LIST_EMPTY(safes)
  */
 /obj/structure/safe/floor
 	name = "floor safe"
-	desc = "Огромный металлический люк со встроенным в него цифербалтом. Мелким шрифтом на циферблате написано: \"Напольный сейф от \"Скарборо Армс\" надёжно защитит ваши ценные вещи от любых посягательств, включая любопытных ассистентов\"."
+	desc = "Огромный металлический люк со встроенным в него цифербалтом. Мелким шрифтом на циферблате написано: \"Напольный сейф от концерна \"Скарборо\" надёжно защитит ваши ценные вещи от любых посягательств, включая любопытных ассистентов\"."
 	icon_state = "floorsafe"
 	density = FALSE
 	level = 1 //Under the floor
@@ -456,7 +471,7 @@ GLOBAL_LIST_EMPTY(safes)
 	drill_y_offset = 20
 
 /obj/structure/safe/floor/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "напольный сейф",
 		GENITIVE = "напольного сейфа",
 		DATIVE = "напольному сейфу",
@@ -467,12 +482,7 @@ GLOBAL_LIST_EMPTY(safes)
 
 /obj/structure/safe/floor/Initialize(mapload)
 	. = ..()
-	var/turf/T = loc
-	if(!T.transparent_floor)
-		hide(T.intact)
-
-/obj/structure/safe/floor/hide(intact)
-	invisibility = intact ? INVISIBILITY_MAXIMUM : 0
+	AddElement(/datum/element/undertile)
 
 /**
  * # Safe Internals
@@ -485,7 +495,7 @@ GLOBAL_LIST_EMPTY(safes)
 	icon_state = "safe_internals"
 
 /obj/item/safe_internals/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "внутренности сейфа",
 		GENITIVE = "внтренностей сейфа",
 		DATIVE = "внутренностям сейфа",
@@ -506,7 +516,7 @@ GLOBAL_LIST_EMPTY(safes)
 	info = "<div style='text-align:center;'><img src = ntlogo.png><center><h3>Коды от сейфа</h3></center>"
 
 /obj/item/paper/safe_code/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "коды от сейфа",
 		GENITIVE = "кодов от сейфа",
 		DATIVE = "кодам от сейфа",

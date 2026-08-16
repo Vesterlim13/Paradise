@@ -7,7 +7,7 @@
 	var/atom/objholder = null
 
 /datum/buildmode_mode/fill/show_help(mob/user)
-	to_chat(user, span_purple(chat_box_examine(
+	to_chat(user, span_purple(boxed_message(
 		"[span_bold("Select corner")] -> Left Mouse Button on turf/obj/mob\n\
 		[span_bold("Delete region")] -> Left Mouse Button + Alt on turf/obj/mob\n\
 		[span_bold("Select object type")] -> Right Mouse Button on buildmode button"))
@@ -38,10 +38,10 @@
 	if(left_click && alt_click && !region_check)
 		if(isturf(object) || isobj(object) || ismob(object))
 			objholder = object.type
-			to_chat(user, span_notice("[capitalize(object.declent_ru(NOMINATIVE))] ([object.type]) выбран[GEND_A_O_Y(object)]."))
+			to_chat(user, span_notice("[DECLENT_RU_CAP(object, NOMINATIVE)] ([object.type]) выбран[GEND_A_O_Y(object)]."))
 			return
 		else
-			to_chat(user, span_notice("[capitalize(object.declent_ru(NOMINATIVE))] не турф, объект, или существо! Пожалуйста, выберите еще раз."))
+			to_chat(user, span_notice("[DECLENT_RU_CAP(object, NOMINATIVE)] не турф, объект, или существо! Пожалуйста, выберите еще раз."))
 	return ..()
 
 /datum/buildmode_mode/fill/handle_selected_area(mob/user, params)

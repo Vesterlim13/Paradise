@@ -17,6 +17,7 @@
 /obj/structure/alien
 	icon = 'icons/mob/alien.dmi'
 	max_integrity = 100
+	cares_about_temperature = TRUE
 
 /obj/structure/alien/run_obj_armor(damage_amount, damage_type, damage_flag = 0, attack_dir)
 	if(damage_flag == MELEE)
@@ -59,24 +60,24 @@
 	smooth = SMOOTH_BITMASK
 
 /obj/structure/alien/resin/add_debris_element()
-	AddElement(/datum/element/debris, null, -40, 8, 0.7)
+	generate_debris_handler(null, -40, 8, 0.7)
 
 /obj/structure/alien/resin/Initialize(mapload)
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 	. = ..()
 
 /obj/structure/alien/resin/Destroy()
 	var/turf/T = get_turf(src)
 	playdestroysound(T)
 	. = ..()
-	T.air_update_turf(TRUE)
+	T.recalculate_atmos_connectivity()
 
 /obj/structure/alien/resin/Move(atom/newloc, direct = NONE, glide_size_override = 0, update_dir = TRUE)
 	var/turf/T = loc
 	. = ..()
 	move_update_air(T)
 
-/obj/structure/alien/resin/CanAtmosPass(turf/T, vertical)
+/obj/structure/alien/resin/CanAtmosPass(direction)
 	return !density
 
 /obj/structure/alien/resin/proc/playdestroysound(source)
@@ -87,8 +88,8 @@
 	desc = "Thick resin solidified into a wall."
 	icon_state = "resin_wall-0"
 
-/obj/structure/alien/resin/wall/BlockSuperconductivity()
-	return 1
+/obj/structure/alien/resin/wall/get_superconductivity(direction)
+	return FALSE
 
 /obj/structure/alien/resin/wall/shadowling //For chrysalis
 	name = "chrysalis wall"
@@ -151,6 +152,7 @@
 /obj/structure/alien/resin/door/Destroy()
 	set_density(FALSE)
 	update_freelook_sight()
+	recalculate_atmos_connectivity()
 	return ..()
 
 /obj/structure/alien/resin/door/update_icon_state()
@@ -246,7 +248,7 @@
 
 	sleep(0.4 SECONDS)
 	set_density(FALSE)
-	air_update_turf(TRUE)
+	recalculate_atmos_connectivity()
 
 	sleep(0.1 SECONDS)
 	operating = FALSE
@@ -271,7 +273,7 @@
 
 	sleep(0.1 SECONDS)
 	set_density(TRUE)
-	air_update_turf(TRUE)
+	recalculate_atmos_connectivity()
 
 	sleep(0.4 SECONDS)
 	set_opacity(TRUE)
@@ -336,9 +338,9 @@
 		icon_state = pick("weeds", "weeds1", "weeds2")
 
 	fullUpdateWeedOverlays()
-	spawn(rand(150, 200))
-		if(src)
-			Life()
+
+	addtimer(CALLBACK(src, PROC_REF(Life)), rand(15 SECONDS, 20 SECONDS))
+	RegisterSignal(linked_node, COMSIG_QDELETING, PROC_REF(clear_linked_node))
 
 /obj/structure/alien/weeds/Destroy()
 	var/turf/T = loc
@@ -346,6 +348,11 @@
 		W.updateWeedOverlays()
 	linked_node = null
 	return ..()
+
+/obj/structure/alien/weeds/proc/clear_linked_node()
+	SIGNAL_HANDLER
+	UnregisterSignal(linked_node, COMSIG_QDELETING)
+	linked_node = null
 
 /obj/structure/alien/weeds/proc/Life()
 	var/turf/U = get_turf(src)
@@ -364,7 +371,7 @@
 
 		new /obj/structure/alien/weeds(T, linked_node)
 
-/obj/structure/alien/weeds/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
+/obj/structure/alien/weeds/temperature_expose(exposed_temperature, exposed_volume)
 	..()
 	if(exposed_temperature > 300)
 		take_damage(5, BURN, 0, 0)
@@ -376,10 +383,10 @@
 	if(!weedImageCache || !length(weedImageCache))
 		weedImageCache = list()
 		weedImageCache.len = 4
-		weedImageCache[WEED_NORTH_EDGING] = image('icons/mob/alien.dmi', "weeds_side_n", layer=2.11, pixel_y = -32)
-		weedImageCache[WEED_SOUTH_EDGING] = image('icons/mob/alien.dmi', "weeds_side_s", layer=2.11, pixel_y = 32)
-		weedImageCache[WEED_EAST_EDGING] = image('icons/mob/alien.dmi', "weeds_side_e", layer=2.11, pixel_x = -32)
-		weedImageCache[WEED_WEST_EDGING] = image('icons/mob/alien.dmi', "weeds_side_w", layer=2.11, pixel_x = 32)
+		weedImageCache[WEED_NORTH_EDGING] = image('icons/mob/alien.dmi', "weeds_side_n", layer=2.11, pixel_z = -32)
+		weedImageCache[WEED_SOUTH_EDGING] = image('icons/mob/alien.dmi', "weeds_side_s", layer=2.11, pixel_z = 32)
+		weedImageCache[WEED_EAST_EDGING] = image('icons/mob/alien.dmi', "weeds_side_e", layer=2.11, pixel_w = -32)
+		weedImageCache[WEED_WEST_EDGING] = image('icons/mob/alien.dmi', "weeds_side_w", layer=2.11, pixel_w = 32)
 
 	var/turf/N = get_step(src, NORTH)
 	var/turf/S = get_step(src, SOUTH)
@@ -552,7 +559,7 @@
 	if(!(obj_flags & NODECONSTRUCT) && status != BURST)
 		Burst(kill = TRUE)
 
-/obj/structure/alien/egg/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
+/obj/structure/alien/egg/temperature_expose(exposed_temperature, exposed_volume)
 	..()
 	if(exposed_temperature > 500)
 		take_damage(5, BURN, 0, 0)

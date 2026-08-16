@@ -16,10 +16,9 @@
 	var/template_id = "shelter_alpha"
 	var/datum/map_template/shelter/template
 	var/used = FALSE
-	var/emagged = FALSE
 
 /obj/item/survivalcapsule/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капсула блюспейс-убежища",
 		GENITIVE = "капсулы блюспейс-убежища",
 		DATIVE = "капсуле блюспейс-убежища",
@@ -64,7 +63,7 @@
 		to_chat(user, span_notice("Ошибка. Попытка развертывания в секторе станции. Развертывание отменено."))
 		playsound(user, 'sound/machines/buzz-sigh.ogg', 15, TRUE)
 		return
-	loc.visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] начинает трястись. Отойдите!"))
+	loc.visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] начинает вибрировать. Отойдите!"))
 	used = TRUE
 	addtimer(CALLBACK(src, PROC_REF(expand), user), 5 SECONDS)
 	return TRUE
@@ -81,9 +80,9 @@
 	var/status = template.check_deploy(deploy_location)
 	switch(status)
 		if(SHELTER_DEPLOY_BAD_AREA)
-			loc.visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] не функционирует в этой зоне."))
+			loc.visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] не функционирует в этой зоне."))
 		if(SHELTER_DEPLOY_BAD_TURFS, SHELTER_DEPLOY_ANCHORED_OBJECTS)
-			loc.visible_message(span_warning("[capitalize(declent_ru(DATIVE))] не хватает места для развертывания! Необходимо очистить площадь [template.width]x[template.height]!"))
+			loc.visible_message(span_warning("[DECLENT_RU_CAP(src, DATIVE)] не хватает места для развертывания! Необходимо очистить площадь [template.width]x[template.height]!"))
 
 	if(status != SHELTER_DEPLOY_ALLOWED)
 		used = FALSE
@@ -111,7 +110,7 @@
 		var/x_component = abs(did_not_stand_back.x - deploy_location.x)
 		var/y_component = abs(did_not_stand_back.y - deploy_location.y)
 		if(ISDIAGONALDIR(dir_to_center))
-			throw_dist = ceil(sqrt(base_x_throw_distance ** 2 + base_y_throw_distance ** 2) - (sqrt(x_component ** 2 + y_component ** 2)))
+			throw_dist = ceil(MAGNITUDE(base_x_throw_distance, base_y_throw_distance) - MAGNITUDE(x_component, y_component))
 			did_not_stand_back.forceMove(get_ranged_target_turf(deploy_location, dir_to_center, throw_dist))
 		else if(dir_to_center & (NORTH|SOUTH))
 			throw_dist = base_y_throw_distance - y_component + 1
@@ -143,7 +142,7 @@
 	template_id = "shelter_beta"
 
 /obj/item/survivalcapsule/luxury/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капсула роскошного блюспейс-убежища",
 		GENITIVE = "капсулы роскошного блюспейс-убежища",
 		DATIVE = "капсуле роскошного блюспейс-убежища",
@@ -157,7 +156,7 @@
 	template_id = "shelter_charlie"
 
 /obj/item/survivalcapsule/luxuryelite/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капсула элитного бара",
 		GENITIVE = "капсулы элитного бара",
 		DATIVE = "капсуле элитного бара",
@@ -180,7 +179,7 @@
 	flags = PREVENT_CLICK_UNDER
 	reinf = TRUE
 	heat_resistance = 1600
-	armor = list(MELEE = 50, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 50, BIO = 100, RAD = 100, FIRE = 80, ACID = 100)
+	armor = list(MELEE = 50, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 50, BIO = 100, FIRE = 80, ACID = 100)
 	smooth = SMOOTH_BITMASK
 	smoothing_groups = SMOOTH_GROUP_WINDOW_FULLTILE
 	canSmoothWith = SMOOTH_GROUP_SURVIVAL_TITANIUM_WALLS + SMOOTH_GROUP_AIRLOCK + SMOOTH_GROUP_WINDOW_FULLTILE
@@ -209,16 +208,19 @@
 	icon_regular_floor = "podfloor_light"
 	floor_tile = /obj/item/stack/tile/pod/light
 
+/turf/simulated/floor/pod/light/lavaland_air
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
+
 /turf/simulated/floor/pod/dark
 	icon_state = "podfloor_dark"
 	icon_regular_floor = "podfloor_dark"
 	floor_tile = /obj/item/stack/tile/pod/dark
 
-/turf/simulated/floor/pod/dark/outside //used in lavaland ruins
-	oxygen = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface::oxygen //used :: to match outside atmos
-	nitrogen = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface::nitrogen
-	temperature = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface::temperature
-	planetary_atmos = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface::planetary_atmos
+/turf/simulated/floor/pod/dark/lavaland_air
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
+
 
 //Door
 /obj/machinery/door/airlock/survival_pod
@@ -229,6 +231,10 @@
 /obj/machinery/door/airlock/survival_pod/glass
 	opacity = FALSE
 	glass = TRUE
+
+/obj/machinery/door/airlock/survival_pod/glass/secure
+	aiControlDisabled = TRUE
+	hackProof = TRUE
 
 /obj/structure/door_assembly/door_assembly_pod
 	name = "pod airlock assembly"
@@ -247,6 +253,8 @@
 //Table
 /obj/structure/table/survival_pod
 	icon = 'icons/obj/lavaland/survival_pod.dmi'
+	smoothing_groups = null
+	canSmoothWith = null
 	smooth = NONE
 	can_be_flipped = FALSE
 
@@ -282,7 +290,7 @@
 	contraband = list()
 
 /obj/machinery/vending/wallmed/survival_pod/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "медицинский модуль аварийного убежища",
 		GENITIVE = "медицинского модуля аварийного убежища",
 		DATIVE = "медицинскому модулю аварийного убежища",
@@ -386,14 +394,14 @@
 
 /obj/structure/fans/Initialize(mapload, loc)
 	. = ..()
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 
 /obj/structure/fans/Destroy()
 	arbitraryatmosblockingvar = 0
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 	return ..()
 
-/obj/structure/fans/CanAtmosPass(turf/T, vertical)
+/obj/structure/fans/CanAtmosPass(direction)
 	return !arbitraryatmosblockingvar
 
 /obj/structure/fans/deconstruct()
@@ -422,7 +430,7 @@
 	buildstackamount = 2
 
 /obj/structure/fans/tiny/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "система контроля среды",
 		GENITIVE = "системы контроля среды",
 		DATIVE = "системе контроля среды",
@@ -430,6 +438,11 @@
 		INSTRUMENTAL = "системой контроля среды",
 		PREPOSITIONAL = "системе контроля среды",
 	)
+
+/obj/structure/fans/tiny/get_superconductivity(direction)
+	// Mostly for stuff on Lavaland.
+	return ZERO_HEAT_TRANSFER_COEFFICIENT
+
 /obj/structure/fans/tiny/invisible
 	name = "air flow blocker"
 	resistance_flags = INDESTRUCTIBLE | LAVA_PROOF | FIRE_PROOF | UNACIDABLE | ACID_PROOF
@@ -437,12 +450,12 @@
 //Signs
 /obj/structure/sign/mining
 	name = "nanotrasen mining corps sign"
-	desc = "Знак облегчения для уставших шахтеров и предупреждение для потенциальных конкурентов Нанотрейзен."
+	desc = "Знак облегчения для уставших шахтеров и предупреждение для потенциальных конкурентов \"Нанотрейзен\"."
 	icon = 'icons/turf/walls/survival_pod_walls.dmi'
 	icon_state = "ntpod"
 
 /obj/structure/sign/mining/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "знак шахтёрского корпуса НТ",
 		GENITIVE = "знака шахтёрского корпуса НТ",
 		DATIVE = "знаку шахтёрского корпуса НТ",
@@ -457,7 +470,7 @@
 	icon_state = "survival"
 
 /obj/structure/sign/mining/survival/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "знак убежища",
 		GENITIVE = "знака убежища",
 		DATIVE = "знаку убежища",
@@ -472,7 +485,7 @@
 	icon = 'icons/obj/lavaland/survival_pod.dmi'
 	name = "tubes"
 	anchored = TRUE
-	layer = MOB_LAYER - 0.2
+	layer = BELOW_MOB_LAYER
 
 /obj/structure/tubes/wrench_act(mob/living/user, obj/item/I)
 	. = TRUE
@@ -492,23 +505,25 @@
 	name = "expensive forgery"
 	icon = 'icons/mob/screen_gen.dmi'
 	icon_state = "x2"
-	var/possible = list(/obj/item/ship_in_a_bottle,
-						/obj/item/gun/energy/pulse,
-						/obj/item/sleeping_carp_scroll,
-						/obj/item/shield/changeling,
-						/obj/item/lava_staff,
-						/obj/item/hierophant_club,
-						/obj/item/melee/energy_katana,
-						/obj/item/his_grace,
-						/obj/item/gun/projectile/automatic/l6_saw,
-						/obj/item/gun/magic/staff/chaos,
-						/obj/item/gun/magic/staff/spellblade,
-						/obj/item/gun/magic/wand/death,
-						/obj/item/gun/magic/wand/fireball,
-						/obj/item/stack/telecrystal/hundred,
-						/obj/item/banhammer)
+	var/possible = list(
+		/obj/item/ship_in_a_bottle,
+		/obj/item/gun/energy/pulse,
+		/obj/item/sleeping_carp_scroll,
+		/obj/item/shield/riot/changeling,
+		/obj/item/lava_staff,
+		/obj/item/hierophant_club,
+		/obj/item/melee/energy_katana,
+		/obj/item/his_grace,
+		/obj/item/gun/projectile/automatic/l6_saw,
+		/obj/item/gun/magic/staff/chaos,
+		/obj/item/gun/magic/staff/spellblade,
+		/obj/item/gun/magic/wand/death,
+		/obj/item/gun/magic/wand/fireball,
+		/obj/item/stack/telecrystal/hundred,
+		/obj/item/banhammer
+	)
 
-/obj/item/fakeartefact/New()
+/obj/item/fakeartefact/Initialize(mapload)
 	. = ..()
 	var/obj/item/I = pick(possible)
 	name = initial(I.name)

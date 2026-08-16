@@ -22,48 +22,26 @@
 	icon_state = "sparks"
 	var/hotspottemp = 1000
 
-/obj/effect/particle_effect/sparks/New()
-	..()
+/obj/effect/particle_effect/sparks/Initialize(mapload)
+	. = ..()
 	flick("sparks", src) // replay the animation
 	playsound(src, SFX_SPARKS, 100, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 	var/turf/T = loc
 	if(isturf(T))
-		T.hotspot_expose(hotspottemp, 100)
+		T.hotspot_expose(hotspottemp, 1)
 	QDEL_IN(src, 20)
 
 /obj/effect/particle_effect/sparks/Destroy()
 	var/turf/T = loc
 	if(isturf(T))
-		T.hotspot_expose(hotspottemp,100)
+		T.hotspot_expose(hotspottemp, 1)
 	return ..()
 
 /obj/effect/particle_effect/sparks/Move(atom/newloc, direct = NONE, glide_size_override = 0, update_dir = TRUE)
 	. = ..()
 	var/turf/T = loc
 	if(isturf(T))
-		T.hotspot_expose(hotspottemp,100)
+		T.hotspot_expose(hotspottemp, 1)
 
 /datum/effect_system/spark_spread
 	effect_type = /obj/effect/particle_effect/sparks
-
-//////////////////////////////////
-//////SPARKLE FIREWORKS
-/////////////////////////////////
-////////////////////////////
-/obj/effect/particle_effect/sparks/sparkles
-	name = "sparkle"
-	icon = 'icons/obj/fireworks.dmi'//findback
-	icon_state = "sparkel"
-	hotspottemp = 3000
-
-/obj/effect/particle_effect/sparks/sparkles/New()
-	var/icon/I = new(src.icon,src.icon_state)
-	var/r = rand(0,255)
-	var/g = rand(0,255)
-	var/b = rand(0,255)
-	I.Blend(rgb(r,g,b),ICON_MULTIPLY)
-	src.icon = I
-	..()
-
-/datum/effect_system/sparkle_spread
-	effect_type = /obj/effect/particle_effect/sparks/sparkles

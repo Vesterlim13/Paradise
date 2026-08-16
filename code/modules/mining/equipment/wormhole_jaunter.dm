@@ -1,7 +1,7 @@
 /**********************Jaunter**********************/
 /obj/item/wormhole_jaunter
 	name = "wormhole jaunter"
-	desc = "Одноразовое устройство, использующее устаревшую технологию червоточин. Нанотрейзен переключилась на блюспейс для более точной телепортации. Перемещение через создаваемые им червоточины, мягко говоря, некомфортно.\nБлагодаря модификациям Свободных Големов, этот генератор червоточин обеспечивает защиту от пропастей."
+	desc = "Одноразовое устройство, использующее устаревшую технологию червоточин. \"Нанотрейзен\" переключилась на блюспейс для более точной телепортации. Перемещение через создаваемые им червоточины, мягко говоря, некомфортно.\nБлагодаря модификациям Свободных Големов, этот генератор червоточин обеспечивает защиту от пропастей."
 	icon_state = "Jaunter"
 	item_state = "electronic"
 	w_class = WEIGHT_CLASS_SMALL
@@ -9,10 +9,9 @@
 	throw_range = 5
 	origin_tech = "bluespace=2"
 	slot_flags = ITEM_SLOT_BELT
-	var/emagged = FALSE
 
 /obj/item/wormhole_jaunter/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "генератор червоточин",
 		GENITIVE = "генератора червоточин",
 		DATIVE = "генератору червоточин",
@@ -27,12 +26,13 @@
 	activate(user, TRUE)
 
 /obj/item/wormhole_jaunter/proc/turf_check()
+
 	var/turf/device_turf = get_turf(src)
 
 	if(!device_turf || !is_teleport_allowed(device_turf.z))
 		return "Ошибка! Телепортация невозможна."
 
-	if(!is_mining_level(device_turf.z) || istype(get_area(device_turf), /area/ruin/space/bubblegum_arena))
+	if(istype(get_area(device_turf), /area/ruin/space/bubblegum_arena) || !is_mining_level(device_turf.z) && !(emagged && is_station_level(device_turf.z)))
 		return "Ошибка! Требуется натуральная гравитация для размещения якоря."
 
 	return TRUE
@@ -56,12 +56,13 @@
 		if(user)
 			balloon_alert(user, "нет доступных маяков!")
 		else
-			visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] не нашёл маяков для создания якоря!"))
+			visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] не нашёл маяков для создания якоря!"))
 		return TRUE // used for chasm code
 
 	var/chosen_beacon = pick(destinations)
 
-	var/obj/effect/portal/jaunt_tunnel/tunnel = new(get_turf(src), get_turf(chosen_beacon), src, 100, user)
+	var/tunnel_lifespan = emagged ? 5 SECONDS : 10 SECONDS
+	var/obj/effect/portal/jaunt_tunnel/tunnel = new(get_turf(src), get_turf(chosen_beacon), src, tunnel_lifespan, user)
 	tunnel.emagged = emagged
 	if(teleport)
 		tunnel.teleport(user)
@@ -84,9 +85,9 @@
 		emagged = TRUE
 		if(user)
 			balloon_alert(user, "протоколы защиты сняты!")
-		var/turf/T = get_turf(src)
-		do_sparks(5, FALSE, T)
-		playsound(T, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
+		var/turf/our_turf = get_turf(src)
+		do_sparks(5, FALSE, our_turf)
+		playsound(our_turf, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 
 /obj/effect/portal/jaunt_tunnel
 	name = "jaunt tunnel"
@@ -94,10 +95,10 @@
 	icon_state = "bhole3"
 	desc = "Стабильная дыра во вселенной, созданная генератором червоточин. Слово \"турбулентный\" не передаёт, насколько жёстким может быть прохождение через неё, но по крайней мере она всегда доставит вас куда-то рядом с маяком."
 	failchance = 0
-	var/emagged = FALSE
+	light_on = FALSE
 
 /obj/effect/portal/jaunt_tunnel/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "стабильная червоточина",
 		GENITIVE = "стабильной червоточины",
 		DATIVE = "стабильной червоточине",
@@ -109,32 +110,70 @@
 /obj/effect/portal/jaunt_tunnel/update_overlays()
 	. = list()	// we need no mask here
 
-/obj/effect/portal/jaunt_tunnel/can_teleport(atom/movable/M, silent = FALSE)
-	if(!emagged && ismegafauna(M))
+/obj/effect/portal/jaunt_tunnel/can_teleport(atom/movable/movable, silent = FALSE)
+	if(!emagged && ismegafauna(movable))
 		return FALSE
 	return ..()
 
-/obj/effect/portal/jaunt_tunnel/teleport(atom/movable/M)
+/obj/effect/portal/jaunt_tunnel/teleport(atom/movable/movable)
 	. = ..()
-	if(.)
-		// KERPLUNK
-		playsound(M,'sound/weapons/resonator_blast.ogg', 50, TRUE)
-		if(iscarbon(M))
-			var/mob/living/carbon/L = M
-			L.Weaken(12 SECONDS)
-			if(ishuman(L))
-				shake_camera(L, 20, 1)
-				addtimer(CALLBACK(L, TYPE_PROC_REF(/mob/living/carbon, vomit)), 20)
+	if(!.)
+		return .
+	playsound(movable, 'sound/weapons/resonator_blast.ogg', 50, TRUE)
+
+	if(!iscarbon(movable))
+		return
+
+	var/mob/living/carbon/living_target = movable
+	if(emagged && ishuman(living_target)) //we need to check this first, because after weaken all held items will be dropped
+		handle_clothing_destruction(living_target)
+	living_target.Weaken(12 SECONDS)
+
+	if(!ishuman(living_target))
+		return
+
+	shake_camera(living_target, 20, 1)
+	addtimer(CALLBACK(living_target, TYPE_PROC_REF(/mob/living/carbon, vomit)), 2 SECONDS)
+
+/obj/effect/portal/jaunt_tunnel/proc/handle_clothing_destruction(mob/living/carbon/human/our_human)
+	if(!ishuman(our_human))
+		return
+
+	var/list/possible_clothings = list()
+	var/obj/item/suit_item = our_human.s_store
+	if(suit_item && !(suit_item.item_flags & ABSTRACT))
+		possible_clothings += suit_item
+	var/obj/item/backpack = our_human.back
+	if(backpack && !(backpack.item_flags & ABSTRACT))
+		possible_clothings += backpack
+
+	// The "we really need held_items() proc" code block
+	var/obj/item/hand_item = our_human.l_hand
+	if(hand_item && !(hand_item.item_flags & ABSTRACT))
+		possible_clothings += hand_item
+	var/obj/item/second_hand_item = our_human.r_hand
+	if(second_hand_item && !(second_hand_item.item_flags & ABSTRACT))
+		possible_clothings += second_hand_item
+
+	if(!length(possible_clothings))
+		return
+
+	var/obj/item/picked_item = pick(possible_clothings)
+	if(picked_item.resistance_flags & FIRE_PROOF || picked_item.resistance_flags & LAVA_PROOF)
+		return
+	our_human.temporarily_remove_item_from_inventory(picked_item)
+	to_chat(our_human, span_warning("[DECLENT_RU_CAP(picked_item, NOMINATIVE)] не выдерживает температуры и разрушается!"))
+	qdel(picked_item)
 
 /obj/item/grenade/jaunter_grenade
 	name = "chasm jaunter recovery grenade"
-	desc = "Граната \"НТ-Пьяный набор\". Первоначально созданная Нанотрейзен для поиска всех маяков в области и создания червоточин к ним, теперь используется шахтёрами для спасения коллег из пропастей."
+	desc = "Граната \"НТ-Пьяный набор\". Первоначально созданная \"Нанотрейзен\" для поиска всех маяков в области и создания червоточин к ним, теперь используется шахтёрами для спасения коллег из пропастей."
 	icon_state = "mirage"
 	/// Mob that threw the grenade.
 	var/mob/living/thrower
 
 /obj/item/grenade/jaunter_grenade/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "граната спасения из пропасти",
 		GENITIVE = "гранаты спасения из пропасти",
 		DATIVE = "гранате спасения из пропасти",

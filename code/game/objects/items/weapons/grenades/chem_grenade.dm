@@ -6,7 +6,7 @@
 	force = 2
 	var/prime_sound = 'sound/items/screwdriver2.ogg'
 	var/stage = GRENADE_EMPTY
-	var/list/beakers = list()
+	var/list/obj/item/beakers = list()
 	var/list/allowed_containers = list(/obj/item/reagent_containers/glass/beaker, /obj/item/reagent_containers/glass/bottle)
 	var/affected_area = 3
 	var/obj/item/assembly_holder/nadeassembly = null
@@ -31,8 +31,7 @@
 
 /obj/item/grenade/chem_grenade/Destroy()
 	QDEL_NULL(nadeassembly)
-	if(!no_splash)
-		QDEL_LIST(beakers)
+	QDEL_LIST(beakers)
 	return ..()
 
 /obj/item/grenade/chem_grenade/examine(mob/user)
@@ -132,7 +131,7 @@
 		owner.visible_message(span_danger("[attack_text] hits [owner]'s [src], setting it off! What a shot!"))
 		add_attack_logs(P.firer, owner, "A projectile ([hitby]) detonated a grenade held", ATKLOG_FEW)
 		prime()
-		return 1 //It hit the grenade, not them
+		return HIT_RESULT_SUCCESS //It hit the grenade, not them
 
 /obj/item/grenade/chem_grenade/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/hand_labeler))
@@ -307,6 +306,7 @@
 		nadeassembly.on_found(finder)
 
 /obj/item/grenade/chem_grenade/hear_talk(mob/living/M, list/message_pieces)
+	. = ..()
 	if(nadeassembly)
 		nadeassembly.hear_talk(M, message_pieces)
 
@@ -576,24 +576,35 @@
 
 /obj/item/grenade/chem_grenade/cleaner/everything
 	payload_name = "melter"
-	desc = "Внутри этой гранаты находятся наниты Синдиката с чёрного рынка, которые поглощают всё, с чем сталкиваются. Органы, одежда, пульты, люди. Ничто не в безопасности.<br>Теперь с новым пенящимся аппликатором!"
+	desc = "Внутри этой гранаты находятся наниты \"Синдиката\" с чёрного рынка, которые поглощают всё, с чем сталкиваются. Органы, одежда, пульты, люди. Ничто не в безопасности.<br>Теперь с новым пенящимся аппликатором!"
 	cleaning_chem = "admincleaner_all"
 
 /obj/item/grenade/chem_grenade/cleaner/object
 	payload_name = "object dissolving"
-	desc = "Внутри этой гранаты находятся наниты Синдиката с чёрного рынка, которые, как ни странно, поглощают только предметы, оставляя живых существ и более крупные машины в покое.<br>Теперь с новым пенообразующим аппликатором!"
+	desc = "Внутри этой гранаты находятся наниты \"Синдиката\" с чёрного рынка, которые, как ни странно, поглощают только предметы, оставляя живых существ и более крупные машины в покое.<br>Теперь с новым пенообразующим аппликатором!"
 	cleaning_chem = "admincleaner_item"
 
 /obj/item/grenade/chem_grenade/cleaner/organic
 	payload_name = "organic dissolving"
-	desc = "Внутри этой гранаты находятся наниты Синдиката с чёрного рынка, которые жаждут живых существ и их органов, кремниевых или органических, мёртвых или живых.<br>Теперь с новым пенящимся аппликатором!"
+	desc = "Внутри этой гранаты находятся наниты \"Синдиката\" с чёрного рынка, которые жаждут живых существ и их органов, кремниевых или органических, мёртвых или живых.<br>Теперь с новым пенящимся аппликатором!"
 	cleaning_chem = "admincleaner_mob"
 
 /obj/item/grenade/chem_grenade/teargas
 	payload_name = "teargas"
-	desc = "Used for nonlethal riot control. Contents under pressure. Do not directly inhale contents."
+	desc = "Взрывчатое устройство, предназначенное для ручного подрыва. \
+			При детонации испускает облако слезоточивого газа."
 	icon_state = "teargas"
 	stage = GRENADE_READY
+
+/obj/item/grenade/chem_grenade/teargas/get_ru_names()
+	return alist(
+		NOMINATIVE = "газовая граната (Капсаицин)",
+		GENITIVE = "газовой гранаты (Капсаицин)",
+		DATIVE = "газовой гранате (Капсаицин)",
+		ACCUSATIVE = "газовую гранату (Капсаицин)",
+		INSTRUMENTAL = "газовой гранатой (Капсаицин)",
+		PREPOSITIONAL = "газовой гранате (Капсаицин)"
+	)
 
 /obj/item/grenade/chem_grenade/teargas/Initialize(mapload)
 	. = ..()

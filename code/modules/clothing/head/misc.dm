@@ -5,7 +5,7 @@
 	icon_state = "centcom"
 	desc = "It's good to be emperor."
 	item_state = "centhat"
-	armor = list(MELEE = 30, BULLET = 15, LASER = 30, ENERGY = 10, BOMB = 25, BIO = 0, RAD = 0, FIRE = 50, ACID = 50)
+	armor = list(MELEE = 30, BULLET = 15, LASER = 30, ENERGY = 10, BOMB = 25, BIO = 0, FIRE = 50, ACID = 50)
 	strip_delay = 80
 
 /obj/item/clothing/head/hairflower
@@ -76,6 +76,7 @@
 	icon_state = "syndicate-helm-black-red"
 	item_state = "syndicate-helm-black-red"
 	desc = "A plastic replica of a syndicate agent's space helmet, you'll look just like a real murderous syndicate agent in this! This is a toy, it is not made for use in space!"
+	clothing_flags = parent_type::clothing_flags|STACKABLE_HELMET_EXEMPT
 	flags_inv = HIDEMASK|HIDEHEADSETS|HIDEGLASSES|HIDENAME|HIDEHAIR
 	undyeable = TRUE
 	sprite_sheets = list(
@@ -238,7 +239,6 @@
 	icon_state = "fedora"
 	item_state = "fedora"
 	desc = "A great hat ruined by being within fifty yards of you."
-	actions_types = list(/datum/action/item_action/tip_fedora)
 
 	sprite_sheets = list(
 		SPECIES_VOX = 'icons/mob/clothing/species/vox/head.dmi',
@@ -248,6 +248,10 @@
 		SPECIES_NEARA = 'icons/mob/clothing/species/monkey/head.dmi',
 		SPECIES_STOK = 'icons/mob/clothing/species/monkey/head.dmi',
 	)
+
+/obj/item/clothing/head/fedora/ComponentInitialize()
+	. = ..()
+	AddElement(/datum/element/right_click_mapper/attack_self, "Поправить федору")
 
 /obj/item/clothing/head/fedora/attack_self(mob/user)
 	tip_fedora(user)
@@ -385,14 +389,14 @@
 	name = "officers beret"
 	desc = "A black beret adorned with the shield—a silver kite shield with an engraved sword—of the Nanotrasen security forces, announcing to the world that the wearer is a defender of Nanotrasen."
 	icon_state = "beret_centcom_officer"
-	armor = list(MELEE = 40, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 0, RAD = 0, FIRE = 20, ACID = 50)
+	armor = list(MELEE = 40, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 0, FIRE = 20, ACID = 50)
 	strip_delay = 60
 
 /obj/item/clothing/head/beret/centcom/officer/navy
 	name = "navy blue officers beret"
 	desc = "A navy blue beret adorned with the shield—a silver kite shield with an engraved sword—of the Nanotrasen security forces, announcing to the world that the wearer is a defender of Nanotrasen."
 	icon_state = "beret_centcom_officer_navy"
-	armor = list(MELEE = 40, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 0, RAD = 0, FIRE = 20, ACID = 50)
+	armor = list(MELEE = 40, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 0, FIRE = 20, ACID = 50)
 
 /obj/item/clothing/head/beret/centcom/officer/sparkyninja_beret
 	name = "royal marines commando beret"
@@ -492,6 +496,10 @@
 	)
 	actions_types = list(/datum/action/item_action/caw)
 
+/obj/item/clothing/head/griffin/ComponentInitialize()
+	. = ..()
+	AddElement(/datum/element/right_click_mapper/attack_self, "Каркнуть")
+
 /obj/item/clothing/head/griffin/attack_self()
 	caw()
 
@@ -505,6 +513,20 @@
 	desc = "A hat suitable for any man of high and exalted rank."
 	icon_state = "lordadmiralhat"
 	item_state = "lordadmiralhat"
+
+/obj/item/clothing/head/lordadmiralhat/admiral
+	name = "admiral hat"
+	desc = "Шляпа снятая с головы самого адмирала флота НТ. Или ССП? ТСФ? Не важно. Она снята с головы о-о-очень важной шишки."
+
+/obj/item/clothing/head/lordadmiralhat/admiral/get_ru_names()
+	return alist(
+		NOMINATIVE = "адмиральская шляпа",
+		GENITIVE = "адмиральской шляпы",
+		DATIVE = "адмиральской шляпе",
+		ACCUSATIVE = "адмиральскую шляпу",
+		INSTRUMENTAL = "адмиральской шляпы",
+		PREPOSITIONAL = "адмиральской шляпе",
+	)
 
 /obj/item/clothing/head/human_head
 	name = "bloated human head"
@@ -547,7 +569,7 @@
 	name = "crown"
 	desc = "A crown fit for a king, a petty king maybe."
 	icon_state = "crown"
-	armor = list(MELEE = 15, BULLET = 0, LASER = 0,ENERGY = 15, BOMB = 0, BIO = 0, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 15, BULLET = 0, LASER = 0,ENERGY = 15, BOMB = 0, BIO = 0, FIRE = 100, ACID = 50)
 	resistance_flags = FIRE_PROOF
 
 /obj/item/clothing/head/crown/fancy
@@ -578,7 +600,7 @@
 	desc = "Голова мёртвого всадника, очищенная от чешуи, крови и внутренних органов во время разделки. Вселяет страх в ваших врагов."
 	icon_state = "scorched_skull"
 	item_state = "scorched_skull"
-	armor = list(MELEE = 50, BULLET = 10, LASER = 10, ENERGY = 10, BOMB = 10, BIO = 0, RAD = 0, FIRE = 60, ACID = 60)
+	armor = list(MELEE = 50, BULLET = 10, LASER = 10, ENERGY = 10, BOMB = 10, BIO = 0, FIRE = 60, ACID = 60)
 	w_class = WEIGHT_CLASS_TINY
 	flags_cover = HEADCOVERSEYES
 	flags_inv = HIDENAME|HIDEHAIR
@@ -594,7 +616,7 @@
 	)
 
 /obj/item/clothing/head/scorched_skull/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "обожжённый череп",
 		GENITIVE = "обожжённого черепа",
 		DATIVE = "обожжённому черепу",
@@ -623,7 +645,7 @@
 	)
 
 /obj/item/clothing/head/roach/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "роуч",
 		GENITIVE = "роуча",
 		DATIVE = "роучу",
@@ -700,3 +722,32 @@
 		SPECIES_GREY = 'icons/mob/clothing/species/grey/head.dmi',
 		SPECIES_DRASK = 'icons/mob/clothing/species/drask/head.dmi',
 	)
+
+/obj/item/clothing/head/colour/headband
+	name = "headband"
+	desc = "Кусок ткани, оборачиваемый вокруг головы."
+	gender = FEMALE
+	icon_state = "headband"
+	item_state = "headband"
+	w_class = WEIGHT_CLASS_TINY
+	sprite_sheets = list(
+		SPECIES_VOX = 'icons/mob/clothing/species/vox/head.dmi',
+		SPECIES_GREY = 'icons/mob/clothing/species/grey/head.dmi',
+		SPECIES_DRASK = 'icons/mob/clothing/species/drask/head.dmi',
+		SPECIES_MONKEY = 'icons/mob/clothing/species/monkey/head.dmi',
+	)
+
+/obj/item/clothing/head/colour/headband/get_ru_names()
+	return alist(
+		NOMINATIVE = "повязка на голову",
+		GENITIVE = "повязки на голову",
+		DATIVE = "повязке на голову",
+		ACCUSATIVE = "повязку на голову",
+		INSTRUMENTAL = "повязкой на голову",
+		PREPOSITIONAL = "повязке на голову",
+	)
+
+/obj/item/clothing/head/colour/headband/Initialize(mapload)
+	. = ..()
+	AddComponent(/datum/component/spraycan_paintable)
+

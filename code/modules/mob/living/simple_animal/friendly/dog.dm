@@ -47,7 +47,7 @@
 /mob/living/simple_animal/pet/dog/verb/chasetail()
 	set name = "Гоняться за хвостом"
 	set desc = "d'awwww."
-	set category = STATPANEL_DOG
+	set category = VERB_CATEGORY_DOG
 
 	visible_message("[src] [pick("dances around", "chases [p_their()] tail")].", "[pick("You dance around", "You chase your tail")].")
 	spin(20, 1)
@@ -276,7 +276,7 @@
 
 		if(health <= 0)
 			head_icon = DF.get_overlay(dir = EAST)
-			head_icon.pixel_y = -8
+			head_icon.pixel_z = -8
 			head_icon.transform = turn(head_icon.transform, 180)
 		else
 			head_icon = DF.get_overlay()
@@ -296,7 +296,7 @@
 
 		if(health <= 0)
 			back_icon = DF.get_overlay(dir = EAST)
-			back_icon.pixel_y = -11
+			back_icon.pixel_z = -11
 			back_icon.transform = turn(back_icon.transform, 180)
 		else
 			back_icon = DF.get_overlay()
@@ -307,7 +307,7 @@
 		"speak" = CALLBACK(src, PROC_REF(handle_automated_speech), TRUE),
 		"wear_hat" = CALLBACK(src, PROC_REF(find_new_hat)),
 		"drop_hat" = CALLBACK(src, PROC_REF(drop_hat)),
-		"spin" = CALLBACK(src, TYPE_PROC_REF(/mob, emote), "spin")), cooldown, CALLBACK(src, PROC_REF(end_dchat_plays)))
+		"spin" = CALLBACK(src, TYPE_PROC_REF(/mob, emote), "spin")), cooldown, CALLBACK(src, PROC_REF(stop_deadchat_plays)))
 
 	if(. == COMPONENT_INCOMPATIBLE)
 		return
@@ -324,7 +324,7 @@
 			possible_headwear += item
 	if(!length(possible_headwear))
 		for(var/obj/item/item in orange(1))
-			if(ispath(item.dog_fashion, /datum/dog_fashion/head) && Adjacent(item))
+			if(ispath(item.dog_fashion, /datum/dog_fashion/head) && item.IsReachableBy(src))
 				possible_headwear += item
 	if(!length(possible_headwear))
 		return
@@ -332,13 +332,13 @@
 		inventory_head.forceMove(drop_location())
 		inventory_head = null
 	place_on_head(pick(possible_headwear))
-	visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] надева[PLUR_ET_YUT(src)] [inventory_head.declent_ru(ACCUSATIVE)] на голову каким-то образом."))
+	visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] надева[PLUR_ET_YUT(src)] [inventory_head.declent_ru(ACCUSATIVE)] на голову каким-то образом."))
 
 ///Deadchat plays command that drops the current hat off Ian.
 /mob/living/simple_animal/pet/dog/corgi/proc/drop_hat()
 	if(!inventory_head)
 		return
-	visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] энергично тряс[PLUR_YOT_UT(src)] головой, бросая [inventory_head.declent_ru(ACCUSATIVE)] на землю."))
+	visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] энергично тряс[PLUR_YOT_UT(src)] головой, бросая [inventory_head.declent_ru(ACCUSATIVE)] на землю."))
 	inventory_head.forceMove(drop_location())
 	inventory_head = null
 	update_dog_fluff()
@@ -361,9 +361,12 @@
 	. = ..()
 	SSpersistent_data.register(src)
 
+/mob/living/simple_animal/pet/dog/corgi/Ian/Destroy(force)
+	SSpersistent_data.registered_atoms -= src
+	return ..()
+
 /mob/living/simple_animal/pet/dog/corgi/Ian/death(gibbed)
 	write_memory(TRUE)
-	SSpersistent_data.registered_atoms -= src // We already wrote here, dont overwrite!
 	..()
 
 /mob/living/simple_animal/pet/dog/corgi/Ian/persistent_load()
@@ -679,7 +682,7 @@
 	bark_sound = null	//No robo-bjork...
 	yelp_sound = null	//Or robo-Yelp.
 	tts_seed = "Glados"
-	var/emagged = 0
+	var/emagged = FALSE
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 	loot = list(/obj/effect/decal/cleanable/blood/gibs/robot)
 	del_on_death = 1
@@ -778,7 +781,7 @@
 	health = 30
 
 /mob/living/simple_animal/pet/dog/pug/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "мопс",
 		GENITIVE = "мопса",
 		DATIVE = "мопсу",

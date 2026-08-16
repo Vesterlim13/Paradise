@@ -29,8 +29,7 @@
 /area/survivalpod)
 "f" = (
 /obj/structure/sign/mining/survival{
-	dir = 4;
-	tag = "icon-survival (EAST)"
+	dir = 4
 	},
 /obj/structure/disposalpipe/segment{
 	dir = 9
@@ -39,8 +38,7 @@
 /area/survivalpod)
 "g" = (
 /obj/structure/sign/mining/survival{
-	dir = 4;
-	tag = "icon-survival (EAST)"
+	dir = 4
 	},
 /obj/structure/disposalpipe/segment{
 	dir = 1
@@ -101,7 +99,7 @@
 /obj/structure/table/wood/fancy/black,
 /obj/item/book/manual/barman_recipes,
 /obj/item/reagent_containers/food/drinks/shaker,
-/obj/item/reagent_containers/glass/rag,
+/obj/item/rag,
 /turf/simulated/floor/pod,
 /area/survivalpod)
 "s" = (
@@ -123,8 +121,7 @@
 	dir = 8
 	},
 /obj/machinery/light/small{
-	dir = 4;
-	tag = "icon-bulb1 (EAST)"
+	dir = 4
 	},
 /turf/simulated/floor/pod,
 /area/survivalpod)
@@ -134,8 +131,7 @@
 /area/survivalpod)
 "y" = (
 /obj/structure/sign/mining/survival{
-	dir = 4;
-	tag = "icon-survival (EAST)"
+	dir = 4
 	},
 /obj/structure/disposalpipe/junction{
 	dir = 4
@@ -171,10 +167,7 @@
 /turf/simulated/floor/pod,
 /area/survivalpod)
 "I" = (
-/obj/structure/sink{
-	dir = 4;
-	pixel_x = 12
-	},
+/obj/structure/sink/directional/west,
 /obj/machinery/light/small{
 	dir = 1
 	},
@@ -221,8 +214,7 @@
 /area/survivalpod)
 "W" = (
 /obj/structure/sign/mining/survival{
-	dir = 4;
-	tag = "icon-survival (EAST)"
+	dir = 4
 	},
 /turf/simulated/wall/mineral/titanium/survival,
 /area/survivalpod)

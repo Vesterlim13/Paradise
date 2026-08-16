@@ -1,4 +1,4 @@
-#define SPACE_DRAGON_SPAWN_THRESHOLD 55
+#define SPACE_DRAGON_SPAWN_THRESHOLD 45
 
 /datum/event/space_dragon
 	announceWhen = 45
@@ -9,7 +9,7 @@
 		GLOB.major_announcement.announce(
 			message = "Зафиксирован большой поток органической энергии вблизи станции [station_name()]. Пожалуйста, ожидайте.",
 			new_title = ANNOUNCE_CCPARANORMAL_RU,
-			new_sound = 'sound/AI/commandreport.ogg'
+			new_sound = SSstation.announcer.get_rand_report_sound(),
 		)
 	else
 		log_and_message_admins("Warning: Could not spawn any mobs for event Space Dragon")

@@ -161,8 +161,10 @@
 
 /obj/machinery/airlock_sensor/process()
 	if(on)
-		var/datum/gas_mixture/air_sample = return_air()
-		var/pressure = round(air_sample.return_pressure(),0.1)
+		var/turf/location = get_turf(src)
+
+		var/datum/gas_mixture/air_sample = location.get_readonly_air()
+		var/pressure = round(air_sample.return_pressure(), 0.1)
 
 		if(abs(pressure - previousPressure) > 0.001 || previousPressure == null)
 			var/datum/signal/signal = new
@@ -218,6 +220,10 @@
 				2=Network Access
 	*/
 
+
+MAPPING_BUTTON_HELPERS(/obj/machinery/access_button, 25, 7)
+MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/access_button, 24, 24)
+
 /obj/machinery/access_button/update_icon_state()
 	if(on)
 		icon_state = "access_button_standby"
@@ -250,7 +256,7 @@
 
 	if(!allowed(user) && (wires & 1) && !user.can_advanced_admin_interact())
 		to_chat(user, span_warning("Access denied."))
-		playsound(src, pick('sound/machines/button.ogg', 'sound/machines/button_alternate.ogg', 'sound/machines/button_meloboom.ogg'), 20)
+		playsound(src, SFX_BUTTON_DENIED, 20)
 
 	else if(radio_connection)
 		var/datum/signal/signal = new

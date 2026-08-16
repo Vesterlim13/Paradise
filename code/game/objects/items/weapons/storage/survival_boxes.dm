@@ -12,33 +12,53 @@
 // MARK: Base survival box
 /obj/item/storage/box/survival
 	icon_state = "box_civ"
+	/// Our breathmask
 	var/breathmask = /obj/item/clothing/mask/breath
+	/// Our internals
 	var/internals = /obj/item/tank/internals/emergency_oxygen
-	var/first_aid = /obj/item/storage/firstaid/crew
+	/// What we give to the players with premium internals trait
+	var/premium_internals = /obj/item/tank/internals/emergency_oxygen/double
+	/// Our standart medkit
+	var/first_aid = /obj/item/storage/firstaid/crew/full
+	/// Our standart glowstick
 	var/glowstick = /obj/item/flashlight/flare/glowstick/blue
+	/// Our first healing item with premium internals trait
+	var/bruise_pack = /obj/item/stack/medical/bruise_pack/advanced
+	/// Our second healing item with premium internals trait
+	var/ointment_pack = /obj/item/stack/medical/ointment/advanced
 
 /obj/item/storage/box/survival/populate_contents()
 	if(breathmask)
 		new breathmask(src)
-	if(internals)
+	if(internals && !HAS_TRAIT(SSstation, STATION_TRAIT_PREMIUM_INTERNALS))
 		new internals(src)
-	if(first_aid)
+	if(premium_internals && HAS_TRAIT(SSstation, STATION_TRAIT_PREMIUM_INTERNALS))
+		new premium_internals(src)
+	if(first_aid && !HAS_TRAIT(SSstation, STATION_TRAIT_CRAMPED_INTERNALS))
 		new first_aid(src)
-	if(glowstick)
+	if(glowstick && !HAS_TRAIT(SSstation, STATION_TRAIT_CRAMPED_INTERNALS))
 		new glowstick(src)
+
+	if(bruise_pack && HAS_TRAIT(SSstation, STATION_TRAIT_PREMIUM_INTERNALS))
+		new bruise_pack(src)
+	if(ointment_pack && HAS_TRAIT(SSstation, STATION_TRAIT_PREMIUM_INTERNALS))
+		new ointment_pack(src)
 
 //MARK: Job-specific survival boxes
 /obj/item/storage/box/survival/brigphys
 	icon_state = "box_brigphys"
+	item_state = "sec"
 
 /obj/item/storage/box/survival/engineer
 	icon_state = "box_eng"
+	item_state = "eng"
 	internals = /obj/item/tank/internals/emergency_oxygen/engi
 
 /obj/item/storage/box/survival/survival_mining
 	icon_state = "box_min"
 	breathmask = /obj/item/clothing/mask/gas/explorer/folded
 	internals = /obj/item/tank/internals/emergency_oxygen/engi
+	item_state = "mining"
 
 /obj/item/storage/box/survival/survival_mining/populate_contents()
 	. = ..()
@@ -50,6 +70,7 @@
 	breathmask = /obj/item/clothing/mask/gas/sechailer/folded
 	internals = /obj/item/tank/internals/emergency_oxygen/engi/sec
 	glowstick = /obj/item/flashlight/flare/glowstick/red
+	item_state = "sec"
 
 /obj/item/storage/box/survival/survival_security/populate_contents()
 	. = ..()
@@ -59,6 +80,7 @@
 
 /obj/item/storage/box/survival/survival_security/hos
 	icon_state = "box_hos"
+	item_state = "hos"
 
 /obj/item/storage/box/survival/survival_security/cadet
 	icon_state = "box_cadet"
@@ -75,6 +97,7 @@
 /obj/item/storage/box/survival/survival_laws
 	icon_state = "box_avd"
 	glowstick = /obj/item/flashlight/flare/glowstick/pink
+	item_state = "sec"
 
 /obj/item/storage/box/survival/survival_laws/populate_contents()
 	. = ..()
@@ -83,10 +106,12 @@
 	new /obj/item/camera(src)
 
 /obj/item/storage/box/survival/survival_laws/magisraka
-	icon_state = "box_magisraka"
+	icon_state = "box_magistrate"
+	item_state = "magistrate"
 
 /obj/item/storage/box/survival/survival_syndi
 	icon_state = "box_syndi"
+	item_state = "syndie"
 	breathmask = /obj/item/clothing/mask/gas/syndicate
 	internals = /obj/item/tank/internals/emergency_oxygen/engi/syndi
 	first_aid = null
@@ -102,6 +127,7 @@
 /obj/item/storage/box/survival/centcomofficer
 	name = "officer kit"
 	icon_state = "box_ert"
+	item_state = "ert"
 	storage_slots = 14
 	max_combined_w_class = 20
 	breathmask = /obj/item/clothing/mask/gas/sechailer/folded
@@ -127,6 +153,7 @@
 	name = "boxed survival kit"
 	desc = "A standard issue Soviet military survival kit."
 	icon_state = "box_soviet"
+	item_state = "green"
 
 /obj/item/storage/box/survival/soviet/populate_contents()
 	new /obj/item/clothing/mask/breath(src)
@@ -144,15 +171,16 @@
 /obj/item/storage/box/survival/responseteam
 	name = "boxed survival kit"
 	icon_state = "box_ert"
+	item_state = "ert"
+	breathmask = /obj/item/clothing/mask/gas/sechailer/folded
+	internals = /obj/item/tank/internals/emergency_oxygen/engi
+	glowstick = /obj/item/flashlight/flare
 
 /obj/item/storage/box/survival/responseteam/populate_contents()
-	new /obj/item/clothing/mask/gas/sechailer/folded(src)
-	new /obj/item/tank/internals/emergency_oxygen/engi(src)
-	new /obj/item/flashlight/flare(src)
+	. = ..()
 	new /obj/item/crowbar/small(src)
 	new /obj/item/kitchen/knife/combat(src)
 	new /obj/item/radio/centcom(src)
-	new /obj/item/storage/firstaid/crew(src)
 	new /obj/item/stack/medical/bruise_pack/military(src)
 
 // ERT set for trial admins
@@ -212,7 +240,7 @@
 	new /obj/item/clothing/under/rank/medical (src)
 	new /obj/item/pda/heads/ert/medical (src)
 	new /obj/item/card/id/ert/registration/medic (src)
-	new /obj/item/clothing/shoes/white (src)
+	new /obj/item/clothing/shoes/color/white (src)
 	new /obj/item/clothing/gloves/combat (src)
 	new /obj/item/clothing/suit/armor/vest/ert/medical (src)
 	new /obj/item/gun/energy/gun/pdw9/ert (src)
@@ -309,7 +337,7 @@
 	new /obj/item/clothing/glasses/sunglasses (src)
 	new /obj/item/clothing/mask/gas/sechailer/swat (src)
 	new /obj/item/gun/energy/gun/pdw9/ert (src)
-	new /obj/item/gun/projectile/automatic/pistol/sp8/sp8t (src)
+	new /obj/item/gun/projectile/automatic/pistol/sp8 (src)
 	new /obj/item/storage/backpack/ert/commander/trialmoment/prespawn (src)
 
 /obj/item/storage/backpack/ert/commander/trialmoment/prespawn/populate_contents()
@@ -335,14 +363,14 @@
 	new /obj/item/clothing/shoes/combat (src)
 	new /obj/item/clothing/gloves/combat (src)
 	new /obj/item/clothing/suit/space/hardsuit/ert/security (src)
-	new /obj/item/gun/projectile/automatic/lasercarbine (src)
+	new /obj/item/gun/projectile/automatic/ik60 (src)
 	new /obj/item/clothing/glasses/night (src)
 	new /obj/item/clothing/mask/gas/sechailer/swat (src)
 	new /obj/item/storage/backpack/ert/security/trialmoment/prespawn (src)
 
 /obj/item/storage/backpack/ert/security/trialmoment/prespawn/populate_contents()
 	new /obj/item/storage/box/survival/responseteam (src)
-	new	/obj/item/gun/projectile/automatic/pistol/sp8/sp8t (src)
+	new	/obj/item/gun/projectile/automatic/pistol/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
@@ -350,8 +378,8 @@
 	new /obj/item/storage/box/handcuffs (src)
 	new /obj/item/grenade/flashbang (src)
 	new /obj/item/grenade/flashbang (src)
-	new/obj/item/ammo_box/magazine/laser (src)
-	new/obj/item/ammo_box/magazine/laser (src)
+	new/obj/item/ammo_box/magazine/ik60mag (src)
+	new/obj/item/ammo_box/magazine/ik60mag (src)
 	new /obj/item/gun/energy/gun/pdw9/ert (src)
 	new /obj/item/implanter/mindshield/ert (src)
 	new /obj/item/implanter/death_alarm (src)
@@ -376,7 +404,7 @@
 
 /obj/item/storage/backpack/ert/engineer/trialmoment/prespawn/populate_contents()
 	new /obj/item/storage/box/survival/responseteam (src)
-	new /obj/item/gun/projectile/automatic/pistol/sp8/sp8t (src)
+	new /obj/item/gun/projectile/automatic/pistol/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/rcd/preloaded (src)
@@ -395,7 +423,7 @@
 	new /obj/item/clothing/under/rank/medical (src)
 	new /obj/item/pda/heads/ert/medical (src)
 	new /obj/item/card/id/ert/registration/medic (src)
-	new /obj/item/clothing/shoes/white (src)
+	new /obj/item/clothing/shoes/color/white (src)
 	new /obj/item/clothing/gloves/combat (src)
 	new /obj/item/clothing/suit/space/hardsuit/ert/medical (src)
 	new /obj/item/clothing/glasses/hud/health/sunglasses (src)
@@ -407,7 +435,7 @@
 
 /obj/item/storage/backpack/ert/medical/trialmoment/prespawn/populate_contents()
 	new /obj/item/storage/box/survival/responseteam (src)
-	new /obj/item/gun/projectile/automatic/pistol/sp8/sp8t (src)
+	new /obj/item/gun/projectile/automatic/pistol/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/storage/firstaid/ertm (src)
@@ -452,7 +480,7 @@
 	new /obj/item/holosign_creator/janitor (src)
 	new /obj/item/flashlight (src)
 	new /obj/item/melee/flyswatter (src)
-	new /obj/item/gun/projectile/automatic/pistol/sp8/sp8t (src)
+	new /obj/item/gun/projectile/automatic/pistol/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/ammo_box/magazine/sp8 (src)
 	new /obj/item/implanter/mindshield/ert (src)
@@ -472,14 +500,20 @@
 
 /obj/item/storage/box/survival/species/vox
 	icon_state = "box_vox"
+	item_state = "vox"
 	breathmask = /obj/item/clothing/mask/breath/vox
 	internals = /obj/item/tank/internals/emergency_oxygen/nitrogen
+	premium_internals = /obj/item/tank/internals/emergency_oxygen/double/vox
 
 /obj/item/storage/box/survival/species/machine
 	icon_state = "box_machine"
+	item_state = "mech"
 	breathmask = null
 	internals = null
+	premium_internals = null
 	first_aid = null
+	bruise_pack = /obj/item/stack/nanopaste
+	ointment_pack = /obj/item/stack/nanopaste
 
 /obj/item/storage/box/survival/species/machine/create_species_specific_items(obj/item/storage/box/place)
 	new /obj/item/weldingtool/mini(place)
@@ -487,10 +521,14 @@
 
 /obj/item/storage/box/survival/species/nucleation
 	icon_state = "box_nucleation"
+	item_state = "eng"
 	breathmask = null
 	internals = null
+	premium_internals = null
 	first_aid = /obj/item/storage/firstaid/crew/nucleation
 
 /obj/item/storage/box/survival/species/plasmaman
 	icon_state = "box_plasma"
+	item_state = "mining"
 	internals = /obj/item/tank/internals/emergency_oxygen/plasma
+	premium_internals = /obj/item/tank/internals/emergency_oxygen/plasma

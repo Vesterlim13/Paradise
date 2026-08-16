@@ -14,7 +14,7 @@
 	var/revive_type = SENTIENCE_ORGANIC //So you can't revive boss monsters or robots with it
 
 /obj/item/lazarus_injector/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "инъектор Лазаря",
 		GENITIVE = "инъектора Лазаря",
 		DATIVE = "инъектору Лазаря",
@@ -26,7 +26,7 @@
 /obj/item/lazarus_injector/update_icon_state()
 	icon_state = "lazarus_[loaded ? "hypo" : "empty"]"
 
-/obj/item/lazarus_injector/afterattack(atom/target, mob/user, proximity_flag, params)
+/obj/item/lazarus_injector/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
 	if(!loaded)
 		return
 	if(isliving(target) && proximity_flag)
@@ -39,10 +39,10 @@
 				M.faction = list("neutral")
 				M.revive()
 				M.can_collar = 1
-				if(istype(target, /mob/living/simple_animal/hostile))
+				if(ishostile(target))
 					var/mob/living/simple_animal/hostile/H = M
 					if(malfunctioning)
-						H.faction |= list("lazarus", "\ref[user]")
+						H.faction |= list("lazarus", PERSONAL_FACTION(user))
 						H.robust_searching = 1
 						H.friends += user
 						H.attack_same = 1
@@ -75,7 +75,7 @@
 /obj/item/lazarus_injector/examine(mob/user)
 	. = ..()
 	if(!loaded)
-		. += span_notice("[capitalize(declent_ru(NOMINATIVE))] пуст.")
+		. += span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] пуст.")
 	if(malfunctioning)
 		. += span_notice("Дисплей [declent_ru(GENITIVE)] мерцает.")
 
@@ -92,7 +92,7 @@
 	var/capture_type = SENTIENCE_ORGANIC //So you can't capture boss monsters or robots with it
 
 /obj/item/mobcapsule/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капсула Лазаря",
 		GENITIVE = "капсулы Лазаря",
 		DATIVE = "капсуле Лазаря",

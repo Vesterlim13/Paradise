@@ -433,6 +433,7 @@
 	icon_medium = "pinonmedium_crew"
 	icon_far = "pinonfar_crew"
 	modes = list(MODE_CREW)
+	custom_price = PAYCHECK_CREW
 
 /obj/item/pinpointer/crew/examine(mob/user)
 	. = ..()
@@ -771,7 +772,7 @@
 	var/obj/item/part_upper/lower/lower = null
 
 /obj/item/pinpointer/clock/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "часовой целеуказатель",
 		GENITIVE = "часового целеуказателя",
 		DATIVE = "часовому целеуказателю",

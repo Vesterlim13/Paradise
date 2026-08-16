@@ -28,29 +28,30 @@
 	if(!istype(our_glasses))
 		update_worn_glasses()
 		return
-
 	if(our_glasses.tint || initial(our_glasses.tint))
 		update_tint()
 	if(our_glasses.prescription)
 		update_nearsighted_effects()
-	if(our_glasses.vision_flags || our_glasses.see_in_dark || our_glasses.invis_override || our_glasses.invis_view || !isnull(our_glasses.lighting_alpha))
+	if(our_glasses.vision_flags || our_glasses.see_in_dark || our_glasses.invis_view || !isnull(our_glasses.lighting_alpha))
 		update_sight()
 		update_client_colour()
-	// Handle eyes shine
 	if(our_glasses.flags_cover & GLASSESCOVERSEYES)
 		update_misc_effects()
-
 	update_worn_glasses()
 
 /**
  * Handle stuff to update when a mob equips/unequips a mask.
  */
-/mob/living/carbon/human/wear_mask_update(obj/item/clothing/mask, toggle_off = FALSE)
+/mob/living/carbon/human/wear_mask_update(obj/item/clothing/mask, toggle_off)
+	mask = mask || wear_mask
+	if(!mask)
+		return
+
 	if(istype(mask) && mask.tint || initial(mask.tint))
 		update_tint()
 
-	if((mask.flags_inv & (HIDEHAIR|HIDEHEADHAIR|HIDEFACIALHAIR)) || \
-		(initial(mask.flags_inv) & (HIDEHAIR|HIDEHEADHAIR|HIDEFACIALHAIR)))
+	if((mask.flags_inv & HIDE_ALL_HAIR) || \
+		(initial(mask.flags_inv) & HIDE_ALL_HAIR))
 		update_hair()	//rebuild hair
 		update_fhair()
 		update_head_accessory()
@@ -89,10 +90,11 @@
 	if(toggle_off && internal && !has_airtight_items())
 		internal = null
 		update_action_buttons_icon()
-
 	if(forced || \
-		(check_item.flags_inv & (HIDEHAIR|HIDEHEADHAIR|HIDEFACIALHAIR)) || \
-		(initial(check_item.flags_inv) & (HIDEHAIR|HIDEHEADHAIR|HIDEFACIALHAIR)))
+		(check_item.flags_inv & HIDE_ALL_HAIR) || \
+		(initial(check_item.flags_inv) & HIDE_ALL_HAIR) || \
+		(check_item.visor_flags_inv & HIDE_ALL_HAIR) || \
+		(initial(check_item.visor_flags_inv) & HIDE_ALL_HAIR))
 		update_hair()	//rebuild hair
 		update_fhair()
 		update_head_accessory()
@@ -109,18 +111,30 @@
 	if(forced || \
 		(check_item.flags_inv & HIDEHEADSETS) || \
 		(check_item.flags_inv_transparent & HIDEHEADSETS) || \
+		(check_item.visor_flags_inv & HIDEHEADSETS) || \
+		(check_item.visor_flags_inv_transparent & HIDEHEADSETS) || \
+		(initial(check_item.visor_flags_inv) & HIDEHEADSETS) || \
+		(initial(check_item.visor_flags_inv_transparent) & HIDEHEADSETS) || \
 		(initial(check_item.flags_inv) & HIDEHEADSETS) || \
 		(initial(check_item.flags_inv_transparent) & HIDEHEADSETS))
 		update_worn_ears()
 	if(forced || \
 		(check_item.flags_inv & HIDEMASK) || \
 		(check_item.flags_inv_transparent & HIDEMASK) || \
+		(check_item.visor_flags_inv & HIDEMASK) || \
+		(check_item.visor_flags_inv_transparent & HIDEMASK) || \
+		(initial(check_item.visor_flags_inv) & HIDEMASK) || \
+		(initial(check_item.visor_flags_inv_transparent) & HIDEMASK) || \
 		(initial(check_item.flags_inv) & HIDEMASK) || \
 		(initial(check_item.flags_inv_transparent) & HIDEMASK))
 		update_worn_mask()
 	if(forced || \
 		(check_item.flags_inv & HIDEGLASSES) || \
 		(check_item.flags_inv_transparent & HIDEGLASSES) || \
+		(check_item.visor_flags_inv & HIDEGLASSES) || \
+		(check_item.visor_flags_inv_transparent & HIDEGLASSES) || \
+		(initial(check_item.visor_flags_inv) & HIDEGLASSES) || \
+		(initial(check_item.visor_flags_inv_transparent) & HIDEGLASSES) || \
 		(initial(check_item.flags_inv) & HIDEGLASSES) || \
 		(initial(check_item.flags_inv_transparent) & HIDEGLASSES))
 		update_worn_glasses()
@@ -136,20 +150,36 @@
  * Handles stuff to update when a mob equips/unequips a suit.
  */
 /mob/living/carbon/human/wear_suit_update(obj/item/clothing/suit)
+	suit = suit || wear_suit
+	if(!suit)
+		return
+
 	if((suit.flags_inv & HIDEJUMPSUIT) || \
 		(suit.flags_inv_transparent & HIDEJUMPSUIT) || \
+		(suit.visor_flags_inv & HIDEJUMPSUIT) || \
+		(suit.visor_flags_inv_transparent & HIDEJUMPSUIT) || \
+		(initial(suit.visor_flags_inv) & HIDEJUMPSUIT) || \
+		(initial(suit.visor_flags_inv_transparent) & HIDEJUMPSUIT) || \
 		(initial(suit.flags_inv) & HIDEJUMPSUIT) || \
 		(initial(suit.flags_inv_transparent) & HIDEJUMPSUIT))
 		update_worn_undersuit()
 
 	if((suit.flags_inv & HIDESHOES) || \
 		(suit.flags_inv_transparent & HIDESHOES) || \
+		(suit.visor_flags_inv & HIDESHOES) || \
+		(suit.visor_flags_inv_transparent & HIDESHOES) || \
+		(initial(suit.visor_flags_inv) & HIDESHOES) || \
+		(initial(suit.visor_flags_inv_transparent) & HIDESHOES) || \
 		(initial(suit.flags_inv) & HIDESHOES) || \
 		(initial(suit.flags_inv_transparent) & HIDESHOES))
 		update_worn_shoes()
 
 	if((suit.flags_inv & HIDEGLOVES) || \
 		(suit.flags_inv_transparent & HIDEGLOVES) || \
+		(suit.visor_flags_inv & HIDEGLOVES) || \
+		(suit.visor_flags_inv_transparent & HIDEGLOVES) || \
+		(initial(suit.visor_flags_inv) & HIDEGLOVES) || \
+		(initial(suit.visor_flags_inv_transparent) & HIDEGLOVES) || \
 		(initial(suit.flags_inv) & HIDEGLOVES) || \
 		(initial(suit.flags_inv_transparent) & HIDEGLOVES))
 		update_worn_gloves()
@@ -325,11 +355,14 @@
 		if(observe.client && observe.client.eye == src && observe.do_observe_target == src)
 			observe.client.screen -= I
 		else
+			observe.handle_when_autoobserve_move()
 			LAZYREMOVE(inventory_observers, observe)
 
 	I.forceMove(src)
 	I.layer = ABOVE_HUD_LAYER
 	SET_PLANE_EXPLICIT(I, ABOVE_HUD_PLANE, src)
+
+	var/not_handled = FALSE
 
 	switch(slot)
 		if(ITEM_SLOT_BACK)
@@ -352,11 +385,11 @@
 			update_legcuffed_status()
 
 		if(ITEM_SLOT_HAND_LEFT)
-			l_hand = I
+			. ||= put_in_l_hand(I)
 			update_held_items()
 
 		if(ITEM_SLOT_HAND_RIGHT)
-			r_hand = I
+			. ||= put_in_r_hand(I)
 			update_held_items()
 
 		if(ITEM_SLOT_BELT)
@@ -428,6 +461,9 @@
 				if(get_active_hand() == I)
 					temporarily_remove_item_from_inventory(I)
 				I.forceMove(back)
+			else if(ismodcontrol(back))
+				var/obj/item/mod/control/control = back
+				I.forceMove(control.bag || drop_location())
 			else
 				I.item_flags &= ~IN_STORAGE
 				I.forceMove(drop_location())
@@ -439,9 +475,32 @@
 			uniform.attackby(I, src)
 
 		else
+			not_handled = TRUE
 			to_chat(src, span_warning("You are trying to equip this item to an unsupported inventory slot. Report this to a coder!"))
+	//Item has been handled at this point and equipped callback can be safely called
+	//We cannot call it for items that have not been handled as they are not yet correctly
+	//in a slot (handled further down inheritance chain, probably living/carbon/human/equip_to_slot
+	if(!not_handled && !(slot & ITEM_SLOT_HANDS)) // put in hands calls equipped on its own, annoyingly
+		return has_equipped(I, slot, initial)
 
-	return I.equipped(src, slot, initial)
+/mob/living/carbon/has_equipped(obj/item/item, slot, initial = FALSE)
+	. = ..()
+	if(!.)
+		return
+
+	hud_used?.update_locked_slots()
+	if(!(slot & item.slot_flags)) // Things below only update if slotted in (ie: not held)
+		return
+	add_item_coverage(item)
+
+
+/mob/living/carbon/has_unequipped(obj/item/item)
+	. = ..()
+	if(!.)
+		return
+
+	hud_used?.update_locked_slots()
+	remove_item_coverage(item)
 
 /**
  * Returns the item currently in the slot
@@ -586,41 +645,19 @@
 
 	return O.equip(src, visualsOnly)
 
+/mob/living/carbon/human/get_visible_items()
+	var/list/visible_items = ..()
+	var/obj/item/clothing/under/under = w_uniform
+
+	if(istype(under) && length(under.accessories) && (under in visible_items))
+		visible_items += under.accessories
+
+	return visible_items
+
 //delete all equipment without dropping anything
 /mob/living/carbon/human/proc/delete_equipment()
 	for(var/slot in get_all_slots())//order matters, dependant slots go first
 		qdel(slot)
-
-/mob/living/carbon/human/get_equipped_items(include_pockets = FALSE, include_hands = FALSE)
-	var/list/items = ..()
-	if(belt)
-		items += belt
-	if(l_ear)
-		items += l_ear
-	if(r_ear)
-		items += r_ear
-	if(glasses)
-		items += glasses
-	if(gloves)
-		items += gloves
-	if(neck)
-		items += neck
-	if(shoes)
-		items += shoes
-	if(wear_id)
-		items += wear_id
-	if(wear_pda)
-		items += wear_pda
-	if(w_uniform)
-		items += w_uniform
-	if(include_pockets)
-		if(l_store)
-			items += l_store
-		if(r_store)
-			items += r_store
-		if(s_store)
-			items += s_store
-	return items
 
 /**
  * Used to return a list of equipped items on a human mob; does not by default include held items, see include_flags
@@ -677,4 +714,96 @@
 /// Returns if the carbon is wearing shock proof gloves
 /mob/living/carbon/human/proc/wearing_shock_proof_gloves()
 	return gloves?.siemens_coefficient == 0
+
+/// take the most recent item out of a slot or place held item in a slot
+/mob/living/carbon/human/proc/smart_equip_targeted(slot_type = ITEM_SLOT_BELT, slot_item_name = "пояс")
+	if(incapacitated())
+		return
+	var/obj/item/thing = get_active_hand()
+	var/obj/item/equipped_item = get_item_by_slot(slot_type)
+
+	if(!equipped_item) // We also let you equip an item like this
+		if(!thing)
+			balloon_alert(src, "отсутствует [slot_item_name]")
+			return
+		if(equip_to_slot_if_possible(thing, slot_type))
+			update_held_items()
+		return
+
+	var/obj/item/storage/storage
+	if(isstorage(equipped_item))
+		storage = equipped_item
+
+	if(!storage)
+		if(!thing)
+			equipped_item.attack_hand(src)
+		else
+			balloon_alert(src, "[slot_item_name] занят")
+		return
+
+	if(thing)
+		if(storage.can_be_inserted(thing))
+			storage.handle_item_insertion(thing)
+		return
+
+	if(!length(storage.contents))
+		balloon_alert(src, "[slot_item_name] пуст")
+		return
+
+	var/obj/item/stored = storage.contents[length(storage.contents)]
+	if(!stored || stored.on_found(src))
+		return
+	stored.attack_hand(src) // take out thing from item in storage slot
+
+/// Adds the passed item's coverage to the mob's coverage related flags
+/mob/living/carbon/proc/add_item_coverage(obj/item/item)
+	var/pre_coverage = obscured_slots
+	obscured_slots |= item.flags_inv
+	covered_slots |= item.flags_inv /*| item.transparent_protection*/
+	if(pre_coverage != obscured_slots)
+		item_coverage_changed(obscured_slots & ~pre_coverage, pre_coverage & ~obscured_slots)
+
+/// Removes the passed item's coverage from the mob's coverage related flags
+/mob/living/carbon/proc/remove_item_coverage(obj/item/item)
+	refresh_obscured() // No way to remove a single item's coverage without recalculating everything
+
+/mob/living/carbon/refresh_obscured()
+	var/pre_coverage = obscured_slots
+
+	obscured_slots = NONE
+	covered_slots = NONE
+	for(var/obj/item/other_equipped_item as anything in get_equipped_items())
+		obscured_slots |= other_equipped_item.flags_inv
+		covered_slots |= other_equipped_item.flags_inv /*| other_equipped_item.transparent_protection*/
+
+	if(HAS_TRAIT(src, TRAIT_HUSK) /*|| HAS_TRAIT(src, TRAIT_INVISIBLE_MAN)*/)
+		obscured_slots |= HIDEHAIR|HIDEFACIALHAIR
+
+	if(pre_coverage != obscured_slots)
+		item_coverage_changed(obscured_slots & ~pre_coverage, pre_coverage & ~obscured_slots)
+
+/**
+ * Called when a mob's obscured slots change
+ *
+ * Args
+ * * added_slots - slots that were added to obscured_slots
+ * * removed_slots - slots that were removed from obscured_slots
+ */
+/mob/living/carbon/proc/item_coverage_changed(added_slots, removed_slots)
+	SEND_SIGNAL(src, COMSIG_CARBON_ITEM_COVERAGE_CHANGED, added_slots, removed_slots)
+	update_clothing(hidden_slots_to_inventory_slots(added_slots|removed_slots))
+	/*
+	if((added_slots|removed_slots) & HIDESNOUT)
+		synchronize_bodyshapes()
+	*/
+	if((added_slots|removed_slots) & (HIDEHAIR|HIDEFACIALHAIR))
+		update_hair()
+	/*
+	if((added_slots|removed_slots) & HIDEEYES)
+		update_eyes()
+	*/
+	// HIDEJUMPSUIT is for digitigrade legs, HIDEEARS is for lizard frills, HIDEHAIR is for felinid ears and lizard horns, the others should be obvious
+	// future todo; we should collect a list of all bodypart overlays and what conceals/reveals them dynamically, rather than hardcoding this
+	if((added_slots|removed_slots) & (HIDEJUMPSUIT|HIDEHAIR|HIDETAIL))
+		update_body()
 

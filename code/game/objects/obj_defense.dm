@@ -1,8 +1,7 @@
 /// The essential proc to call when an obj must receive damage of any kind.
 /obj/proc/take_damage(damage_amount, damage_type = BRUTE, damage_flag = "", sound_effect = TRUE, attack_dir, armour_penetration = 0)
 	if(QDELETED(src))
-		stack_trace("[src] taking damage after deletion")
-		return
+		CRASH("[src] taking damage after deletion")
 	if(sound_effect)
 		play_attack_sound(damage_amount, damage_type, damage_flag)
 	if((resistance_flags & INDESTRUCTIBLE) || obj_integrity <= 0)
@@ -20,6 +19,8 @@
 	if(damage_type != BRUTE && damage_type != BURN)
 		return 0
 	var/armor_protection = 0
+	if(!armor)
+		return
 	if(damage_flag)
 		armor_protection = armor.getRating(damage_flag)
 	if(armor_protection)		//Only apply weak-against-armor/hollowpoint effects if there actually IS armor.
@@ -77,7 +78,7 @@
 			else
 				playsound(src, 'sound/weapons/tap.ogg', 50, TRUE)
 		if(BURN)
-			playsound(src.loc, 'sound/items/welder.ogg', 100, TRUE)
+			playsound(loc, 'sound/items/welder.ogg', 100, TRUE)
 
 /obj/hitby(atom/movable/AM, skipcatch, hitpush, blocked, datum/thrownthing/throwingdatum)
 	..()
@@ -105,17 +106,19 @@
 /obj/bullet_act(obj/projectile/P)
 	. = ..()
 	playsound(src, P.hitsound, 50, TRUE)
-	visible_message(span_danger(pick(list("[capitalize(declent_ru(NOMINATIVE))] поражен[GEND_A_O_Y(src)] [P.declent_ru(INSTRUMENTAL)]!", "[capitalize(P.declent_ru(NOMINATIVE))] попадает в [declent_ru(ACCUSATIVE)]!"))), projectile_message = TRUE)
+	visible_message(
+		span_danger(pick(list("[DECLENT_RU_CAP(src, NOMINATIVE)] поражен[GEND_A_O_Y(src)] [P.declent_ru(INSTRUMENTAL)]!",
+		"[DECLENT_RU_CAP(P, NOMINATIVE)] попадает в [declent_ru(ACCUSATIVE)]!"))),
+		projectile_message = TRUE,
+	)
 	if(!QDELETED(src)) //Bullet on_hit effect might have already destroyed this object
 		take_damage(P.damage, P.damage_type, P.flag, 0, turn(P.dir, 180), P.armour_penetration)
 
 /obj/blob_act(obj/structure/blob/B)
 	if(!..() || (obj_flags & IGNORE_BLOB_ACT))
 		return
-	if(isturf(loc))
-		var/turf/T = loc
-		if((T.intact && level == 1) || T.transparent_floor == TURF_TRANSPARENT) //the blob doesn't destroy thing below the floor
-			return
+	if(HAS_TRAIT(src, TRAIT_UNDERFLOOR)) //the blob doesn't destroy thing below the floor
+		return
 	take_damage(400, BRUTE, MELEE, 0, get_dir(src, B))
 
 /obj/proc/attack_generic(mob/user, damage_amount = 0, damage_type = BRUTE, damage_flag = 0, sound_effect = 1, armor_penetration = 0) //used by attack_alien, attack_animal, and attack_slime
@@ -181,15 +184,15 @@
 		return
 	attack_generic(user, rand(5 + user.age_state.damage, 10 + user.age_state.damage), BRUTE, MELEE, 1)
 
-/obj/mech_melee_attack(obj/mecha/M)
-	M.do_attack_animation(src)
+/obj/mech_melee_attack(obj/mecha/mech, obj/item/mecha_parts/mecha_equipment/selected_module = null)
+	mech.do_attack_animation(src, used_item = selected_module)
 	var/play_soundeffect = 0
-	var/mech_damtype = M.damtype
-	if(M.selected)
-		mech_damtype = M.selected.damtype
+	var/mech_damtype = mech.damtype
+	if(selected_module)
+		mech_damtype = selected_module.damtype
 		play_soundeffect = 1
 	else
-		switch(M.damtype)
+		switch(mech.damtype)
 			if(BRUTE)
 				playsound(src, 'sound/weapons/punch4.ogg', 50, TRUE)
 			if(BURN)
@@ -199,8 +202,8 @@
 				return 0
 			else
 				return 0
-	M.visible_message(span_danger("[M.name] hits [src]!"), span_danger("You hit [src]!"))
-	return take_damage(M.force*3, mech_damtype, MELEE, play_soundeffect, get_dir(src, M)) // multiplied by 3 so we can hit objs hard but not be overpowered against mobs.
+	mech.visible_message(span_danger("[mech.name] hits [src]!"), span_danger("You hit [src]!"))
+	return take_damage(mech.force * 3, mech_damtype, MELEE, play_soundeffect, get_dir(src, mech)) // multiplied by 3 so we can hit objs hard but not be overpowered against mobs.
 
 /obj/singularity_act()
 	ex_act(EXPLODE_DEVASTATE)
@@ -243,16 +246,14 @@ GLOBAL_DATUM_INIT(acid_overlay, /mutable_appearance, mutable_appearance('icons/e
 
 // MARK: FIRE
 
-/obj/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume, global_overlay = TRUE)
-	if(isturf(loc))
-		var/turf/T = loc
-		if((T.intact && level == 1) || T.transparent_floor == TURF_TRANSPARENT) //fire can't damage things hidden below the floor.
-			return
+/obj/fire_act(exposed_temperature, exposed_volume)
+	if(HAS_TRAIT(src, TRAIT_UNDERFLOOR)) //fire can't damage things hidden below the floor.
+		return
 	..()
 	if(QDELETED(src)) // no taking damage after deletion
 		return
 	if(exposed_temperature && !(resistance_flags & FIRE_PROOF))
-		take_damage(clamp(0.02 * exposed_temperature, 0, 20), BURN, "fire", 0)
+		take_damage(clamp(0.02 * exposed_temperature, 0, 20), BURN, FIRE, 0)
 	if(!(resistance_flags & ON_FIRE) && (resistance_flags & FLAMMABLE) && !(resistance_flags & FIRE_PROOF))
 		resistance_flags |= ON_FIRE
 		SSfires.processing[src] = src
@@ -266,7 +267,8 @@ GLOBAL_DATUM_INIT(acid_overlay, /mutable_appearance, mutable_appearance('icons/e
 	deconstruct(FALSE)
 
 /// Called when the obj is no longer on fire.
-/obj/proc/extinguish()
+/obj/extinguish()
+	. = ..()
 	if(resistance_flags & ON_FIRE)
 		resistance_flags &= ~ON_FIRE
 		cut_overlay(custom_fire_overlay ? custom_fire_overlay : GLOB.fire_overlay, TRUE)
@@ -332,6 +334,8 @@ GLOBAL_DATUM_INIT(acid_overlay, /mutable_appearance, mutable_appearance('icons/e
 /obj/flamer_fire_act(damage)
 	if(resistance_flags & FIRE_PROOF)
 		resistance_flags &= ~FIRE_PROOF
+
 	if(armor.getRating(FIRE) > 50)
 		armor = armor.setRating(fire_value = 50)
+
 	return ..()

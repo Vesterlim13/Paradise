@@ -227,9 +227,18 @@
 	var/list/boxes = list() // If the boxes are stacked, they come here
 	var/box_tag = ""
 
+/obj/item/pizzabox/open
+	icon_state = "pizzabox_open"
+	open = TRUE
+
 /obj/item/pizzabox/Initialize(mapload)
 	. = ..()
 	update_appearance(UPDATE_DESC|UPDATE_ICON)
+
+/obj/item/pizzabox/Destroy()
+	QDEL_NULL(pizza)
+	LAZYCLEARLIST(boxes)
+	return ..()
 
 /obj/item/pizzabox/update_desc(updates = ALL)
 	. = ..()
@@ -258,7 +267,7 @@
 /obj/item/pizzabox/update_overlays()
 	. = ..()
 	if(open && pizza)
-		. += image("food/pizza.dmi", icon_state = pizza.icon_state, pixel_y = -3)
+		. += image("food/pizza.dmi", icon_state = pizza.icon_state, pixel_z = -3)
 		return
 	else
 		// Stupid code because byondcode sucks
@@ -271,7 +280,7 @@
 			if(box_tag != "")
 				set_tag = TRUE
 		if(!open && set_tag)
-			. += image("food/pizza.dmi", icon_state = "pizzabox_tag", pixel_y = length(boxes) * 3)
+			. += image("food/pizza.dmi", icon_state = "pizzabox_tag", pixel_z = length(boxes) * 3)
 
 /obj/item/pizzabox/attack_hand(mob/user)
 	if(open && pizza)

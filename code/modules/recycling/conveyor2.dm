@@ -118,13 +118,13 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	. = ..()
 	update()
 
-/obj/machinery/conveyor/attackby(obj/item/I, mob/user, params)
+/obj/machinery/conveyor/attackby(obj/item/tool, mob/user, params)
 	if(user.a_intent == INTENT_HARM || (stat & BROKEN))
 		return ..()
 
-	if(istype(I, /obj/item/conveyor_switch_construct))
+	if(istype(tool, /obj/item/conveyor_switch_construct))
 		add_fingerprint(user)
-		var/obj/item/conveyor_switch_construct/switch_construct = I
+		var/obj/item/conveyor_switch_construct/switch_construct = tool
 		if(switch_construct.id == id)
 			return ..()
 		LAZYREMOVE(GLOB.conveyors_by_id[id], src)
@@ -133,15 +133,15 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 		to_chat(user, span_notice("You link [switch_construct] with [src]."))
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
-	if(user.drop_transfer_item_to_loc(I, loc))
+	if(user.drop_transfer_item_to_loc(tool, loc))
 		add_fingerprint(user)
 		return ATTACK_CHAIN_BLOCKED_ALL
 
 	return ..()
 
-/obj/machinery/conveyor/crowbar_act(mob/user, obj/item/I)
+/obj/machinery/conveyor/crowbar_act(mob/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || (stat & BROKEN))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || (stat & BROKEN))
 		return .
 	if(!(stat & BROKEN))
 		var/obj/item/conveyor_construct/conveyor = new(loc, id)
@@ -149,32 +149,32 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	to_chat(user, span_notice("You detach [src]."))
 	qdel(src)
 
-/obj/machinery/conveyor/wrench_act(mob/user, obj/item/I)
+/obj/machinery/conveyor/wrench_act(mob/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || (stat & BROKEN))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || (stat & BROKEN))
 		return .
 	setDir(turn(dir, -45))
 	to_chat(user, span_notice("You rotate [src]."))
 
-/obj/machinery/conveyor/screwdriver_act(mob/living/user, obj/item/I)
+/obj/machinery/conveyor/screwdriver_act(mob/living/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || (stat & BROKEN))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || (stat & BROKEN))
 		return .
 	flipped = !flipped
 	update_move_direction()
 	to_chat(user, span_notice("You flip [src]'s belt [flipped ? "around" : "back to normal"]."))
 
-/obj/machinery/conveyor/wirecutter_act(mob/living/user, obj/item/I)
+/obj/machinery/conveyor/wirecutter_act(mob/living/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || (stat & BROKEN))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || (stat & BROKEN))
 		return .
 	inverted = !inverted
 	update_move_direction()
 	to_chat(user, span_notice("You set [src]'s direction [inverted ? "backwards" : "back to default"]."))
 
-/obj/machinery/conveyor/multitool_act(mob/living/user, obj/item/I)
+/obj/machinery/conveyor/multitool_act(mob/living/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || !user.client || !COOLDOWN_FINISHED(src, multitool_cooldown))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || !user.client || !COOLDOWN_FINISHED(src, multitool_cooldown))
 		return .
 	COOLDOWN_START(src, multitool_cooldown, 1 SECONDS)
 	if(!id)
@@ -190,7 +190,7 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 		var/image/arrow = image('icons/mob/screen_gen.dmi', loc, "arrow", POINT_LAYER)
 		SET_PLANE(arrow, GAME_PLANE, loc)
 		flick_overlay(arrow, clients, 2.5 SECONDS)
-		animate(arrow, pixel_x = (belt_switch.x - x) * ICON_SIZE_X + belt_switch.pixel_x, pixel_y = (belt_switch.y - y) * ICON_SIZE_Y + belt_switch.pixel_y, time = 0.5 SECONDS, easing = QUAD_EASING)	// yonked from point code
+		animate(arrow, pixel_w = (belt_switch.x - x) * ICON_SIZE_X + belt_switch.pixel_x, pixel_z = (belt_switch.y - y) * ICON_SIZE_Y + belt_switch.pixel_y, time = 0.5 SECONDS, easing = QUAD_EASING)	// yonked from point code
 	if(!switch_found)
 		to_chat(user, span_warning("This conveyor is linked to the switch out of your current view."))
 
@@ -291,19 +291,21 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	if(operating == CONVEYOR_OFF)
 		GLOB.move_manager.stop_looping(conveyable, SSconveyors)
 		return
+
 	start_conveying(conveyable)
 
-/obj/machinery/conveyor/proc/conveyable_exit(datum/source, atom/movable/conveyable, atom/newLoc)
+/obj/machinery/conveyor/proc/conveyable_exit(datum/source, atom/movable/conveyable, direction)
 	SIGNAL_HANDLER
 
-	var/direction = get_dir(loc, newLoc)
 	var/has_conveyor = neighbors["[direction]"]
+
 	if(conveyable.z != z || !has_conveyor || !isturf(conveyable.loc)) //If you've entered something on us, stop moving
 		GLOB.move_manager.stop_looping(conveyable, SSconveyors)
 
 /obj/machinery/conveyor/proc/start_conveying(atom/movable/moving)
 	if(QDELETED(moving))
 		return
+
 	var/datum/move_loop/move/moving_loop = GLOB.move_manager.processing_on(moving, SSconveyors)
 	if(moving_loop)
 		moving_loop.direction = movedir
@@ -311,13 +313,16 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 		return
 
 	var/static/list/unconveyables = typecacheof(list(/obj/effect, /mob/dead))
+
 	if(!istype(moving) || is_type_in_typecache(moving, unconveyables) || moving == src)
 		return
+
 	moving.AddComponent(/datum/component/convey, movedir, speed)
 
 /obj/machinery/conveyor/proc/stop_conveying(atom/movable/thing)
 	if(!ismovable(thing))
 		return
+
 	GLOB.move_manager.stop_looping(thing, SSconveyors)
 
 // subtypes
@@ -382,6 +387,9 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	if(new_id)
 		id = new_id
 	update_appearance()
+	AddComponent(/datum/component/usb_port, list(
+		/obj/item/circuit_component/conveyor_switch,
+	))
 	LAZYADD(GLOB.conveyors_by_id[id], src)
 
 /obj/machinery/conveyor_switch/Destroy()
@@ -445,12 +453,15 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 /obj/machinery/conveyor_switch/proc/on_user_activation(mob/user, direction)
 	add_fingerprint(user)
 	playsound(loc, 'sound/machines/switch.ogg', 10, TRUE)
+
 	if(stat & NOPOWER)
 		to_chat(user, span_warning("Switch is unpowered."))
 		return
+
 	if(!allowed(user) && !user.can_advanced_admin_interact()) //this is in Para but not TG. I don't think there's any which are set anyway.
 		to_chat(user, span_warning("Access denied."))
 		return
+
 	update_position(direction)
 	update_appearance()
 	update_linked_conveyors()
@@ -482,35 +493,37 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	if(user.can_advanced_admin_interact())
 		on_user_activation(user, CONVEYOR_FORWARD)
 
-/obj/machinery/conveyor_switch/crowbar_act(mob/user, obj/item/I)
+/obj/machinery/conveyor_switch/crowbar_act(mob/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || (stat & NOPOWER))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || (stat & NOPOWER))
 		return .
 	var/obj/item/conveyor_switch_construct/switch_construct = new(loc, id)
 	transfer_fingerprints_to(switch_construct)
 	to_chat(user, span_notice("You detach [src]."))
 	qdel(src)
 
-/obj/machinery/conveyor_switch/wrench_act(mob/user, obj/item/I)
+/obj/machinery/conveyor_switch/wrench_act(mob/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || (stat & NOPOWER))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || (stat & NOPOWER))
 		return .
 	invert_icon = !invert_icon
 	update_appearance()
 	to_chat(user, span_notice("You set [src] to [invert_icon ? "inverted": "normal"] position."))
 
-/obj/machinery/conveyor_switch/multitool_act(mob/user, obj/item/I)
+/obj/machinery/conveyor_switch/multitool_act(mob/user, obj/item/tool)
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume) || (stat & NOPOWER))
+	if(!tool.use_tool(src, user, 0, volume = tool.tool_volume) || (stat & NOPOWER))
 		return
 	ui_interact(user)
 
 /obj/machinery/conveyor_switch/ui_interact(mob/user, datum/tgui/ui = null)
 	user.set_machine(src)
 	ui = SStgui.try_update_ui(user, src, ui)
-	if(!ui)
-		ui = new(user, src, "ConveyorSwitch", name)
-		ui.open()
+	if(ui)
+		return
+
+	ui = new(user, src, "ConveyorSwitch", name)
+	ui.open()
 
 /obj/machinery/conveyor_switch/ui_data(mob/user)
 	var/list/data = list(
@@ -577,30 +590,30 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	. += span_notice("<b>Use</b> the assembly on the ground to finalize it.")
 	. += span_notice("Use a <b>conveyor belt switch</b> on the assembly to link them.")
 
-/obj/item/conveyor_construct/attackby(obj/item/I, mob/user, params)
-	if(istype(I, /obj/item/conveyor_switch_construct))
+/obj/item/conveyor_construct/attackby(obj/item/tool, mob/user, params)
+	if(istype(tool, /obj/item/conveyor_switch_construct))
 		add_fingerprint(user)
-		var/obj/item/conveyor_switch_construct/switch_construct = I
+		var/obj/item/conveyor_switch_construct/switch_construct = tool
 		to_chat(user, span_notice("You link [src] to [switch_construct]."))
 		id = switch_construct.id
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
 	return ..()
 
-/obj/item/conveyor_construct/afterattack(turf/interacting_with, mob/user, proximity, params)
-	if(!proximity)
+/obj/item/conveyor_construct/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
+	if(!proximity_flag)
 		return
 	if(user.incapacitated())
 		return
-	if(!isfloorturf(interacting_with))
+	if(!isfloorturf(target))
 		return
-	if(interacting_with == user.loc)
+	if(target == user.loc)
 		to_chat(user, span_warning("You cannot place [src] under yourself."))
 		return
-	if(locate(/obj/machinery/conveyor) in interacting_with) //Can't put conveyors beneath conveyors
+	if(locate(/obj/machinery/conveyor) in target) //Can't put conveyors beneath conveyors
 		to_chat(user, span_warning("There's already a conveyor there!"))
 		return
-	var/obj/machinery/conveyor/conveyor = new(interacting_with, user.dir, id)
+	var/obj/machinery/conveyor/conveyor = new(target, user.dir, id)
 	transfer_fingerprints_to(conveyor)
 	qdel(src)
 
@@ -625,12 +638,12 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	. += span_notice("<b>Use</b> it on a section of conveyor belt or conveyor placer to link them together.")
 	. += span_notice("<b>Use</b> the assembly on the ground to finalize it.")
 
-/obj/item/conveyor_switch_construct/afterattack(turf/interacting_with, mob/user, proximity, params)
-	if(!proximity)
+/obj/item/conveyor_switch_construct/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
+	if(!proximity_flag)
 		return
 	if(user.incapacitated())
 		return
-	if(!isfloorturf(interacting_with))
+	if(!isfloorturf(target))
 		return
 	var/found = FALSE
 	for(var/obj/machinery/conveyor/belt in view())
@@ -640,19 +653,20 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	if(!found)
 		to_chat(user, span_notice("The conveyor switch did not detect any linked conveyor belts in range."))
 		return
-	var/obj/machinery/conveyor_switch/built_switch = new(interacting_with, id)
+	var/obj/machinery/conveyor_switch/built_switch = new(target, id)
 	transfer_fingerprints_to(built_switch)
 	qdel(src)
 
-/obj/item/conveyor_switch_construct/attackby(obj/item/I, mob/user, params)
-	if(istype(I, /obj/item/conveyor_switch_construct))
-		add_fingerprint(user)
-		var/obj/item/conveyor_switch_construct/switch_construct = I
-		to_chat(user, span_notice("You link the two switch constructs."))
-		id = switch_construct.id
-		return ATTACK_CHAIN_PROCEED_SUCCESS
+/obj/item/conveyor_switch_construct/attackby(obj/item/tool, mob/user, params)
+	if(!istype(tool, /obj/item/conveyor_switch_construct))
+		return ..()
 
-	return ..()
+	add_fingerprint(user)
+	var/obj/item/conveyor_switch_construct/switch_construct = tool
+	to_chat(user, span_notice("You link the two switch constructs."))
+	id = switch_construct.id
+	return ATTACK_CHAIN_PROCEED_SUCCESS
+
 
 /obj/item/paper/conveyor
 	name = "paper- 'Nano-it-up U-build series, #9: Build your very own conveyor belt, in SPACE'"
@@ -663,6 +677,71 @@ GLOBAL_LIST_EMPTY(conveyors_by_id)
 	assemblies onto the floor, et voila, belt built. Our special Nano-it-up smart switch will detected any linked assemblies as far as the eye can see! </p>\
 	<p> Set single directional switches by using your multitool on the switch after you've installed the switch assembly.</p>\
 	<p> This convenience, you can only have it when you Nano-it-up. Stay nano!</p>"
+
+/obj/item/circuit_component/conveyor_switch
+	display_name = "Конвейерный переключатель"
+	desc = "Позволяет управлять подключёнными конвейерными лентами."
+
+	/// Direction input ports.
+	var/datum/port/input/stop
+	var/datum/port/input/active
+	var/datum/port/input/reverse
+	/// The current direction of the conveyor attached to the component.
+	var/datum/port/output/direction
+	/// The switch this conveyor switch component is attached to.
+	var/obj/machinery/conveyor_switch/attached_switch
+
+/obj/item/circuit_component/conveyor_switch/Destroy()
+	if(attached_switch)
+		unregister_usb_parent(attached_switch)
+	stop = null
+	active = null
+	reverse = null
+	direction = null
+	. = ..()
+
+/obj/item/circuit_component/conveyor_switch/populate_ports()
+	active = add_input_port("Старт", PORT_TYPE_SIGNAL, trigger = PROC_REF(activate))
+	stop = add_input_port("Стоп", PORT_TYPE_SIGNAL, trigger = PROC_REF(stop))
+	direction = add_output_port("Направление", PORT_TYPE_NUMBER)
+
+/obj/item/circuit_component/conveyor_switch/get_ui_notices()
+	. = ..()
+	. += create_ui_notice("Направление конвейера: 0 — остановлен; 1 — активен; -1 — работает в обратном режиме.", "orange", "info")
+
+/obj/item/circuit_component/conveyor_switch/register_usb_parent(atom/movable/shell)
+	. = ..()
+	if(!istype(shell, /obj/machinery/conveyor_switch))
+		return
+
+	attached_switch = shell
+	if(!attached_switch.one_way)
+		reverse = add_input_port("Реверс", PORT_TYPE_SIGNAL, trigger = PROC_REF(reverse))
+
+/obj/item/circuit_component/conveyor_switch/unregister_usb_parent(atom/movable/shell)
+	attached_switch = null
+	return ..()
+
+/obj/item/circuit_component/conveyor_switch/proc/on_switch_changed()
+	attached_switch.update_appearance()
+	attached_switch.update_linked_conveyors()
+	attached_switch.update_linked_switches()
+	direction.set_output(attached_switch.position)
+
+/obj/item/circuit_component/conveyor_switch/proc/activate()
+	SIGNAL_HANDLER
+	attached_switch.position = CONVEYOR_FORWARD
+	INVOKE_ASYNC(src, PROC_REF(on_switch_changed))
+
+/obj/item/circuit_component/conveyor_switch/proc/stop()
+	SIGNAL_HANDLER
+	attached_switch.position = CONVEYOR_OFF
+	INVOKE_ASYNC(src, PROC_REF(on_switch_changed))
+
+/obj/item/circuit_component/conveyor_switch/proc/reverse()
+	SIGNAL_HANDLER
+	attached_switch.position = CONVEYOR_BACKWARDS
+	INVOKE_ASYNC(src, PROC_REF(on_switch_changed))
 
 #undef CONVEYOR_BACKWARDS
 #undef CONVEYOR_OFF

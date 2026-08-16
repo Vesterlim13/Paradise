@@ -36,7 +36,7 @@
 	if(resistance_flags & ON_FIRE)
 		return ATTACK_CHAIN_BLOCKED_ALL
 
-	if(I.get_heat())
+	if(I.get_temperature())
 		if(!Adjacent(user)) //to prevent issues as a result of telepathically lighting a paper bundles
 			return ATTACK_CHAIN_BLOCKED_ALL
 
@@ -58,7 +58,7 @@
 		fire_act()
 		return ATTACK_CHAIN_BLOCKED_ALL
 
-	if(is_pen(I) || istype(I, /obj/item/toy/crayon))
+	if(is_pen(I) || iscrayon(I))
 		add_fingerprint(user)
 		var/obj/item/paper/paper = papers[page]
 		if(!istype(paper))	// photo
@@ -135,7 +135,7 @@
 
 	return ..()
 
-/obj/item/paper_bundle/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume, global_overlay = TRUE)
+/obj/item/paper_bundle/fire_act(exposed_temperature, exposed_volume)
 	..()
 	if(!(resistance_flags & FIRE_PROOF))
 		for(var/obj/item/paper/paper in papers)
@@ -251,7 +251,10 @@
 				usr.temporarily_remove_item_from_inventory(src, force = TRUE)
 				usr.put_in_hands(P, ignore_anim = FALSE)
 				close_window(usr, "PaperBundle[UID()]")
+				usr.unset_machine() // Ensure the bundle GCs
 				qdel(src)
+				return
+
 			else if(page == amount)
 				screen = 2
 			else if(page == amount+1)
@@ -267,7 +270,7 @@
 
 /obj/item/paper_bundle/verb/rename()
 	set name = "Переименовать пачку"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in usr
 
 	var/n_name = tgui_input_text(usr, "What would you like to label the bundle?", "Bundle Labelling", name)
@@ -279,15 +282,16 @@
 
 /obj/item/paper_bundle/verb/remove_all()
 	set name = "Распустить пачку"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in usr
 
 	to_chat(usr, span_notice("You loosen the bundle."))
-	for(var/obj/O in src)
-		O.loc = usr.loc
-		O.layer = initial(O.layer)
-		O.plane = initial(O.plane)
-		O.add_fingerprint(usr)
+	for(var/obj/item/page in papers)
+		page.forceMove_turf(usr.loc)
+		page.layer = initial(page.layer)
+		page.plane = initial(page.plane)
+		page.add_fingerprint(usr)
+	LAZYCLEARLIST(papers)
 	usr.temporarily_remove_item_from_inventory(src)
 	qdel(src)
 	return

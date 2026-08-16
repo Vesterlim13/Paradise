@@ -126,9 +126,6 @@
 
 	update_fire()
 
-	if(blocks_emissive)
-		add_overlay(get_emissive_block())
-
 /mob/living/simple_animal/pet/slugcat/on_lying_down(new_lying_angle)
 	if(inventory_head)
 		hat_offset_y = hat_offset_y_rest
@@ -168,7 +165,7 @@
 		var/image/slugI = image(hat_icon_file, hat_icon_state)
 		slugI.alpha = hat_alpha
 		slugI.color = hat_color
-		slugI.pixel_y = hat_offset_y
+		slugI.pixel_z = hat_offset_y
 		//slugI.transform = matrix(1, 0, 1, 0, 1, 0)
 		return slugI
 

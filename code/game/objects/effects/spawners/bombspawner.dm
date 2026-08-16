@@ -18,10 +18,10 @@
 
 /obj/effect/spawner/newbomb/radio
 
-/obj/effect/spawner/newbomb/New()
-	..()
+/obj/effect/spawner/newbomb/Initialize(mapload)
+	. = ..()
 
-	var/obj/item/transfer_valve/V = new(src.loc)
+	var/obj/item/transfer_valve/V = new(loc)
 	var/obj/item/tank/internals/plasma/PT = new(V)
 	var/obj/item/tank/internals/oxygen/OT = new(V)
 
@@ -31,25 +31,22 @@
 	PT.master = V
 	OT.master = V
 
-	PT.air_contents.temperature = btemp1 + T0C
-	OT.air_contents.temperature = btemp2 + T0C
+	PT.air_contents.set_temperature(btemp1 + T0C)
+	OT.air_contents.set_temperature(btemp2 + T0C)
 
 	var/obj/item/assembly/S
 
-	switch(src.btype)
+	switch(btype)
 		// radio
 		if(0)
-
 			S = new/obj/item/assembly/signaler(V)
 
 		// proximity
 		if(1)
-
 			S = new/obj/item/assembly/prox_sensor(V)
 
 		// timer
 		if(2)
-
 			S = new/obj/item/assembly/timer(V)
 
 	V.attached_device = S
@@ -59,4 +56,4 @@
 
 	V.update_icon()
 
-	qdel(src)
+	return INITIALIZE_HINT_QDEL

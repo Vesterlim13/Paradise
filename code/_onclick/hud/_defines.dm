@@ -50,6 +50,7 @@
 #define ui_inv3 "CENTER  :16,SOUTH:5"			//borgs
 #define ui_borg_module "CENTER+1:16,SOUTH:5"
 #define ui_borg_store "CENTER+2:16,SOUTH:5"		//borgs
+#define ui_borg_lawmanager "EAST-4:24,SOUTH:5"  //borgs
 
 #define ui_monkey_mask "CENTER-3:14,SOUTH:5"	//monkey
 #define ui_monkey_back "CENTER-2:15,SOUTH:5"	//monkey
@@ -71,6 +72,7 @@
 
 #define ui_crafting "EAST:-5,SOUTH+2:7"
 #define ui_language_menu "EAST:-22,SOUTH+2:7"
+#define ui_area_creator "EAST-1:-7,SOUTH+2:7"
 
 #define ui_borg_pull "EAST-2:26,SOUTH+1:7"
 #define ui_borg_radio "EAST-1:28,SOUTH+1:7"
@@ -164,6 +166,8 @@
 #define ui_ai_up "TOP:-6,RIGHT-1"
 #define ui_ai_down "TOP:-6,RIGHT"
 
+#define ui_ai_connect_to_shell "BOTTOM:6,LEFT+3"
+
 // Bots
 #define ui_bot_radio "EAST-1:28,SOUTH:7"
 #define ui_bot_pull "EAST-2:26,SOUTH:7"
@@ -188,3 +192,4 @@
 //2 = reduced hud (just hands and intent switcher)
 //3 = no hud (for screenshots)
 
+#define ARBITRARY_VIEWRANGE_NOHUD 2

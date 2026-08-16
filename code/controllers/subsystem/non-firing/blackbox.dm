@@ -3,14 +3,8 @@
 SUBSYSTEM_DEF(blackbox)
 	name = "Blackbox"
 	// On Master.Shutdown(), it shuts down subsystems in the REVERSE order
-	// The database SS has INIT_ORDER_DBCORE=16, and this SS has INIT_ORDER_BLACKBOX=15
-	// So putting this ensures it shuts down in the right order
-	ss_id = "blackbox"
-	init_order = INIT_ORDER_BLACKBOX
 	wait = 10 MINUTES
 	runlevels = RUNLEVEL_LOBBY | RUNLEVELS_DEFAULT
-	offline_implications = "Player count and admin count statistics will no longer be logged to the database. No immediate action is needed."
-	cpu_display = SS_CPUDISPLAY_LOW
 
 	/// List of all recorded feedback
 	var/list/datum/feedback_variable/feedback = list()
@@ -23,7 +17,7 @@ SUBSYSTEM_DEF(blackbox)
 
 /datum/controller/subsystem/blackbox/Initialize()
 	if(!SSdbcore.IsConnected())
-		flags |= SS_NO_FIRE // Disable firing if SQL is disabled
+		ss_flags |= SS_NO_FIRE // Disable firing if SQL is disabled
 	record_feedback("amount", "dm_version", DM_VERSION)
 	record_feedback("amount", "dm_build", DM_BUILD)
 	record_feedback("amount", "byond_version", world.byond_version)
@@ -55,7 +49,7 @@ SUBSYSTEM_DEF(blackbox)
 //no touchie
 /datum/controller/subsystem/blackbox/can_vv_get(var_name)
 	if(var_name == NAMEOF(src, feedback))
-		return debug_variable(var_name, deepCopyList(feedback), 0, src)
+		return debug_variable(var_name, deep_copy_list(feedback), 0, src)
 	return ..()
 
 /datum/controller/subsystem/blackbox/vv_edit_var(var_name, var_value)
@@ -173,6 +167,8 @@ SUBSYSTEM_DEF(blackbox)
 			record_feedback("tally", "radio_usage", 1, "service")
 		if(PROC_FREQ)
 			record_feedback("tally", "radio_usage", 1, "procedure")
+		if(VOX_RAID_FREQ)
+			record_feedback("tally", "radio_usage", 1, "voxcom")
 		else
 			record_feedback("tally", "radio_usage", 1, "other")
 

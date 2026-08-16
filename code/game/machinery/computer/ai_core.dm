@@ -9,40 +9,15 @@
 	var/obj/item/circuitboard/aicore/circuit = null
 	var/obj/item/mmi/brain = null
 
+/obj/structure/AIcore/Initialize(mapload)
+	. = ..()
+	update_appearance(UPDATE_ICON_STATE)
+
 /obj/structure/AIcore/Destroy(force)
 	QDEL_NULL(laws)
 	QDEL_NULL(circuit)
 	QDEL_NULL(brain)
-	if(state == AI_READY_CORE)
-		INVOKE_ASYNC(src, PROC_REF(death_alarm))
-
 	return ..()
-
-/obj/structure/AIcore/proc/death_alarm()
-	var/static/msg = "Внимание! Обнаружено повреждение внутренних систем станционного ИИ. \
-					Требуется срочное вмешательство."
-	var/static/sender = "Автоматическая система оповещений"
-	radio_announce(msg, sender, COMM_FREQ, src)
-
-	var/obj/item/pda/dummy_pda = new /obj/item/pda()
-	dummy_pda.owner = sender
-	var/datum/data/pda/app/messenger/sender_messenger = dummy_pda.find_program(/datum/data/pda/app/messenger)
-	var/obj/machinery/message_server/message_server = find_pda_server()
-
-	if(!message_server)
-		return
-
-	for(var/obj/item/pda/pda in GLOB.PDAs)
-		if(!(pda.ownjob in GLOB.ai_death_alarm_jobs))
-			continue
-
-		var/datum/data/pda/app/messenger/messenger = pda.find_program(/datum/data/pda/app/messenger)
-		if(!messenger?.can_receive())
-			continue
-
-		sender_messenger.create_message(pda, message = msg)
-
-	qdel(dummy_pda)
 
 /obj/structure/AIcore/attackby(obj/item/I, mob/user, params)
 	if(user.a_intent == INTENT_HARM)
@@ -62,7 +37,7 @@
 				return ATTACK_CHAIN_BLOCKED_ALL
 
 		if(SCREWED_CORE)
-			if(istype(I, /obj/item/stack/cable_coil))
+			if(iscoil(I))
 				add_fingerprint(user)
 				var/obj/item/stack/cable_coil/coil = I
 				if(coil.get_amount() < 5)
@@ -70,7 +45,8 @@
 					return ATTACK_CHAIN_PROCEED
 				playsound(loc, coil.usesound, 50, TRUE)
 				to_chat(user, span_notice("You start to add cables to the frame."))
-				if(!do_after(user, 2 SECONDS * coil.toolspeed, src, category = DA_CAT_TOOL) || state != SCREWED_CORE || QDELETED(coil))
+				CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+				if(!do_after(user, 2 SECONDS * coil.toolspeed * construction_mod, src, category = DA_CAT_TOOL) || state != SCREWED_CORE || QDELETED(coil))
 					return ATTACK_CHAIN_PROCEED
 				if(!coil.use(5))
 					to_chat(user, span_warning("At some point during construction you lost some cable. Make sure you have five lengths before trying again."))
@@ -87,7 +63,8 @@
 				if(rglass.get_amount() < 2)
 					to_chat(user, span_warning("You need two sheets of [rglass.name] to insert them into the AI core!"))
 					return ATTACK_CHAIN_PROCEED
-				if(!do_after(user, 2 SECONDS * rglass.toolspeed, src, category = DA_CAT_TOOL) || state != CABLED_CORE || QDELETED(rglass))
+				CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+				if(!do_after(user, 2 SECONDS * rglass.toolspeed * construction_mod, src, category = DA_CAT_TOOL) || state != CABLED_CORE || QDELETED(rglass))
 					return ATTACK_CHAIN_PROCEED
 				if(!rglass.use(2))
 					to_chat(user, span_warning("At some point during construction you lost some [rglass.name]. Make sure you have two sheets of [rglass.name] before trying again."))
@@ -119,7 +96,7 @@
 				laws = ai_module.laws
 				return ATTACK_CHAIN_PROCEED_SUCCESS
 
-			if(istype(I, /obj/item/mmi))
+			if(is_mmi(I))
 				add_fingerprint(user)
 				if(brain)
 					to_chat(user, span_warning("There is already [brain] installed into the frame."))
@@ -250,22 +227,28 @@
 	default_unfasten_wrench(user, I, 20)
 
 /obj/structure/AIcore/update_icon_state()
-	switch(state)
-		if(EMPTY_CORE)
-			icon_state = "0"
-		if(CIRCUIT_CORE)
-			icon_state = "1"
-		if(SCREWED_CORE)
-			icon_state = "2"
-		if(CABLED_CORE)
-			if(brain)
-				icon_state = "3b"
-			else
-				icon_state = "3"
-		if(GLASS_CORE)
-			icon_state = "4"
-		if(AI_READY_CORE)
-			icon_state = "ai-empty"
+	cut_overlays()
+
+	if(state != AI_READY_CORE)
+		icon_state = "[state]"
+		if(state == CABLED_CORE && brain)
+			icon_state += "b"
+		set_light_on(FALSE)
+	else
+
+		icon_state = "ai-core"
+
+		var/mutable_appearance/screen = mutable_appearance(icon, "ai-empty")
+		screen.layer = FLOAT_LAYER
+		screen.appearance_flags = RESET_COLOR | KEEP_APART
+
+		add_overlay(screen)
+
+		add_overlay(emissive_appearance(icon, "ai-empty", src, alpha = 255))
+
+		set_light(0.2, 0.2, LIGHT_COLOR_FAINT_CYAN, l_on = TRUE)
+
+	return ..()
 
 /obj/structure/AIcore/deconstruct(disassembled = TRUE)
 	if(state == GLASS_CORE)
@@ -285,7 +268,8 @@
 	if(!I.tool_use_check(user, 0))
 		return
 	WELDER_ATTEMPT_WELD_MESSAGE
-	if(I.use_tool(src, user, 20, volume = I.tool_volume))
+	CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+	if(I.use_tool(src, user, 2 SECONDS * construction_mod, volume = I.tool_volume))
 		to_chat(user, span_notice("You deconstruct the frame."))
 		new /obj/item/stack/sheet/plasteel(drop_location(), 4)
 		qdel(src)
@@ -305,30 +289,28 @@
 		GLOB.empty_playable_ai_cores -= src
 	return ..()
 
-/client/proc/empty_ai_core_toggle_latejoin()
-	set name = "Toggle AI Core Latejoin"
-	set category = STATPANEL_ADMIN_TOGGLES
-
+ADMIN_VERB(empty_ai_core_toggle_latejoin, R_ADMIN, "Toggle AI Core Latejoin", "Toggle AI Core Latejoin.", ADMIN_CATEGORY_TOGGLES)
 	var/list/cores = list()
 	for(var/obj/structure/AIcore/deactivated/D in world)
 		cores["[D] ([D.loc.loc])"] = D
 
 	if(!length(cores))
-		to_chat(src, "No deactivated AI cores were found.")
+		to_chat(user, "No deactivated AI cores were found.")
 
-	var/id = tgui_input_list(usr, "Which core?", "Toggle AI Core Latejoin", cores, null)
+	var/id = tgui_input_list(user, "Which core?", "Toggle AI Core Latejoin", cores, null)
 	if(!id)
 		return
 
 	var/obj/structure/AIcore/deactivated/D = cores[id]
-	if(!D) return
+	if(!D)
+		return
 
 	if(D in GLOB.empty_playable_ai_cores)
 		GLOB.empty_playable_ai_cores -= D
-		to_chat(src, "\The [id] is now <font color=\"#ff0000\">not available</font> for latejoining AIs.")
+		to_chat(user, "[id] is now <font color=\"#ff0000\">not available</font> for latejoining AIs.")
 	else
 		GLOB.empty_playable_ai_cores += D
-		to_chat(src, "\The [id] is now <font color=\"#008000\">available</font> for latejoining AIs.")
+		to_chat(user, "[id] is now <font color=\"#008000\">available</font> for latejoining AIs.")
 
 /*
 This is a good place for AI-related object verbs so I'm sticking it here.

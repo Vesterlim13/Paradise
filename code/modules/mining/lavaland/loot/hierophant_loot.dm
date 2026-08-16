@@ -28,7 +28,7 @@
 	var/friendly_fire_check = FALSE //if the blasts we make will consider our faction against the faction of hit targets
 
 /obj/item/hierophant_club/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "посох Иерофанта",
 		GENITIVE = "посоха Иерофанта",
 		DATIVE = "посоху Иерофанта",
@@ -57,7 +57,7 @@
 	qdel(user)
 	return OBLITERATION
 
-/obj/item/hierophant_club/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
+/obj/item/hierophant_club/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
 	..()
 	if(world.time < timer)
 		return
@@ -139,7 +139,7 @@
 		to_chat(user, span_warning("Нужно держать посох в руках, чтобы [beacon ? "телепортироваться" : "отсоединить маяк"]!"))
 		return
 	if(is_in_teleport_proof_area(user) && !tele_proof_bypass)
-		to_chat(user, span_warning("[capitalize(declent_ru(NOMINATIVE))] искрит и потрескивает."))
+		to_chat(user, span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] искрит и потрескивает."))
 		return
 	if(!beacon || QDELETED(beacon))
 		if(isturf(user.loc))
@@ -167,7 +167,7 @@
 		to_chat(user, span_warning("Вы слишком близко к маяку для телепортации"))
 		return
 	if(is_in_teleport_proof_area(beacon) && !tele_proof_bypass)
-		to_chat(user, span_warning("[capitalize(declent_ru(NOMINATIVE))] искрит и потрескивает."))
+		to_chat(user, span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] искрит и потрескивает."))
 		return
 	var/turf/beacon_turf = get_turf(beacon)
 	if(beacon_turf.is_blocked_turf(exclude_mobs = TRUE))
@@ -313,7 +313,7 @@
 	icon = 'icons/obj/lavaland/artefacts.dmi'
 	icon_state = "hierophant_talisman_nonactive"
 	item_state = "hierophant_talisman_nonactive"
-	armor = list(MELEE = 5, BULLET = 5, LASER = 5, ENERGY = 5, BOMB = 20, BIO = 20, RAD = 5, FIRE = 100, ACID = 100)
+	armor = list(MELEE = 5, BULLET = 5, LASER = 5, ENERGY = 5, BOMB = 20, BIO = 20, FIRE = 100, ACID = 100)
 	allow_duplicates = FALSE
 	var/possessed = FALSE
 	var/mob/living/simple_animal/shade/talisman/slave // Talisman
@@ -322,7 +322,7 @@
 	var/obj/effect/proc_holder/spell/hierophant_talisman_message/spell_message
 
 /obj/item/clothing/accessory/necklace/hierophant_talisman/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "дремлющий защитный талисман",
 		GENITIVE = "дремлющего защитного талисмана",
 		DATIVE = "дремлющему защитному талисману",
@@ -352,13 +352,16 @@
 	var/list/mob/dead/observer/candidates = SSghost_spawns.poll_candidates("Хотите стать духом талисмана защиты [user.real_name]?", ROLE_PAI, FALSE, 15 SECONDS, source = src)
 	var/mob/dead/observer/theghost = null
 
+	if(QDELETED(slave) || QDELETED(src))
+		return
+
 	if(length(candidates))
 		theghost = pick(candidates)
 		slave = new(src)
 		slave.possess_by_player(theghost.ckey)
 		slave.master = user.ckey
 		name = "Talisman of warding"
-		ru_names = list(
+		ru_names = alist(
 			NOMINATIVE = "защитный талисман",
 			GENITIVE = "защитного талисмана",
 			DATIVE = "защитному талисману",
@@ -487,14 +490,14 @@
 	new /obj/effect/temp_visual/hierophant/telegraph/teleport(T, src)
 	new /obj/effect/temp_visual/hierophant/telegraph/teleport(S, src)
 	animate(src, alpha = 0, time = 2, easing = EASE_OUT) //fade out
-	visible_message(span_hierophant("[capitalize(declent_ru(NOMINATIVE))] растворяется!"))
+	visible_message(span_hierophant("[DECLENT_RU_CAP(src, NOMINATIVE)] растворяется!"))
 	set_density(FALSE)
 	addtimer(CALLBACK(src, PROC_REF(talisman_teleport_3), T), 2)
 
 /obj/effect/proc_holder/spell/hierophant_talisman_teleport/proc/talisman_teleport_3(turf/T)
 	animate(src, alpha = 255, time = 2, easing = EASE_IN) //fade IN
 	set_density(TRUE)
-	visible_message(span_hierophant("[capitalize(declent_ru(NOMINATIVE))] материализуется!"))
+	visible_message(span_hierophant("[DECLENT_RU_CAP(src, NOMINATIVE)] материализуется!"))
 
 /obj/effect/proc_holder/spell/hierophant_talisman_message
 	name = "Телепатическое послание"
@@ -522,7 +525,7 @@
 	to_chat(usr, span_hierophant("Вы говорите в разум [choice]:</b> [msg]"))
 	to_chat(choice, "[span_deadsay(span_hierophant("Странные, магические и одновременно чуждые мысли обращаются к вам..."))] [span_hierophant("[msg]")]")
 	for(var/mob/dead/observer/G in GLOB.player_list)
-		G.show_message(span_hierophant("Послание Иерофанта от <b>[usr]</b> ([ghost_follow_link(usr, ghost=G)]) к <b>[choice]</b> ([ghost_follow_link(choice, ghost=G)]): [msg]</i>")) //what the fuck...
+		G.show_message(span_hierophant("Послание Иерофанта от ([ghost_follow_link(usr, ghost = G)]) <b>[usr]</b> к \[[ghost_follow_link(choice, ghost = G)]\] <b>[choice]</b>: [msg]</i>")) //what the fuck...
 
 /obj/item/clothing/accessory/necklace/hierophant_talisman/on_attached(obj/item/clothing/under/new_suit, mob/attacher)
 	. = ..()

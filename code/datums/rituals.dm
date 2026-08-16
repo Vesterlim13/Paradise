@@ -707,7 +707,7 @@
 		smoke.set_up(amount = 5, location = get_turf(human.loc))
 		smoke.start()
 
-		for(var/obj/item/obj as anything in human.get_equipped_items(TRUE, TRUE))
+		for(var/obj/item/obj as anything in human.get_equipped_items(INCLUDE_POCKETS | INCLUDE_HELD))
 			human.drop_item_ground(obj)
 
 	return
@@ -802,8 +802,10 @@
 
 		human.SetKnockdown(10 SECONDS)
 		var/turf/turf = human.loc
-		new /obj/effect/hotspot(turf)
-		turf.hotspot_expose(700, 50, 1)
+		var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(turf)
+		hotspot.temperature = 1000
+		hotspot.recolor()
+		turf.hotspot_expose(700, 50)
 
 	return
 
@@ -847,8 +849,10 @@
 
 		human.SetKnockdown(10 SECONDS)
 		var/turf/turf = human.loc
-		new /obj/effect/hotspot(turf)
-		turf.hotspot_expose(700, 50, 1)
+		var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(turf)
+		hotspot.temperature = 1000
+		hotspot.recolor()
+		turf.hotspot_expose(700, 50)
 
 	return
 
@@ -959,8 +963,10 @@
 
 		human.SetKnockdown(10 SECONDS)
 		var/turf/turf = human.loc
-		new /obj/effect/hotspot(turf)
-		turf.hotspot_expose(700, 50, 1)
+		var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(turf)
+		hotspot.temperature = 1000
+		hotspot.recolor()
+		turf.hotspot_expose(700, 50)
 
 	return
 
@@ -1024,7 +1030,7 @@
 	animal.master_commander = invoker
 
 	animal.mind.store_memory("<b>Мой хозяин — [invoker.name], выполню [GEND_HIS_HER(invoker)] цели любой ценой!</b>")
-	to_chat(animal, chat_box_green("Вы — раб пеплоходцев. Всегда подчиняйтесь и помогайте им."))
+	to_chat(animal, custom_boxed_message("green_box", "Вы — раб пеплоходцев. Всегда подчиняйтесь и помогайте им."))
 	add_game_logs("стал питомцем игрока [key_name(invoker)]", animal)
 
 	return RITUAL_SUCCESSFUL
@@ -1108,5 +1114,7 @@
 
 		human.SetKnockdown(10 SECONDS)
 		var/turf/turf = human.loc
-		new /obj/effect/hotspot(turf)
-		turf.hotspot_expose(700, 50, 1)
+		var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(turf)
+		hotspot.temperature = 1000
+		hotspot.recolor()
+		turf.hotspot_expose(700, 50)

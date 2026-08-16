@@ -18,6 +18,19 @@
 	name = "Призвать вилы Архидьявола"
 	item_type = /obj/item/twohanded/pitchfork/demonic/ascended
 
+/obj/effect/proc_holder/spell/conjure_item/pitchfork/krampus
+	name = "Призвать вилы Крампуса"
+	item_type = /obj/item/twohanded/pitchfork/demonic/greater/krampus
+
+/obj/effect/proc_holder/spell/conjure_item/krampus_bag
+	name = "Призвать мешок Крампуса"
+	item_type = /obj/item/krampus_bag
+	action_icon_state = "krampus_bag"
+	action_icon = 'icons/obj/items.dmi'
+	action_background_icon_state = "bg_demon"
+	base_cooldown = 10 SECONDS
+	human_req = FALSE
+
 /obj/effect/proc_holder/spell/conjure_item/violin
 	name = "Призвать золотую скрипку"
 	desc = "Призывает/отзывает дьявольскую золотую скрипку."
@@ -38,8 +51,8 @@
 	invocation_type = "whisper"
 	invocation = "Iustus signum in linea punctata."
 
-	selection_activated_message = span_notice("Вы приготавливаете подробный контракт. ЛКМ по цели, чтобы призвать контракт ей в руку.")
-	selection_deactivated_message = span_notice("Вы сохраняете контракт до лучших времен.")
+	selection_activated_message = span_notice_alt("Вы приготавливаете подробный контракт. ЛКМ по цели, чтобы призвать контракт ей в руку.")
+	selection_deactivated_message = span_notice_alt("Вы сохраняете контракт до лучших времен.")
 
 	clothes_req = FALSE
 	human_req = FALSE
@@ -66,7 +79,7 @@
 	for(var/target in targets)
 		var/mob/living/carbon/C = target
 		if(!C.mind || !user.mind)
-			to_chat(user, span_notice("[capitalize(C.declent_ru(NOMINATIVE))] не выглядит разумным и не сможет подписать контракт."))
+			to_chat(user, span_notice("[DECLENT_RU_CAP(C, NOMINATIVE)] не выглядит разумным и не сможет подписать контракт."))
 			continue
 
 		if(C.stat == DEAD)
@@ -91,8 +104,8 @@
 	invocation_type = "shout"
 	invocation = "Ille porcus est meus!"
 
-	selection_activated_message = span_notice("Вы готовы забрать душу. Просто клините на свою жертву.")
-	selection_deactivated_message = span_notice("Вы передумали забирать чью-то душу.")
+	selection_activated_message = span_notice_alt("Вы готовы забрать душу. Просто клините на свою жертву.")
+	selection_deactivated_message = span_notice_alt("Вы передумали забирать чью-то душу.")
 
 	clothes_req = FALSE
 	human_req = FALSE
@@ -202,7 +215,7 @@
 /obj/effect/proc_holder/spell/infernal_jaunt/cast(list/targets, mob/living/user = usr)
 	if(istype(user.loc, /obj/effect/dummy/slaughter))
 		var/continuing = 0
-		if(istype(get_area(user), /area/shuttle)) // Can always phase in in a shuttle.
+		if(is_area_shuttle(get_area(user))) // Can always phase in in a shuttle.
 			continuing = TRUE
 		else
 			for(var/mob/living/C in orange(2, get_turf(user.loc))) //Can also phase in when nearby a potential buyer.
@@ -235,7 +248,7 @@
 /mob/living/proc/infernalphaseout(obj/effect/proc_holder/spell/infernal_jaunt/spell)
 	dust_animation()
 
-	visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] исчезает в огненной вспышке!"))
+	visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] исчезает в огненной вспышке!"))
 	playsound(get_turf(src), 'sound/misc/enter_blood.ogg', 100, TRUE, -1)
 
 	var/obj/effect/dummy/slaughter/s_holder = new(loc)
@@ -256,7 +269,7 @@
 	fakefire()
 	forceMove(get_turf(src))
 
-	visible_message(span_warning("<b>[capitalize(declent_ru(NOMINATIVE))] появляется в огненной вспышке!</b>"))
+	visible_message(span_warning("<b>[DECLENT_RU_CAP(src, NOMINATIVE)] появляется в огненной вспышке!</b>"))
 	playsound(get_turf(src), 'sound/misc/exit_blood.ogg', 100, TRUE, -1)
 
 	addtimer(CALLBACK(src, PROC_REF(fakefireextinguish), TRUE), 1.5 SECONDS)
@@ -403,8 +416,10 @@
 		if(!prob(fire_prob))
 			continue
 
-		new /obj/effect/hotspot(turf)
-		turf.hotspot_expose(2000, 50, 1)
+		var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(turf)
+		hotspot.temperature = 3000
+		hotspot.recolor()
+		turf.hotspot_expose(2000, 50)
 
 	playsound(get_turf(user), 'sound/magic/blind.ogg', 50, TRUE)
 
@@ -461,7 +476,7 @@
 	human.set_species(/datum/species/shadow)
 	var/text = "Вы — создание тьмы. Старайтесь сохранить свою истинную форму и выполнить свои цели."
 	human.store_memory(text, TRUE)
-	to_chat(human, chat_box_red(text))
+	to_chat(human, custom_boxed_message("red_box center", text))
 
 	var/datum/objective/assassinate/shadow_kill/kill = new
 	kill.owner = human.mind
@@ -471,7 +486,7 @@
 	LAZYADD(human.faction, "hell")
 
 	var/list/messages = human.mind.prepare_announce_objectives()
-	to_chat(human, chat_box_red(messages.Join("<br>")))
+	to_chat(human, custom_boxed_message("red_box center", messages.Join("<br>")))
 
 	LAZYOR(devil.shadows, human.mind)
 	playsound(human, 'sound/magic/mutate.ogg', 100, TRUE)

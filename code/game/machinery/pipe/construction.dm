@@ -12,8 +12,8 @@
 	item_state = "buildpipe"
 	var/flipped = 0
 
-/obj/item/pipe/New(loc, pipe_type, dir, obj/machinery/atmospherics/make_from)
-	..()
+/obj/item/pipe/Initialize(mapload, pipe_type, dir, obj/machinery/atmospherics/make_from)
+	. = ..()
 	if(make_from)
 		src.dir = make_from.dir
 		src.pipename = make_from.name
@@ -70,6 +70,8 @@
 			src.pipe_type = PIPE_SCRUBBER
 		else if(istype(make_from, /obj/machinery/atmospherics/binary/passive_gate))
 			src.pipe_type = PIPE_PASSIVE_GATE
+		else if(istype(make_from, /obj/machinery/atmospherics/binary/temperature_gate))
+			src.pipe_type = PIPE_TEMPERATURE_GATE
 		else if(istype(make_from, /obj/machinery/atmospherics/binary/volume_pump))
 			src.pipe_type = PIPE_VOLUME_PUMP
 		else if(istype(make_from, /obj/machinery/atmospherics/unary/heat_exchanger))
@@ -137,16 +139,17 @@
 
 //update the name and icon of the pipe item depending on the type
 
-/obj/item/pipe/rpd_act(mob/user, obj/item/rpd/our_rpd)
+/obj/item/pipe/rpd_act(mob/user, obj/item/rpd/our_rpd, mode)
 	. = TRUE
-	if(our_rpd.mode == RPD_ROTATE_MODE)
-		rotate()
-	else if(our_rpd.mode == RPD_FLIP_MODE)
-		flip()
-	else if(our_rpd.mode == RPD_DELETE_MODE)
-		our_rpd.delete_single_pipe(user, src)
-	else
-		return ..()
+	switch(mode)
+		if(RPD_ROTATE_MODE)
+			rotate()
+		if(RPD_FLIP_MODE)
+			flip()
+		if(RPD_DELETE_MODE)
+			our_rpd.delete_single_pipe(user, src)
+		else
+			return ..()
 
 /obj/item/pipe/click_alt(mob/user)
 	rotate()
@@ -176,7 +179,7 @@
 // rotate the pipe item clockwise
 
 /obj/item/pipe/verb/rotate()
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set name = "Повернуть трубу"
 	set src in view(1)
 
@@ -192,7 +195,7 @@
 	fixdir()
 
 /obj/item/pipe/verb/flip()
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set name = "Перевернуть трубу"
 	set src in view(1)
 
@@ -245,6 +248,7 @@
 			PIPE_PUMP ,\
 			PIPE_VOLUME_PUMP ,\
 			PIPE_PASSIVE_GATE ,\
+			PIPE_TEMPERATURE_GATE ,\
 			PIPE_MVALVE, \
 			PIPE_DVALVE, \
 			PIPE_DP_VENT, \
@@ -339,8 +343,8 @@
 			to_chat(user, span_warning("There is already a pipe of the same type at this location."))
 			return 1
 
-	if(pipe_type in list(PIPE_SUPPLY_STRAIGHT, PIPE_SUPPLY_BENT, PIPE_SCRUBBERS_STRAIGHT, PIPE_SCRUBBERS_BENT, PIPE_HE_STRAIGHT, PIPE_HE_BENT, PIPE_SUPPLY_MANIFOLD, PIPE_SCRUBBERS_MANIFOLD, PIPE_SUPPLY_MANIFOLD4W, PIPE_SCRUBBERS_MANIFOLD4W, PIPE_UVENT, PIPE_SUPPLY_CAP, PIPE_SCRUBBERS_CAP, PIPE_PASV_VENT, PIPE_DP_VENT, PIPE_PASSIVE_GATE))
-		if(T.transparent_floor == TURF_TRANSPARENT) //stops jank with transparent floors and pipes
+	if(pipe_type in list(PIPE_SUPPLY_STRAIGHT, PIPE_SUPPLY_BENT, PIPE_SCRUBBERS_STRAIGHT, PIPE_SCRUBBERS_BENT, PIPE_HE_STRAIGHT, PIPE_HE_BENT, PIPE_SUPPLY_MANIFOLD, PIPE_SCRUBBERS_MANIFOLD, PIPE_SUPPLY_MANIFOLD4W, PIPE_SCRUBBERS_MANIFOLD4W, PIPE_UVENT, PIPE_SUPPLY_CAP, PIPE_SCRUBBERS_CAP, PIPE_PASV_VENT, PIPE_DP_VENT, PIPE_PASSIVE_GATE, PIPE_TEMPERATURE_GATE))
+		if(T.underfloor_accessibility < UNDERFLOOR_INTERACTABLE) //stops jank with transparent floors and pipes
 			to_chat(user, span_warning("You can only fix simple pipes and devices over glass floors!"))
 			return 1
 
@@ -477,6 +481,12 @@
 				P.name = pipename
 			P.on_construction(dir, pipe_dir, color)
 
+		if(PIPE_TEMPERATURE_GATE)		//passive gate
+			var/obj/machinery/atmospherics/binary/temperature_gate/P = new(src.loc)
+			if(pipename)
+				P.name = pipename
+			P.on_construction(dir, pipe_dir, color)
+
 		if(PIPE_VOLUME_PUMP)		//volume pump
 			var/obj/machinery/atmospherics/binary/volume_pump/P = new(src.loc)
 			if(pipename)
@@ -535,11 +545,11 @@
 	to_chat(user, span_notice("You have fastened the meter to the pipe."))
 	qdel(src)
 
-/obj/item/pipe_meter/rpd_act(mob/user, obj/item/rpd/our_rpd)
-	if(our_rpd.mode == RPD_DELETE_MODE)
+/obj/item/pipe_meter/rpd_act(mob/user, obj/item/rpd/our_rpd, mode)
+	if(mode == RPD_DELETE_MODE)
 		our_rpd.delete_single_pipe(user, src)
-	else
-		..()
+		return
+	return ..()
 
 /obj/item/pipe_gsensor
 	name = "gas sensor"
@@ -558,10 +568,10 @@
 	to_chat(user, span_notice("You have fastened the gas sensor."))
 	qdel(src)
 
-/obj/item/pipe_gsensor/rpd_act(mob/user, obj/item/rpd/our_rpd)
-	if(our_rpd.mode == RPD_DELETE_MODE)
+/obj/item/pipe_gsensor/rpd_act(mob/user, obj/item/rpd/our_rpd, mode)
+	if(mode == RPD_DELETE_MODE)
 		our_rpd.delete_single_pipe(user, src)
-	else
-		..()
+		return
+	return ..()
 
 #undef CIRC_RIGHT

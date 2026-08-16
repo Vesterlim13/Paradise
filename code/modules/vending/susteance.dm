@@ -1,6 +1,6 @@
 /obj/machinery/vending/sustenance
 	name = "Sustenance Vendor"
-	desc = "Торговый автомат, в котором продаются продукты питания, в соответствии с разделом 47-С Соглашения об этическом обращении с заключёнными Нанотрейзен."
+	desc = "Торговый автомат, в котором продаются продукты питания, в соответствии с разделом 47-С Соглашения об этическом обращении с заключёнными \"Нанотрейзен\"."
 	slogan_list = list(
 		"При+ятного аппет+ита!",
 		"Дост+аточное кол+ичество кал+орий для интенс+ивной раб+оты.",
@@ -23,6 +23,8 @@
 	broken_lightmask_overlay = "snack_broken_lightmask"
 	broken_lightmask_overlay = "snack_broken_lightmask"
 	refill_canister = /obj/item/vending_refill/sustenance
+	default_price = PAYCHECK_MIN / 2 // prisoners are very poor
+	default_premium_price = PAYCHECK_LOWER / 2
 
 	products = list(
 		/obj/item/reagent_containers/food/snacks/tofu = 24,
@@ -31,13 +33,13 @@
 	)
 	contraband = list(
 		/obj/item/kitchen/knife = 6,
-		/obj/item/reagent_containers/food/drinks/coffee = 12,
+		/obj/item/reagent_containers/food/drinks/cups/coffee_cup/small/coffee = 12,
 		/obj/item/tank/internals/emergency_oxygen = 6,
 		/obj/item/clothing/mask/breath = 6,
 	)
 
 /obj/machinery/vending/sustenance/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Sustenance Vendor",
 		GENITIVE = "торгового автомата Sustenance Vendor",
 		DATIVE = "торговому автомату Sustenance Vendor",

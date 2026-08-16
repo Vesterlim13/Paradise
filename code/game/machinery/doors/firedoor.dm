@@ -26,7 +26,9 @@
 	blocks_emissive = EMISSIVE_BLOCK_GENERIC
 	auto_close_time = 5 SECONDS
 	assemblytype = /obj/structure/firelock_frame
-	armor = list(MELEE = 30, BULLET = 30, LASER = 20, ENERGY = 20, BOMB = 10, BIO = 100, RAD = 100, FIRE = 95, ACID = 70)
+	armor = list(MELEE = 30, BULLET = 30, LASER = 20, ENERGY = 20, BOMB = 10, BIO = 100, FIRE = 95, ACID = 70)
+	superconductivity = ZERO_HEAT_TRANSFER_COEFFICIENT
+	cares_about_temperature = TRUE
 	/// How long does opening by hand take, in deciseconds.
 	var/manual_open_time = 5 SECONDS
 	var/can_crush = TRUE
@@ -35,6 +37,7 @@
 	var/boltslocked = TRUE
 	var/active_alarm = FALSE
 	var/list/affecting_areas
+	var/heat_resistance = 15000
 
 /obj/machinery/door/firedoor/Initialize(mapload)
 	. = ..()
@@ -127,7 +130,8 @@
 		span_notice("[user] tries to open [src] manually."),
 		span_notice("You operate the manual lever on [src]."))
 
-	if(do_after(user, manual_open_time, src))
+	CALCULATE_SKILL_MOD(user, LOCKPICK_SPEED_MOD, lockpick_mod)
+	if(do_after(user, manual_open_time * lockpick_mod, src))
 		add_fingerprint(user)
 		user.visible_message(
 			span_notice("[user] opens [src]."),
@@ -149,7 +153,8 @@
 	if(operating || !welded)
 		return
 	. = TRUE
-	if(!I.use_tool(src, user, 0, volume = I.tool_volume))
+	CALCULATE_SKILL_MOD(user, LOCKPICK_SPEED_MOD, lockpick_mod)
+	if(!I.use_tool(src, user, 1 SECONDS * lockpick_mod, volume = I.tool_volume))
 		return
 	user.visible_message(
 		span_notice("[user] [boltslocked ? "unlocks" : "locks"] [src]'s bolts."), \
@@ -172,7 +177,8 @@
 		span_notice("[user] starts undoing [src]'s bolts..."), \
 		span_notice("You start unfastening [src]'s floor bolts...")
 	)
-	if(!I.use_tool(src, user, 50, volume = I.tool_volume) || boltslocked)
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 5 SECONDS * building_mod, volume = I.tool_volume) || boltslocked)
 		return
 	user.visible_message(
 		span_notice("[user] unfastens [src]'s bolts."), \
@@ -187,7 +193,8 @@
 	if(!I.tool_use_check(user, 0))
 		return
 	WELDER_ATTEMPT_WELD_MESSAGE
-	if(!I.use_tool(src, user, 40, volume = I.tool_volume))
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume))
 		return
 	if(!density) //In case someone opens it while it's getting welded
 		return
@@ -233,7 +240,7 @@
 
 /obj/machinery/door/firedoor/update_icon_state()
 	icon_state = "door_[density ? "closed" : "open"]"
-	SSdemo.mark_dirty(src)
+	//SSdemo.mark_dirty(src)
 
 /obj/machinery/door/firedoor/update_overlays()
 	. = ..()
@@ -243,7 +250,7 @@
 		if(light_on)
 			. += emissive_appearance('icons/obj/doors/doorfire.dmi', "alarmlights_lightmask", src)
 		. += image('icons/obj/doors/doorfire.dmi', "alarmlights")
-	SSdemo.mark_dirty(src)
+	//SSdemo.mark_dirty(src)
 
 /obj/machinery/door/firedoor/proc/activate_alarm()
 	active_alarm = TRUE
@@ -328,7 +335,7 @@
 /obj/machinery/door/firedoor/border_only/CanAStarPass(to_dir, datum/can_pass_info/pass_info)
 	return !density || (dir != to_dir)
 
-/obj/machinery/door/firedoor/border_only/proc/on_exit(datum/source, atom/movable/leaving, atom/newLoc)
+/obj/machinery/door/firedoor/border_only/proc/on_exit(datum/source, atom/movable/leaving, direction)
 	SIGNAL_HANDLER
 
 	if(leaving.movement_type & PHASING)
@@ -340,32 +347,43 @@
 	if(leaving.pass_flags == PASSEVERYTHING || (pass_flags_self & leaving.pass_flags) || ((pass_flags_self & LETPASSTHROW) && leaving.throwing))
 		return
 
-	if(density && dir == get_dir(leaving, newLoc))
+	if(density && dir == direction)
 		leaving.Bump(src)
 		return COMPONENT_ATOM_BLOCK_EXIT
 
-/obj/machinery/door/firedoor/border_only/CanAtmosPass(turf/T, vertical)
-	if(get_dir(loc, T) == dir)
+/obj/machinery/door/firedoor/border_only/CanAtmosPass(direction)
+	if(direction == dir)
 		return !density
 	return TRUE
 
+/obj/machinery/door/firedoor/border_only/get_superconductivity(direction)
+	if(direction == dir && density)
+		return FALSE
+	return ..()
+
 /obj/machinery/door/firedoor/rcd_deconstruct_act(mob/user, obj/item/rcd/our_rcd)
 	. = ..()
-	if(our_rcd.checkResource(16, user))
-		to_chat(user, "Deconstructing firelock...")
+	if(our_rcd.checkResource(RCD_COST_FIRELOCK * 2, user))
+		to_chat(user, "Деконструкция пожарного шлюза...")
 		playsound(get_turf(our_rcd), 'sound/machines/click.ogg', 50, TRUE)
-		if(do_after(user, 5 SECONDS * our_rcd.toolspeed, src, category = DA_CAT_TOOL))
-			if(!our_rcd.useResource(16, user))
+		CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+		if(do_after(user, 5 SECONDS * our_rcd.toolspeed * building_mod, src, category = DA_CAT_TOOL))
+			if(!our_rcd.useResource(RCD_COST_FIRELOCK * 2, user))
 				return RCD_ACT_FAILED
 			playsound(get_turf(our_rcd), our_rcd.usesound, 50, TRUE)
 			add_attack_logs(user, src, "Deconstructed firelock with RCD")
 			qdel(src)
 			return RCD_ACT_SUCCESSFULL
-		to_chat(user, span_warning("ERROR! Deconstruction interrupted!"))
+		to_chat(user, span_warning("ОШИБКА! Деконструкция прервана!"))
 		return RCD_ACT_FAILED
-	to_chat(user, span_warning("ERROR! Not enough matter in unit to deconstruct this firelock!"))
+	to_chat(user, span_warning("ОШИБКА! Недостаточно материи для деконструкции пожарного шлюза!"))
 	playsound(get_turf(our_rcd), 'sound/machines/click.ogg', 50, TRUE)
 	return RCD_ACT_FAILED
+
+/obj/machinery/door/firedoor/temperature_expose(exposed_temperature, exposed_volume)
+	..()
+	if(exposed_temperature > (T0C + heat_resistance))
+		take_damage(round(exposed_volume / 100), BURN, 0, 0)
 
 /obj/machinery/door/firedoor/heavy
 	name = "heavy firelock"
@@ -375,6 +393,7 @@
 	explosion_block = 2
 	assemblytype = /obj/structure/firelock_frame/heavy
 	max_integrity = 550
+	heat_resistance = 20000
 
 /obj/item/firelock_electronics
 	name = "firelock electronics"
@@ -392,8 +411,10 @@
 	icon = 'icons/obj/doors/doorfire.dmi'
 	icon_state = "frame1"
 	density = TRUE
+	cares_about_temperature = TRUE
 	var/constructionStep = CONSTRUCTION_NOCIRCUIT
 	var/reinforced = 0
+	var/heat_resistance = 1000
 
 /obj/structure/firelock_frame/examine(mob/user)
 	. = ..()
@@ -416,6 +437,7 @@
 	if(user.a_intent == INTENT_HARM)
 		return ..()
 
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
 	switch(constructionStep)
 		if(CONSTRUCTION_PANEL_OPEN)
 			if(!istype(I, /obj/item/stack/sheet/plasteel))
@@ -434,7 +456,7 @@
 				span_notice("[user] starts reinforcing [src]..."),
 				span_notice("You start reinforcing [src]..."),
 			)
-			if(!do_after(user, 6 SECONDS * plasteel.toolspeed, src, category = DA_CAT_TOOL) || constructionStep != CONSTRUCTION_PANEL_OPEN || reinforced || QDELETED(plasteel))
+			if(!do_after(user, 6 SECONDS * plasteel.toolspeed * building_mod, src, category = DA_CAT_TOOL) || constructionStep != CONSTRUCTION_PANEL_OPEN || reinforced || QDELETED(plasteel))
 				return ATTACK_CHAIN_PROCEED
 			if(!plasteel.use(2))
 				to_chat(user, span_warning("At some point during construction you lost some plasteel. Make sure you have two plasteel sheets before trying again."))
@@ -461,7 +483,7 @@
 				span_notice("[user] starts wiring [src]..."),
 				span_notice("You start adding wires to [src]..."),
 			)
-			if(!do_after(user, 6 SECONDS * coil.toolspeed, src, category = DA_CAT_TOOL) || constructionStep != CONSTRUCTION_GUTTED || QDELETED(coil))
+			if(!do_after(user, 6 SECONDS * coil.toolspeed * building_mod, src, category = DA_CAT_TOOL) || constructionStep != CONSTRUCTION_GUTTED || QDELETED(coil))
 				return ATTACK_CHAIN_PROCEED
 			if(!coil.use(5))
 				to_chat(user, span_warning("At some point during construction you lost some cable. Make sure you have five lengths before trying again."))
@@ -484,7 +506,7 @@
 				span_notice("You start adding a circuit board to [src]..."),
 			)
 			playsound(loc, I.usesound, 50, TRUE)
-			if(!do_after(user, 4 SECONDS * I.toolspeed, src, category = DA_CAT_TOOL) || constructionStep != CONSTRUCTION_NOCIRCUIT)
+			if(!do_after(user, 4 SECONDS * I.toolspeed * building_mod, src, category = DA_CAT_TOOL) || constructionStep != CONSTRUCTION_NOCIRCUIT)
 				return ATTACK_CHAIN_PROCEED
 			if(!user.drop_transfer_item_to_loc(I, src))
 				return ATTACK_CHAIN_PROCEED
@@ -506,12 +528,13 @@
 	. = TRUE
 	if(!I.tool_use_check(user, 0))
 		return
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
 	if(constructionStep == CONSTRUCTION_WIRES_EXPOSED)
 		user.visible_message(
 			span_notice("[user] starts prying a metal plate into [src]..."), \
 			span_notice("You begin prying the cover plate back onto [src]...")
 		)
-		if(!I.use_tool(src, user, 50, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 5 SECONDS * building_mod, volume = I.tool_volume))
 			return
 		if(constructionStep != CONSTRUCTION_WIRES_EXPOSED)
 			return
@@ -525,7 +548,7 @@
 			span_notice("[user] starts prying something out from [src]..."), \
 			span_notice("You begin prying out the wire cover...")
 		)
-		if(!I.use_tool(src, user, 50, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 5 SECONDS * building_mod, volume = I.tool_volume))
 			return
 		if(constructionStep != CONSTRUCTION_PANEL_OPEN)
 			return
@@ -539,7 +562,7 @@
 			span_notice("[user] begins removing the circuit board from [src]..."), \
 			span_notice("You begin prying out the circuit board from [src]...")
 		)
-		if(!I.use_tool(src, user, 50, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 5 SECONDS * building_mod, volume = I.tool_volume))
 			return
 		if(constructionStep != CONSTRUCTION_GUTTED)
 			return
@@ -562,7 +585,8 @@
 		span_notice("[user] starts cutting the wires from [src]..."), \
 		span_notice("You begin removing [src]'s wires...")
 	)
-	if(!I.use_tool(src, user, 50, volume = I.tool_volume))
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 5 SECONDS * building_mod, volume = I.tool_volume))
 		return
 	if(constructionStep != CONSTRUCTION_WIRES_EXPOSED)
 		return
@@ -587,7 +611,8 @@
 		span_notice("[user] starts bolting down [src]..."), \
 		span_notice("You begin bolting [src]...")
 	)
-	if(!I.use_tool(src, user, 50, volume = I.tool_volume))
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 5 SECONDS * building_mod, volume = I.tool_volume))
 		return
 	if(locate(/obj/machinery/door/firedoor) in get_turf(src))
 		return
@@ -608,7 +633,8 @@
 	if(!I.tool_use_check(user, 0))
 		return
 	WELDER_ATTEMPT_SLICING_MESSAGE
-	if(!I.use_tool(src, user, 40, amount = 1, volume = I.tool_volume))
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 4 SECONDS * building_mod, amount = 1, volume = I.tool_volume))
 		return
 	if(constructionStep != CONSTRUCTION_NOCIRCUIT)
 		return
@@ -617,6 +643,11 @@
 	if(reinforced)
 		new /obj/item/stack/sheet/plasteel(drop_location(), 2)
 	qdel(src)
+
+/obj/structure/firelock_frame/temperature_expose(exposed_temperature, exposed_volume)
+	..()
+	if(exposed_temperature > (T0C + heat_resistance))
+		take_damage(round(exposed_volume / 100), BURN, 0, 0)
 
 /obj/structure/firelock_frame/heavy
 	name = "heavy firelock frame"

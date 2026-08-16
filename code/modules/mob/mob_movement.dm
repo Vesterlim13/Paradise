@@ -54,6 +54,9 @@
 	if(HAS_TRAIT(mob, TRAIT_NO_TRANSFORM))
 		return FALSE // This is sota the goto stop mobs from moving var
 
+	if(mob.throwing && mob.throwing.block_movement)
+		return FALSE
+
 	if(!isliving(mob))
 		if(SEND_SIGNAL(mob, COMSIG_MOB_CLIENT_PRE_NON_LIVING_MOVE, new_loc, direct) & COMSIG_MOB_CLIENT_BLOCK_PRE_NON_LIVING_MOVE)
 			return FALSE
@@ -320,7 +323,7 @@
 			continue
 		return rebound
 
-/mob/get_gravity(turf/gravity_turf)
+/mob/has_gravity(turf/gravity_turf)
 	if(!isnull(GLOB.gravity_is_on))	// global admin override.
 		return GLOB.gravity_is_on
 	return mob_negates_gravity() || ..()
@@ -472,7 +475,7 @@
 
 /mob/verb/move_up()
 	set name = "Подняться"
-	set category = STATPANEL_IC
+	set category = VERB_CATEGORY_IC
 
 	if(remote_control)
 		return remote_control.relaymove(src, UP)
@@ -491,16 +494,21 @@
 	var/ventcrawling_flag = HAS_TRAIT(src, TRAIT_MOVE_VENTCRAWLING) ? ZMOVE_VENTCRAWLING : NONE
 	if(can_z_move(DOWN, above_turf, current_turf, ZMOVE_FALL_FLAGS|ventcrawling_flag)) //Will we fall down if we go up?
 		if(buckled)
-			to_chat(src, span_notice("[capitalize(buckled.declent_ru(NOMINATIVE))] не способ[GEND_EN_NA_NO_NY(buckled)] летать."))
+			to_chat(src, span_notice("[DECLENT_RU_CAP(buckled, NOMINATIVE)] не способ[GEND_EN_NA_NO_NY(buckled)] летать."))
 		else
 			to_chat(src, span_notice("Вы не Супермен чтобы взлететь вверх."))
 		return
+
+	balloon_alert(src, "двигаетесь вверх...")
+	if(!do_after(src, 1 SECONDS, cog_icon = null))
+		return
+
 	if(zMove(UP, z_move_flags = ZMOVE_FLIGHT_FLAGS|ZMOVE_FEEDBACK|ventcrawling_flag))
 		to_chat(src, span_notice("Вы двигаетесь вверх."))
 
 /mob/verb/move_down()
 	set name = "Опуститься"
-	set category = STATPANEL_IC
+	set category = VERB_CATEGORY_IC
 
 	if(remote_control)
 		return remote_control.relaymove(src, DOWN)
@@ -516,7 +524,25 @@
 		var/atom/loc_atom = loc
 		return loc_atom.relaymove(src, DOWN)
 
+	if(!can_z_move(DOWN, current_turf, null, ZMOVE_CAN_FLY_CHECKS|ZMOVE_FEEDBACK))
+		return
+
+	balloon_alert(src, "двигаетесь вниз...")
+	if(!do_after(src, 1 SECONDS, cog_icon = null))
+		return
+
 	var/ventcrawling_flag = HAS_TRAIT(src, TRAIT_MOVE_VENTCRAWLING) ? ZMOVE_VENTCRAWLING : NONE
 	if(zMove(DOWN, z_move_flags = ZMOVE_FLIGHT_FLAGS|ZMOVE_FEEDBACK|ventcrawling_flag))
 		to_chat(src, span_notice("Вы двигаетесь вниз."))
 	return FALSE
+
+/mob/abstract_move(atom/destination)
+	var/turf/new_turf = get_turf(destination)
+	if(new_turf && iscordon(new_turf) && !client?.holder)
+		return
+	return ..()
+
+/mob/Moved(atom/old_loc, movement_dir, forced, list/old_locs, momentum_change)
+	. = ..()
+	if(client && length(client.sound_tokens))
+		SSsound_tokens.clients_needing_update[client] = TRUE

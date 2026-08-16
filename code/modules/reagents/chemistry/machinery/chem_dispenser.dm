@@ -21,15 +21,20 @@
 	var/componentscheck = FALSE
 	var/obj/item/reagent_containers/beaker = null
 	var/mutable_appearance/icon_beaker //cached overlay
+	/// Different dispensers have different overlay for installed beaker
+	var/beaker_overlay_name = "disp_beaker"
 	var/list/dispensable_reagents = list("hydrogen", "lithium", "carbon", "nitrogen", "oxygen", "fluorine",
 	"sodium", "aluminum", "silicon", "phosphorus", "sulfur", "chlorine", "potassium", "iron",
 	"copper", "mercury", "plasma", "radium", "water", "ethanol", "sugar", "iodine", "bromine", "silver", "chromium")
 	var/list/upgrade_reagents = list("oil", "ash", "acetone", "saltpetre", "ammonia", "diethylamine", "fuel")
 	var/list/hacked_reagents = list("toxin")
 	var/is_drink = FALSE
+	var/base_skill = /datum/skill/medical/chemistry
+	var/dispence_skill_name = CHEMISTRY_DISPENSE_RAND_SIZE
+	var/dispence_random_prob_name = CHEMISTRY_DISPENSE_RAND_REAGENT_PROB
 
 /obj/machinery/chem_dispenser/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "химический раздатчик",
 		GENITIVE = "химического раздатчика",
 		DATIVE = "химическому раздатчику",
@@ -101,7 +106,7 @@
 	upgrade_reagents = list()
 
 /obj/machinery/chem_dispenser/mutagensaltpeter/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ботанический раздатчик",
 		GENITIVE = "ботанического раздатчика",
 		DATIVE = "ботаническому раздатчику",
@@ -179,6 +184,16 @@
 		ui.open()
 
 /obj/machinery/chem_dispenser/ui_data(mob/user)
+	var/static/alist/dispense_amounts = alist(
+		SKILL_LEVEL_NONE = list(10, 50, 100),
+		SKILL_LEVEL_BEGINNER = list(5, 10, 50, 100),
+		SKILL_LEVEL_BASIC = list(5, 10, 30, 50, 100),
+		SKILL_LEVEL_ADVANCED = list(5, 10, 20, 30, 50, 100),
+		SKILL_LEVEL_PROFESSIONAL = list(1, 5, 10, 20, 30, 50, 100),
+		SKILL_LEVEL_EXPERT = list(1, 3, 5, 10, 20, 30, 50, 100),
+		SKILL_LEVEL_LEGEND = list(1, 3, 5, 10, 15, 20, 30, 50, 100),
+		SKILL_LEVEL_UNAVAILABLE = list(50),
+	)
 	var/list/data = list()
 
 	data["glass"] = is_drink
@@ -186,6 +201,8 @@
 	data["energy"] = cell.charge ? cell.charge * powerefficiency : "0" //To prevent NaN in the UI.
 	data["maxEnergy"] = cell.maxcharge * powerefficiency
 	data["isBeakerLoaded"] = beaker ? 1 : 0
+	GET_SKILL_LEVEL(user, base_skill, skill_level)
+	data["dispenseAmounts"] = dispense_amounts[skill_level]
 
 	var/beakerContents[0]
 	var/beakerCurrentVolume = 0
@@ -233,7 +250,14 @@
 			if(!cell.use(actual / powerefficiency))
 				atom_say("Недостаточно энергии для завершения операции!")
 				return
-			R.add_reagent(params["reagent"], actual)
+			CALCULATE_SKILL_MOD(usr, dispence_skill_name, dispense_rand_size)
+			CALCULATE_SKILL_MOD(usr, dispence_random_prob_name, dispence_random_prob)
+			dispence_random_prob *= 100
+			actual += min(amount * dispense_rand_size * (rand() - 0.5), free) // assistants gets free drinks, but can evaporate energy in seconds
+			var/reagent = params["reagent"]
+			if(prob(dispence_random_prob))
+				reagent = pick(dispensable_reagents)
+			R.add_reagent(reagent, actual)
 			update_icon(UPDATE_OVERLAYS)
 		if("remove")
 			var/amount = text2num(params["amount"])
@@ -268,7 +292,7 @@
 		SStgui.update_uis(src)
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
-	if(istype(I, /obj/item/reagent_containers/glass) || istype(I, /obj/item/reagent_containers/food/drinks))
+	if(isglassreagentcontainer(I) || istype(I, /obj/item/reagent_containers/food/drinks))
 		add_fingerprint(user)
 		if(panel_open)
 			balloon_alert(user, "техпанель открыта!")
@@ -365,7 +389,7 @@
 	var/static/list/beaker_cache = list()
 	var/random_pixel = rand(-10, 5)	// randomize beaker overlay position
 	if(!beaker_cache["[random_pixel]"])
-		var/mutable_appearance/beaker_olay = mutable_appearance('icons/obj/chemical.dmi', "disp_beaker")
+		var/mutable_appearance/beaker_olay = mutable_appearance('icons/obj/chemical.dmi', beaker_overlay_name)
 		beaker_olay.pixel_w = random_pixel
 		beaker_cache["[random_pixel]"] = beaker_olay
 	. += beaker_cache["[random_pixel]"]
@@ -374,17 +398,21 @@
 	name = "soda fountain"
 	desc = "Машина, способная синтезировать целый ряд самых разных напитков. Круто!"
 	icon_state = "soda_dispenser"
+	beaker_overlay_name = "bar_beaker"
 	ui_title = "Фонтан Напитков 10000"
-	dispensable_reagents = list("water", "ice", "soymilk", "coffee", "tea", "hot_coco", "cola", "spacemountainwind", "dr_gibb", "space_up",
-	"tonic", "sodawater", "lemon_lime", "grapejuice", "sugar", "orangejuice", "lemonjuice", "limejuice", "tomatojuice", "banana",
-	"watermelonjuice", "carrotjuice", "potato", "berryjuice")
+	dispensable_reagents = list("banana", "berryjuice", "carrotjuice", "coffee", "cola", "dr_gibb", "grapejuice", "hot_coco", "ice", "lemon_lime",
+	"lemonjuice", "limejuice", "milk", "orangejuice", "potato", "sodawater", "soymilk", "space_up", "spacemountainwind", "sugar",
+	"tea", "tomatojuice", "tonic", "water", "watermelonjuice")
 	upgrade_reagents = list("bananahonk", "milkshake", "cafe_latte", "cafe_mocha", "triple_citrus", "icecoffe","icetea")
 	hacked_reagents = list("thirteenloko")
 	var/list/hackedupgrade_reagents = list("zaza") //I possess zaza
 	is_drink = TRUE
+	base_skill = /datum/skill/service/drink_mixing
+	dispence_skill_name = DRINKS_DISPENSE_RAND_SIZE
+	dispence_random_prob_name = DRINKS_DISPENSE_RAND_REAGENT_PROB
 
 /obj/machinery/chem_dispenser/soda/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "раздатчик напитков",
 		GENITIVE = "раздатчика напитков",
 		DATIVE = "раздатчику напитков",
@@ -432,14 +460,17 @@
 	name = "booze dispenser"
 	desc = "Машина, способная синтезировать для вас любую алкогольную бурду, которая только может прийти в голову. Настоящее чудо алкологольных технологий!"
 	icon_state = "booze_dispenser"
+	beaker_overlay_name = "bar_beaker"
 	ui_title = "Наливатель Бухла 9001"
 	dispensable_reagents = list("ice", "cream", "cider", "beer", "kahlua", "whiskey", "wine", "vodka", "gin", "rum", "tequila", "vermouth", "cognac", "ale", "mead", "synthanol", "jagermeister", "bluecuracao", "sambuka", "schnaps", "sheridan")
 	upgrade_reagents = list("iced_beer", "irishcream", "manhattan", "antihol", "synthignon", "bravebull")
 	hacked_reagents = list("goldschlager", "patron", "absinthe", "ethanol", "nothing", "sake", "bitter", "champagne", "aperol", "noalco_beer")
 	is_drink = TRUE
+	base_skill = /datum/skill/service/drink_mixing
+	dispence_skill_name = DRINKS_DISPENSE_RAND_SIZE
 
 /obj/machinery/chem_dispenser/beer/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "раздатчик алкоголя",
 		GENITIVE = "раздатчика алкоголя",
 		DATIVE = "раздатчику алкоголя",
@@ -481,7 +512,7 @@
 	upgrade_reagents = list("atrazine", "glyphosate", "pestkiller", "diethylamine", "ash")
 
 /obj/machinery/chem_dispenser/botanical/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ботанический раздатчик",
 		GENITIVE = "ботанического раздатчика",
 		DATIVE = "ботаническому раздатчику",
@@ -534,7 +565,7 @@
 	var/recharge_rate = 1 // Keep this as an integer
 
 /obj/item/handheld_chem_dispenser/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ручной химический раздатчик",
 		GENITIVE = "ручного химического раздатчика",
 		DATIVE = "ручному химическому раздатчику",
@@ -558,8 +589,8 @@
 /obj/item/handheld_chem_dispenser/get_cell()
 	return cell
 
-/obj/item/handheld_chem_dispenser/afterattack(obj/target, mob/user, proximity)
-	if(!proximity || !current_reagent || !amount)
+/obj/item/handheld_chem_dispenser/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
+	if(!proximity_flag || !current_reagent || !amount)
 		return
 
 	if(!check_allowed_items(target,target_self = TRUE) || !target.is_refillable())
@@ -592,7 +623,7 @@
 /obj/item/handheld_chem_dispenser/ui_interact(mob/user, datum/tgui/ui = null)
 	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, "HandheldChemDispenser", capitalize(declent_ru(NOMINATIVE)))
+		ui = new(user, src, "HandheldChemDispenser", DECLENT_RU_CAP(src, NOMINATIVE))
 		ui.open()
 
 /obj/item/handheld_chem_dispenser/ui_data(mob/user)
@@ -647,7 +678,7 @@
 /obj/item/handheld_chem_dispenser/update_overlays()
 	. = ..()
 	if(cell?.charge)
-		var/image/power_light = image('icons/obj/chemical.dmi', src, "light_low")
+		var/mutable_appearance/power_light = mutable_appearance('icons/obj/chemical.dmi', "light_low")
 		var/percent = round((cell.charge / cell.maxcharge) * 100)
 		switch(percent)
 			if(0 to 33)
@@ -658,13 +689,12 @@
 				power_light.icon_state = "light_full"
 		. += power_light
 
-		var/image/mode_light = image('icons/obj/chemical.dmi', src, "light_remove")
-		mode_light.icon_state = "light_[mode]"
+		var/mutable_appearance/mode_light = mutable_appearance('icons/obj/chemical.dmi', "light_[mode]")
 		. += mode_light
 
-		var/image/chamber_contents = image('icons/obj/chemical.dmi', src, "reagent_filling")
+		var/mutable_appearance/chamber_contents = mutable_appearance('icons/obj/chemical.dmi', "reagent_filling")
 		var/datum/reagent/R = GLOB.chemical_reagents_list[current_reagent]
-		chamber_contents.icon += R.color
+		chamber_contents.color = R.color
 		. += chamber_contents
 
 /obj/item/handheld_chem_dispenser/process()
@@ -724,7 +754,7 @@
 	"sake", "bitter", "champagne", "aperol", "noalco_beer")
 
 /obj/item/handheld_chem_dispenser/booze/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ручной алкогольный раздатчик",
 		GENITIVE = "ручного алкогольного раздатчика",
 		DATIVE = "ручному алкогольному раздатчику",
@@ -745,7 +775,7 @@
 	"triple_citrus", "icecoffe", "icetea", "thirteenloko")
 
 /obj/item/handheld_chem_dispenser/soda/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ручной раздатчик напитков",
 		GENITIVE = "ручного раздатчика напитков",
 		DATIVE = "ручному раздатчику напитков",
@@ -773,7 +803,7 @@
 	)
 
 /obj/item/handheld_chem_dispenser/botanical/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "компактный кухонный раздатчик",
 		GENITIVE = "компактного кухонного раздатчика",
 		DATIVE = "компактному кухонному раздатчику",
@@ -793,7 +823,7 @@
 	)
 
 /obj/item/handheld_chem_dispenser/cooking/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "компактный кухонный раздатчик",
 		GENITIVE = "компактного кухонного раздатчика",
 		DATIVE = "компактному кухонному раздатчику",

@@ -37,7 +37,7 @@
 		STOP_PROCESSING(SSobj, src)
 		return null
 	var/turf/location = loc
-	if(istype(location, /mob/))
+	if(ismob(location))
 		var/mob/M = location
 		if(M.l_hand == src || M.r_hand == src)
 			location = M.loc
@@ -67,10 +67,11 @@
 	else
 		return TRUE
 
-/obj/item/flamethrower/afterattack(atom/target, mob/user, flag, params)
+/obj/item/flamethrower/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
 	. = ..()
-	if(flag)
+	if(proximity_flag)
 		return // too close
+
 	if(user && user.get_active_hand() == src) // Make sure our user is still holding us
 		var/turf/target_turf = get_turf(target)
 		if(target_turf)
@@ -195,11 +196,11 @@
 	operating = TRUE
 	var/turf/previousturf = get_turf(src)
 	for(var/turf/simulated/T in turflist)
-		if(!T.air)
+		if(T.blocks_air)
 			break
 		if(T == previousturf)
 			continue	//so we don't burn the tile we be standin on
-		if(!ptank || !T.CanAtmosPass(previousturf, vertical = FALSE))
+		if(!ptank || !T.CanAtmosPass(get_dir(T, previousturf)) || !previousturf.CanAtmosPass(get_dir(previousturf, T)))
 			break
 		if(igniter)
 			igniter.ignite_turf(src, T)
@@ -218,13 +219,10 @@
 	//TODO: DEFERRED Consider checking to make sure tank pressure is high enough before doing this...
 	//Transfer 5% of current tank air contents to turf
 	var/datum/gas_mixture/air_transfer = ptank.air_contents.remove_ratio(release_amount)
-	if(air_transfer.toxins)
-		air_transfer.toxins = air_transfer.toxins * 5
-	target.assume_air(air_transfer)
-	//Burn it based on transfered gas
-	target.hotspot_expose((ptank.air_contents.temperature*2) + 380, 500)
-	//location.hotspot_expose(1000,500,1)
-	SSair.add_to_active(target, 0)
+	if(air_transfer.toxins())
+		air_transfer.set_toxins(air_transfer.toxins() * 5)
+	target.blind_release_air(air_transfer)
+	target.hotspot_expose((ptank.air_contents.temperature() * 2) + PLASMA_MINIMUM_BURN_TEMPERATURE, min(CELL_VOLUME, CELL_VOLUME * air_transfer.total_moles()))
 
 /obj/item/flamethrower/Initialize(mapload)
 	. = ..()
@@ -253,7 +251,7 @@
 		add_game_logs("A projectile ([hitby]) detonated a flamethrower tank held by [key_name(owner)] at [COORD(target_turf)]", owner)
 		igniter.ignite_turf(src,target_turf, release_amount = 100)
 		QDEL_NULL(ptank)
-		return 1 //It hit the flamethrower, not them
+		return HIT_RESULT_SUCCESS //It hit the flamethrower, not them
 
 /obj/item/assembly/igniter/proc/flamethrower_process(turf/simulated/location)
 	location.hotspot_expose(700, 2)

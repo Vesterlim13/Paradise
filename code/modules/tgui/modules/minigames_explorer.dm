@@ -28,7 +28,7 @@
 		this["fluff"] = ""
 		this["uids"] = list()
 		for(var/minigame_obj in GLOB.mini_games[mini_game]) //each mini_game can contain multiple actual spawners, we use only one desc/info
-			this["uids"] += "\ref[minigame_obj]"
+			this["uids"] += UID_of(minigame_obj)
 			if(!this["desc"])	//haven't set descriptions yet
 				var/obj/O = minigame_obj
 				this["desc"] = O.desc
@@ -36,7 +36,7 @@
 		data["spawners"] += list(this)
 	return data
 
-/datum/minigames_explorer/ui_act(action, params)
+/datum/minigames_explorer/ui_act(action, params, datum/tgui/ui)
 	if(..())
 		return
 	switch(action)
@@ -53,11 +53,15 @@
 			owner.client?.prefs?.minigames_notifications = !owner.client?.prefs?.minigames_notifications
 			return
 
+	switch(action)
+		if("deathmatch")
+			to_chat(owner, span_warning("Дезматч временно отключён до дальнейшего оповещения."))
+			return
+
 	var/list/possible_spawners = params["ID"]
-	var/obj/MS = locate(pick(possible_spawners))
+	var/obj/MS = locateUID(pick(possible_spawners))
 	if(!MS || !MS.is_mob_spawnable())
-		log_runtime(EXCEPTION("A ghost tried to interact with an invalid mini_game, or the mini_game didn't exist."))
-		return
+		CRASH("A ghost tried to interact with an invalid mini_game, or the mini_game didn't exist.")
 	switch(action)
 		if("jump")
 			owner.forceMove(get_turf(MS))
@@ -65,3 +69,8 @@
 		if("spawn")
 			MS.attack_ghost(owner)
 			. = TRUE
+
+/datum/minigames_explorer/proc/deathmatch()
+	if(isnull(GLOB.deathmatch_game))
+		GLOB.deathmatch_game = new
+	GLOB.deathmatch_game.ui_interact(usr)

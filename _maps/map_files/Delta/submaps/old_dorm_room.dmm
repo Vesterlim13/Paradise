@@ -1,19 +1,14 @@
 //MAP CONVERTED BY dmm2tgm.py THIS HEADER COMMENT PREVENTS RECONVERSION, DO NOT REMOVE
 "ao" = (
-/obj/machinery/firealarm{
-	dir = 8;
-	pixel_x = -26
-	},
+/obj/machinery/firealarm/directional/west,
 /obj/structure/table/wood,
 /obj/item/folder/red,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "bs" = (
-/obj/machinery/newscaster{
-	pixel_x = -30
-	},
+/obj/machinery/newscaster/directional/west,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "bO" = (
 /obj/effect/map_effect/marker_helper/mapmanip/submap/edge{
 	dir = 4
@@ -56,24 +51,19 @@
 	pixel_y = 24;
 	specialfunctions = 4
 	},
-/obj/machinery/alarm{
-	dir = 4;
-	pixel_x = -22
-	},
+/obj/machinery/alarm/directional/west,
 /obj/structure/dresser,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "fs" = (
 /obj/structure/closet/secure_closet/personal/cabinet,
 /obj/item/clothing/suit/storage/browntrenchcoat,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "fv" = (
-/obj/machinery/light_switch{
-	pixel_x = 24
-	},
+/obj/machinery/light_switch/directional/east,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "gb" = (
 /obj/structure/rack,
 /obj/item/storage/toolbox/emergency/old,
@@ -91,7 +81,7 @@
 "hj" = (
 /obj/item/twohanded/required/kirbyplants,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "hT" = (
 /obj/structure/sign/poster/official/random{
 	pixel_x = 32
@@ -148,7 +138,7 @@
 /area/template_noop)
 "rT" = (
 /turf/simulated/wall,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "sp" = (
 /obj/structure/cable{
 	icon_state = "1-2"
@@ -161,7 +151,7 @@
 /turf/simulated/floor/plasteel{
 	icon_state = "neutralfull"
 	},
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "tI" = (
 /turf/simulated/floor/plasteel{
 	dir = 4;
@@ -181,7 +171,7 @@
 /obj/effect/map_effect/marker/mapmanip/submap/extract/delta/old_doorm_room,
 /obj/effect/map_effect/marker_helper/submap_def/delta/old_doorm_room/working,
 /turf/simulated/wall,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "yP" = (
 /turf/simulated/floor/plating,
 /area/template_noop)
@@ -199,13 +189,10 @@
 	icon_state = "0-4"
 	},
 /obj/structure/table/wood,
-/obj/machinery/power/apc{
-	dir = 8;
-	pixel_x = -26
-	},
+/obj/machinery/power/apc/directional/west,
 /obj/item/flashlight/lamp,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "Di" = (
 /obj/structure/rack,
 /obj/effect/spawner/lootdrop/maintenance/double,
@@ -249,7 +236,7 @@
 	dir = 8
 	},
 /turf/simulated/wall,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "Hn" = (
 /obj/effect/decal/cleanable/glass,
 /obj/item/stack/rods{
@@ -271,7 +258,7 @@
 /obj/item/paper_bin,
 /obj/item/pen,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "Lo" = (
 /obj/structure/closet/firecloset,
 /turf/simulated/floor/plating,
@@ -291,7 +278,7 @@
 	icon_state = "1-2"
 	},
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "OW" = (
 /obj/item/twohanded/required/kirbyplants,
 /turf/simulated/floor/plasteel{
@@ -314,7 +301,7 @@
 /obj/structure/bed,
 /obj/item/bedsheet/rainbow,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "RP" = (
 /obj/effect/map_effect/marker_helper/mapmanip/submap/edge{
 	dir = 6
@@ -355,7 +342,7 @@
 	dir = 4
 	},
 /turf/simulated/wall,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "Ui" = (
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/plasteel{
@@ -370,7 +357,7 @@
 	dir = 4
 	},
 /turf/simulated/wall,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "Vj" = (
 /obj/structure/cable{
 	icon_state = "1-2"
@@ -387,7 +374,7 @@
 	},
 /obj/structure/chair/office/dark,
 /turf/simulated/floor/wood/fancy/birch,
-/area/crew_quarters/sleep)
+/area/station/commons/sleep)
 "Wf" = (
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/plasteel{
@@ -405,7 +392,6 @@
 /area/template_noop)
 "XU" = (
 /obj/structure/cable{
-	d2 = 8;
 	icon_state = "0-8"
 	},
 /obj/effect/decal/cleanable/dirt,

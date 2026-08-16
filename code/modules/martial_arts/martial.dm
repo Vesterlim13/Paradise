@@ -51,7 +51,7 @@
 	/// Set to TRUE to prevent users of this style from using stun batons (and stunprods)
 	var/no_baton = FALSE
 	/// Message displayed when someone uses a baton when its forbidden by a martial art
-	var/no_baton_reason = span_warning("Из-за занятий по боевым искусствам вы не можете крепко схватиться за станбатон!")
+	var/no_baton_reason = span_warning_alt("Из-за занятий по боевым искусствам вы не можете крепко схватиться за станбатон!")
 	/// Whether or not you can grab someone while horizontal with this Martial Art
 	var/can_horizontally_grab = TRUE
 	/// If falce, doesn't change strength and strength limit.
@@ -74,7 +74,7 @@
 	return act(MARTIAL_COMBO_STEP_HELP, A, D)
 
 /datum/martial_art/proc/can_use(mob/living/carbon/human/human)
-	return !HAS_TRAIT(human, TRAIT_PACIFISM)
+	return !HAS_TRAIT(human, TRAIT_PACIFISM) && !HAS_TRAIT(human, TRAIT_MARTIAL_ARTS_SUPPRESSED)
 
 /datum/martial_art/proc/act(step, mob/living/carbon/human/user, mob/living/carbon/human/target, could_start_new_combo = TRUE)
 	if(!can_use(user))
@@ -179,7 +179,7 @@
 	return TRUE
 
 /datum/martial_art/proc/attack_reaction(mob/living/carbon/human/defender, mob/living/carbon/human/attacker, obj/item/I, visible_message, self_message)
-	if(can_use(defender) && defender.in_throw_mode && !defender.incapacitated(INC_IGNORE_GRABBED))
+	if(can_use(defender) && defender.in_throw_mode && !defender.incapacitated(IGNORE_GRAB))
 		if(prob(block_chance))
 			if(visible_message || self_message)
 				defender.visible_message(visible_message, self_message)
@@ -201,21 +201,23 @@
 	if(!human.mind)
 		return FALSE
 
+	for(var/datum/martial_art/art in human.mind.known_martial_arts)
+		if(istype(art, src))
+			return FALSE
+
+	temporary = make_temporary
+
 	if(change_musculs && HASBIT(SEND_SIGNAL(human, COMSIG_CAN_CHANGE_STRENGTH), COMPONENT_CAN_CHANGE_STRENGTH))
 		ADD_TRAIT(human, TRAIT_STRONG_MUSCLES, UNIQUE_TRAIT_SOURCE(src))
-		SEND_SIGNAL(human, COMSIG_STRENGTH_LEVEL_UP, 4)
+
+		if(!temporary)
+			SEND_SIGNAL(human, COMSIG_STRENGTH_LEVEL_UP, 4)
+
 		human.update_body(TRUE)
-
-	for(var/datum/martial_art/art in human.mind.known_martial_arts)
-		if(!istype(art, src))
-			continue
-
-		return FALSE
 
 	if(no_baton)
 		if(isbaton(human.get_item_by_slot(ITEM_SLOT_HAND_LEFT)))
 			human.drop_l_hand()
-
 		if(isbaton(human.get_item_by_slot(ITEM_SLOT_HAND_RIGHT)))
 			human.drop_r_hand()
 
@@ -226,10 +228,10 @@
 		add_verb(human, /mob/living/carbon/human/proc/dirslash_enabling)
 		human.dirslash_enabled = TRUE
 
-	temporary = make_temporary
 	human.mind.known_martial_arts.Add(src)
 	human.mind.martial_art = get_highest_weight(human)
 	owner_UID = human.UID()
+
 	return TRUE
 
 /datum/martial_art/proc/remove(mob/living/carbon/human/human)
@@ -265,7 +267,7 @@
 /mob/living/carbon/human/proc/martial_arts_help()
 	set name = "Информацию о БИ"
 	set desc = "Gives information about the martial arts you know."
-	set category = STATPANEL_MARTIALARTS
+	set category = VERB_CATEGORY_MARTIALARTS
 	var/mob/living/carbon/human/human = usr
 	if(!istype(human))
 		to_chat(usr, span_warning("You shouldn't have access to this verb. Report this as a bug to the github please."))
@@ -275,7 +277,7 @@
 /mob/living/carbon/human/proc/dirslash_enabling()
 	set name = "Атака по направлению"
 	set desc = "If direction slash is enabled, you can attack mobs, by clicking behind their backs"
-	set category = STATPANEL_MARTIALARTS
+	set category = VERB_CATEGORY_MARTIALARTS
 	dirslash_enabled = !dirslash_enabled
 	to_chat(src, span_notice("Directrion slash is [dirslash_enabled? "enabled" : "disabled"] now."))
 
@@ -287,6 +289,11 @@
 
 // Put after the header and before the footer in the explaination text
 /datum/martial_art/proc/explaination_combos(user)
+	var/mob/living/carbon/human/human = user
+	if(HAS_TRAIT(human, TRAIT_MARTIAL_ARTS_SUPPRESSED))
+		to_chat(user, span_warning("Что-то подавляет ваши боевые навыки... Вы не можете вспомнить техники."))
+		return
+
 	if(HAS_COMBOS)
 		for(var/combo_type in combos)
 			var/datum/martial_combo/MC = new combo_type()
@@ -301,6 +308,8 @@
 	return
 
 /datum/martial_art/proc/try_deflect(mob/user)
+	if(HAS_TRAIT(user, TRAIT_MARTIAL_ARTS_SUPPRESSED))
+		return FALSE
 	return prob(deflection_chance)
 
 /datum/martial_art/proc/explaination_notice(user)
@@ -452,7 +461,7 @@
 	var/datum/martial_art/the_sleeping_carp/theSleepingCarp = new(null)
 	theSleepingCarp.teach(user)
 	user.temporarily_remove_item_from_inventory(src)
-	visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] подхватыва[PLUR_ET_YUT(src)] огонь и быстро сгора[PLUR_ET_YUT(src)] до тла."))
+	visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] подхватыва[PLUR_ET_YUT(src)] огонь и быстро сгора[PLUR_ET_YUT(src)] до тла."))
 	new /obj/effect/decal/cleanable/ash(get_turf(src))
 	qdel(src)
 
@@ -464,7 +473,7 @@
 	item_state = "cqcmanual"
 
 /obj/item/CQC_manual/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "старое руководство",
 		GENITIVE = "старого руководства",
 		DATIVE = "старому руководству",
@@ -506,7 +515,7 @@
 	item_state = "syringe_0"
 
 /obj/item/CQC_manual/chef/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "имплант улучшения CQC",
 		GENITIVE = "импланта улучшения CQC",
 		DATIVE = "импланту улучшения CQC",
@@ -562,7 +571,7 @@
 	item_state = "mr_cheng_manual"
 
 /obj/item/mr_chang_technique/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "журнал \"Техника Агрессивного Маркетинга\"",
 		GENITIVE = "журнала \"Техника Агрессивного Маркетинга\"",
 		DATIVE = "журналу \"Техника Агрессивного Маркетинга\"",
@@ -592,7 +601,7 @@
 	item_state = "throwingknives"
 
 /obj/item/throwing_manual/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "мануал \"Курс Техники метания ножей молодого Десантника\"",
 		GENITIVE = "мануала \"Курс Техники метания ножей молодого Десантника\"",
 		DATIVE = "мануалу \"Курс Техники метания ножей молодого Десантника\"",
@@ -624,7 +633,9 @@
 	throwforce = 20
 	attack_verb = list("сокрушил", "ударил", "огрел")
 	icon_state = "bostaff0"
-	block_chance = 50
+
+/obj/item/twohanded/bostaff/add_parry_component()
+	AddComponent(/datum/component/parry, _stamina_constant = 2, _stamina_coefficient = 0.5, _parryable_attack_types = ALL_ATTACK_TYPES)
 
 /obj/item/twohanded/bostaff/update_icon_state()
 	icon_state = "bostaff[HAS_TRAIT(src, TRAIT_WIELDED)]"
@@ -690,7 +701,7 @@
 /obj/item/twohanded/bostaff/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = ITEM_ATTACK)
 	if(HAS_TRAIT(src, TRAIT_WIELDED))
 		return ..()
-	return FALSE
+	return HIT_RESULT_FAILED
 
 /atom/movable/screen/combo
 	icon_state = ""
@@ -718,7 +729,7 @@
 	for(var/i in 1 to length(streak))
 		var/intent_text = copytext(streak, i, i + 1)
 		var/image/intent_icon = image(icon, src, "combo_[intent_text]")
-		intent_icon.pixel_x = 16 * (i - 1) - 8 * length(streak)
+		intent_icon.pixel_w = 16 * (i - 1) - 8 * length(streak)
 		. += intent_icon
 
 /atom/movable/screen/combo/update_icon_state()

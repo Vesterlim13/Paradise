@@ -94,10 +94,13 @@
 	height = 11
 	dir = 4
 	roundstart_move = "emergency_away"
-	var/sound_played = 0 //If the launch sound has been sent to all players on the shuttle itself
-
-	var/canRecall = TRUE //no bad condom, do not recall the crew transfer shuttle!
-	var/forceHijacked = FALSE // forced change of arrival at the syndicate base
+	/// If the launch sound has been sent to all players on the shuttle itself
+	var/sound_played = FALSE
+	/// No bad condom, do not recall the crew transfer shuttle!
+	var/canRecall = TRUE
+	/// Forced change of arrival at the syndicate base
+	var/force_hijacked = FALSE
+	/// Is devil on shuttle?
 	var/devil_on_shuttle = FALSE
 
 /obj/docking_port/mobile/emergency/register()
@@ -135,13 +138,13 @@
 		GLOB.major_announcement.announce(
 			"Был вызван эвакуационный шаттл. [redAlert ? "Красный уровень угрозы подтверждён: отправлен приоритетный шаттл. " : "" ]Он прибудет в течение [timeLeft(600)] минут.[reason][SSshuttle.emergencyLastCallLoc ? "\n\nВызов шаттла отслежен. Результаты можно посмотреть на любой консоли связи." : "" ]",
 			new_title = ANNOUNCE_PRIORITY_RU,
-			new_sound = sound('sound/AI/eshuttle_call.ogg')
+			new_sound = ANNOUNCER_SHUTTLECALLED
 		)
 	else
 		GLOB.major_announcement.announce(
 			"Был вызван тра+нспортный шаттл. [redAlert ? "Красный уровень угрозы подтверждён: отправлен приоритетный шаттл. " : "" ]Он прибудет в течение [timeLeft(600)] минут.[reason]",
 			new_title = ANNOUNCE_PRIORITY_RU,
-			new_sound = sound('sound/AI/cshuttle.ogg')
+			new_sound = ANNOUNCER_SHUTTLECALLED
 		)
 
 /obj/docking_port/mobile/emergency/cancel(area/signalOrigin)
@@ -161,7 +164,7 @@
 	GLOB.major_announcement.announce(
 		"Эвакуационный шаттл был отозван.[SSshuttle.emergencyLastCallLoc ? " Отзыв шаттла отслежен. Результаты можно посмотреть на любой консоли связи." : "" ]",
 		new_title = ANNOUNCE_PRIORITY_RU,
-		new_sound = sound('sound/AI/eshuttle_recall.ogg')
+		new_sound = ANNOUNCER_SHUTTLERECALLED
 	)
 
 /obj/docking_port/mobile/emergency/proc/is_hijacked()
@@ -187,7 +190,7 @@
 				continue
 			if(H.wear_suit && H.wear_suit.breakout_time) //straight jacket
 				continue
-			if(istype(H.loc, /obj/structure/closet)) //locked/welded locker, all aboard the clown train honk honk
+			if(iscloset(H.loc)) //locked/welded locker, all aboard the clown train honk honk
 				var/obj/structure/closet/C = H.loc
 				if(C.welded || C.locked)
 					continue
@@ -236,13 +239,13 @@
 					GLOB.major_announcement.announce(
 						"Эвакуационный шаттл совершил стыковку со станцией. У вас есть [timeLeft(600)] минуты, чтобы взобраться на борт эвакуационного шаттла.",
 						new_title = ANNOUNCE_PRIORITY_RU,
-						new_sound = sound('sound/AI/eshuttle_dock.ogg')
+						new_sound = ANNOUNCER_SHUTTLEDOCK
 					)
 				else
 					GLOB.major_announcement.announce(
 						"Транспортный шаттл совершил стыковку со станцией. У вас есть [timeLeft(600)] минуты, чтобы взобраться на борт транспортного шаттла.",
 						new_title = ANNOUNCE_PRIORITY_RU,
-						new_sound = sound('sound/AI/cshuttle_dock.ogg')
+						new_sound = ANNOUNCER_SHUTTLEDOCK
 					)
 		if(SHUTTLE_DOCKED)
 
@@ -251,7 +254,7 @@
 					"Обнаружена угроза. Отлёт отложен на неопределённый срок до разрешения конфликта.",
 					new_title = ANNOUNCE_PRIORITY_RU
 				)
-				sound_played = 0
+				sound_played = FALSE
 				mode = SHUTTLE_STRANDED
 
 			if(time_left <= 0 && SSshuttle.emergencyNoEscape && mode != SHUTTLE_STRANDED)
@@ -259,7 +262,7 @@
 					"Шаттл заблокирован. Свяжитесь с Центральным командованием для уточнения причин и снятия блокировки.",
 					new_title = ANNOUNCE_PRIORITY_RU
 				)
-				sound_played = 0
+				sound_played = FALSE
 				mode = SHUTTLE_STRANDED
 
 			if(time_left <= 100) // 9 seconds left - start requesting transit zones for emergency and pods
@@ -268,7 +271,7 @@
 				check_transit_zone()
 
 			if(time_left <= 50 && !sound_played) //4 seconds left - should sync up with the launch
-				sound_played = 1
+				sound_played = TRUE
 				var/hyperspace_sound = sound('sound/effects/hyperspace_begin.ogg')
 				for(var/area/shuttle/escape/E in GLOB.areas)
 					SEND_SOUND(E, hyperspace_sound)
@@ -289,9 +292,6 @@
 					"Эвакуационный шаттл покинул станцию. До прибытия в доки ЦК осталось [timeLeft(600)] минуты.",
 					new_title = ANNOUNCE_PRIORITY_RU
 				)
-				for(var/mob/M in GLOB.player_list)
-					if(!isnewplayer(M) && !M.client.karma_spent && !(M.client.ckey in GLOB.karma_spenders) && !M.get_preference(PREFTOGGLE_DISABLE_KARMA_REMINDER))
-						to_chat(M, "<i>You have not yet spent your karma for the round; was there a player worthy of receiving your reward? Look under Special Verbs tab, Award Karma.</i>")
 
 		if(SHUTTLE_ESCAPE)
 			if(time_left <= 0)
@@ -306,7 +306,7 @@
 				// now move the actual emergency shuttle to centcomm
 				// unless the shuttle is "hijacked"
 				var/destination_dock = "emergency_away"
-				if(is_hijacked() || forceHijacked)
+				if(is_hijacked())
 					destination_dock = "emergency_syndicate"
 					GLOB.major_announcement.announce(
 						"Обнаружен взлом навигационных протоколов. Пожалуйста, свяжитесь в руководством.",
@@ -314,7 +314,7 @@
 						new_sound = 'sound/misc/announce_syndi.ogg'
 					)
 
-				if(devil_on_shuttle)
+				if(devil_on_shuttle || force_hijacked)
 					GLOB.major_announcement.announce(
 						message = "Обнаружен сбой навигационных протоколов. Эвакуационный шаттл сошёл с установленного маршрута и движется в неизвестном направлении.",
 						new_title = ANNOUNCE_PRIORITY_RU,
@@ -352,7 +352,7 @@
 /obj/docking_port/mobile/pod/Initialize(mapload)
 	. = ..()
 	if(id == "pod")
-		log_runtime(EXCEPTION("[type] id has not been changed from the default. Use the id convention \"pod1\" \"pod2\" etc."))
+		WARNING("[type] id has not been changed from the default. Use the id convention \"pod1\" \"pod2\" etc.")
 
 /obj/docking_port/mobile/pod/cancel()
 	return

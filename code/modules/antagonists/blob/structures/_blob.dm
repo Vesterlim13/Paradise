@@ -9,7 +9,7 @@
 	pass_flags_self = PASSBLOB
 	layer = BELOW_MOB_LAYER
 	can_astar_pass = CANASTARPASS_ALWAYS_PROC
-	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 0, RAD = 0, FIRE = 80, ACID = 70)
+	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 0, FIRE = 80, ACID = 70)
 	creates_cover = TRUE
 	obj_flags = BLOCK_Z_OUT_DOWN | BLOCK_Z_IN_UP // stops blob mobs from falling on multiz.
 	max_integrity = BLOB_REGULAR_MAX_HP
@@ -43,12 +43,11 @@
 /obj/structure/blob/Initialize(mapload, owner_overmind)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_CHASM_DESTROYED, INNATE_TRAIT)
-	GLOB.blobs |= src
 	if(owner_overmind && isovermind(owner_overmind))
 		link_to_overmind(owner_overmind)
 	setDir(pick(GLOB.cardinal))
 	if(atmosblock)
-		air_update_turf(TRUE)
+		recalculate_atmos_connectivity()
 	ConsumeTile()
 	update_blob()
 
@@ -60,9 +59,8 @@
 /obj/structure/blob/Destroy()
 	if(atmosblock)
 		atmosblock = FALSE
-		air_update_turf(1)
-	GLOB.blobs -= src
-	SSticker?.mode?.legit_blobs -= src
+		recalculate_atmos_connectivity()
+	SSticker?.mode?.remove_blob_tile(src)
 	if(overmind)
 		overmind.all_blobs -= src
 		overmind.blobs_legit -= src  //if it was in the legit blobs list, it isn't now
@@ -74,27 +72,30 @@
 /obj/structure/blob/obj_destruction(damage_flag)
 	if(overmind)
 		overmind.blobstrain.death_reaction(src, damage_flag)
-	. = ..()
+	return ..()
 
 /obj/structure/blob/Adjacent(atom/neighbour)
 	. = ..()
-	if(.)
-		var/result = 0
-		var/direction = get_dir(src, neighbour)
-		var/list/dirs = list("[NORTHWEST]" = list(NORTH, WEST), "[NORTHEAST]" = list(NORTH, EAST), "[SOUTHEAST]" = list(SOUTH, EAST), "[SOUTHWEST]" = list(SOUTH, WEST))
-		for(var/A in dirs)
-			if(direction == text2num(A))
-				for(var/B in dirs[A])
-					var/C = locate(/obj/structure/blob) in get_step(src, B)
-					if(C)
-						result++
-		. -= result - 1
+	if(!.)
+		return
+	var/result = 0
+	var/direction = get_dir(src, neighbour)
+	var/list/dirs = alist(NORTHWEST = list(NORTH, WEST), NORTHEAST = list(NORTH, EAST), SOUTHEAST = list(SOUTH, EAST), SOUTHWEST = list(SOUTH, WEST))
+	for(var/possible_dir, dir_list in dirs)
+		if(direction != possible_dir)
+			return
+		for(var/blob_tile in dir_list)
+			if(locate(/obj/structure/blob) in get_step(src, blob_tile))
+				result++
+	. -= result - 1
 
-/obj/structure/blob/BlockSuperconductivity()
-	return atmosblock
-
-/obj/structure/blob/CanAtmosPass(turf/T, vertical)
+/obj/structure/blob/CanAtmosPass(direction)
 	return !atmosblock
+
+/obj/structure/blob/get_superconductivity(direction)
+	if(atmosblock)
+		return FALSE
+	return ..()
 
 /obj/structure/blob/update_icon() //Updates color based on overmind color if we have an overmind.
 	. = ..()
@@ -123,7 +124,7 @@
 
 /obj/structure/blob/proc/ConsumeTile()
 	for(var/atom/thing in loc)
-		if(!thing.can_blob_attack())
+		if(QDELETED(thing) || !thing.can_blob_attack())
 			continue
 		if(isliving(thing) && overmind && !HAS_TRAIT(thing, TRAIT_BLOB_ALLY)) // Make sure to inject strain-reagents with automatic attacks when needed.
 			overmind.blobstrain.attack_living(thing)
@@ -168,6 +169,9 @@
 		return
 	var/make_blob = TRUE //can we make a blob?
 
+	if(!T.GetComponent(/datum/component/blob_turf_consuming))
+		T.add_blob_consume_component()
+
 	if(isspaceturf(T) && !(locate(/obj/structure/lattice) in T))
 		if(SEND_SIGNAL(T, COMSIG_TRY_CONSUME_TURF) & COMPONENT_CANT_CONSUME)
 			make_blob = FALSE
@@ -202,7 +206,7 @@
 			if(Ablob.area_flags & BLOBS_ALLOWED) //Is this area allowed for winning as blob?
 				if(overmind)
 					overmind.blobs_legit |= B
-				SSticker?.mode?.legit_blobs |= B
+				SSticker?.mode?.add_blob_tile(B)
 			else if(controller)
 				B.balloon_alert(overmind, "вне станции, не считается!")
 				offstation = TRUE
@@ -261,7 +265,7 @@
 	if(overmind)
 		overmind.blobstrain.extinguish_reaction(src)
 
-/obj/structure/blob/hit_by_thrown_carbon(mob/living/carbon/human/C, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
+/obj/structure/blob/hit_by_thrown_mob(mob/living/throwned_mob, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
 	damage *= 0.25 // Lets not have sorium be too much of a blender / rapidly kill itself
 	return ..()
 
@@ -269,7 +273,7 @@
 	if(ROLE_BLOB in M.faction) //sorry, but you can't kill the blob as a blobbernaut
 		to_chat(M, span_danger("Вы не можете навредить структурам блоба"))
 		return
-	..()
+	return ..()
 
 /obj/structure/blob/play_attack_sound(damage_amount, damage_type = BRUTE, damage_flag = NONE)
 	switch(damage_type)

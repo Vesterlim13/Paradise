@@ -1,3 +1,6 @@
+/// List of all guardians currently extant
+GLOBAL_LIST_EMPTY(parasites)
+
 /mob/living/simple_animal/hostile/guardian
 	name = "Guardian Spirit"
 	real_name = "Guardian Spirit"
@@ -44,7 +47,7 @@
 	var/name_color = "white"//only used with protector shields for the time being
 
 /mob/living/simple_animal/hostile/guardian/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "Дух-Хранитель",
 		GENITIVE = "Духа-Хранителя",
 		DATIVE = "Духу-Хранителю",
@@ -55,11 +58,16 @@
 
 /mob/living/simple_animal/hostile/guardian/Initialize(mapload, mob/living/host)
 	. = ..()
+	GLOB.parasites += src
 	AddElement(/datum/element/simple_flying)
 	if(!host)
 		return
 	summoner = host
 	host.grant_guardian_actions(src)
+
+/mob/living/simple_animal/hostile/guardian/Destroy()
+	GLOB.parasites -= src
+	return ..()
 
 /mob/living/simple_animal/hostile/guardian/ComponentInitialize()
 	AddComponent( \
@@ -70,17 +78,14 @@
 
 /mob/living/simple_animal/hostile/guardian/med_hud_set_health()
 	if(summoner)
-		var/image/holder = hud_list[HEALTH_HUD]
-		holder.icon_state = "hud[RoundHealth(summoner)]"
+		set_hud_image_state(HEALTH_HUD, "hud[RoundHealth(summoner)]")
 
 /mob/living/simple_animal/hostile/guardian/med_hud_set_status()
 	if(summoner)
-		var/image/holder = hud_list[STATUS_HUD]
-		holder.pixel_y = get_cached_height() - ICON_SIZE_Y
 		if(summoner.stat == DEAD)
-			holder.icon_state = STATUS_HUD_DEAD
+			set_hud_image_state(STATUS_HUD, STATUS_HUD_DEAD)
 		else
-			holder.icon_state = STATUS_HUD_HEALTHY
+			set_hud_image_state(STATUS_HUD, STATUS_HUD_HEALTHY)
 
 /mob/living/simple_animal/hostile/guardian/Life(seconds, times_fired)
 	..()
@@ -164,9 +169,9 @@
 		return .
 
 	to_chat(summoner, span_danger("Вашего хранителя [name] атакуют! Вы получаете урон!"))
-	summoner.visible_message(span_danger("Кровь хлещет из [summoner] ибо [src.declent_ru(NOMINATIVE)] получает урон!"))
+	summoner.visible_message(span_danger("Кровь хлещет из [summoner] ибо [declent_ru(NOMINATIVE)] получает урон!"))
 	if(summoner.stat == UNCONSCIOUS)
-		to_chat(summoner, span_danger("Ваше тело не выдерживает нагрузки от поддержания [src.declent_ru(ACCUSATIVE)] в таком состоянии, оно начинает разрушаться!"))
+		to_chat(summoner, span_danger("Ваше тело не выдерживает нагрузки от поддержания [declent_ru(ACCUSATIVE)] в таком состоянии, оно начинает разрушаться!"))
 		summoner.adjustCloneLoss(amount / 2)
 
 /mob/living/simple_animal/hostile/guardian/adjustStaminaLoss(
@@ -236,7 +241,7 @@
 	// Show the message to any ghosts/dead players.
 	for(var/mob/M in GLOB.dead_mob_list)
 		if(M?.client && M.stat == DEAD && !isnewplayer(M))
-			to_chat(M, span_alien("<i>Сообщение Стража <b>[src]</b> ([ghost_follow_link(src, ghost=M)]): [input]</i>"))
+			to_chat(M, span_alien("([ghost_follow_link(src, ghost = M)]) <i>Сообщение Стража <b>[src]</b>: [input]</i>"))
 
 /mob/living/simple_animal/hostile/guardian/proc/ToggleMode()
 	to_chat(src, span_danger("У вас нет другого режима!"))
@@ -275,7 +280,7 @@
 	var/name_list = list("Aries", "Leo", "Sagittarius", "Taurus", "Virgo", "Capricorn", "Gemini", "Libra", "Aquarius", "Cancer", "Scorpio", "Pisces")
 
 /obj/item/guardiancreator/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "колода карт Таро",
 		GENITIVE = "колоды карт Таро",
 		DATIVE = "колоде карт Таро",
@@ -285,19 +290,18 @@
 	)
 
 /obj/item/guardiancreator/attack_self(mob/living/user)
-	for(var/mob/living/simple_animal/hostile/guardian/G in GLOB.alive_mob_list)
-		if(G.summoner == user)
-			to_chat(user, "У вас уже есть [mob_name]!")
-			return
+	if(has_guardian(user))
+		to_chat(user, "У вас уже есть [mob_name]!")
+		return
 	if(user.mind && (ischangeling(user) || isvampire(user)))
 		to_chat(user, "[ling_failure]")
 		return
-	if(used == TRUE)
+	if(used)
 		to_chat(user, "[used_message]")
 		return
 	used = TRUE // Set this BEFORE the popup to prevent people using the injector more than once, polling ghosts multiple times, and receiving multiple guardians.
 	var/choice = tgui_alert(user, "[confirmation_message]", "Confirm", list("Да", "Нет"))
-	if(choice == "Нет")
+	if(choice != "Да")
 		to_chat(user, span_warning("Вы решили не использовать [name]."))
 		used = FALSE
 		return
@@ -316,10 +320,18 @@
 			return
 
 	var/list/mob/dead/observer/candidates = SSghost_spawns.poll_candidates("Вы хотите поиграть за [mob_name] ([guardian_type]) у [user.real_name]?", ROLE_GUARDIAN, FALSE, 10 SECONDS, source = src, role_cleanname = "[mob_name] ([guardian_type])")
+
+	if(QDELETED(user))
+		return
+
 	var/mob/dead/observer/theghost = null
 
 	if(length(candidates))
 		theghost = pick(candidates)
+		if(has_guardian(user))
+			to_chat(user, "У вас уже есть [mob_name]!")
+			used = FALSE
+			return
 		log_game("[user](ckey: [user.key]) has successfully spawned [guardian_type] type guardian(ckey: [theghost.key])")
 		spawn_guardian(user, theghost.key, guardian_type)
 	else
@@ -331,6 +343,13 @@
 	. = ..()
 	if(used)
 		. += span_notice("[used_message]")
+
+/obj/item/guardiancreator/proc/has_guardian(mob/living/user)
+	for(var/mob/living/simple_animal/hostile/guardian/guardian in GLOB.alive_mob_list)
+		if(guardian.summoner != user)
+			continue
+		return TRUE
+	return FALSE
 
 /obj/item/guardiancreator/proc/spawn_guardian(mob/living/user, key, guardian_type)
 	var/pickedtype = /mob/living/simple_animal/hostile/guardian/punch
@@ -415,7 +434,7 @@
 	name_list = list("Gallium", "Indium", "Thallium", "Bismuth", "Aluminium", "Mercury", "Iron", "Silver", "Zinc", "Titanium", "Chromium", "Nickel", "Platinum", "Tellurium", "Palladium", "Rhodium", "Cobalt", "Osmium", "Tungsten", "Iridium")
 
 /obj/item/guardiancreator/tech/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "инъектор голопаразитов",
 		GENITIVE = "инъектора голопаразитов",
 		DATIVE = "инъектору голопаразитов",
@@ -463,7 +482,7 @@
 	name_list = list("brood", "hive", "nest")
 
 /obj/item/guardiancreator/biological/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "скопление яиц скарабеев",
 		GENITIVE = "скопления яиц скарабеев",
 		DATIVE = "скоплению яиц скарабеев",

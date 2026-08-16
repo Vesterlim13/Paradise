@@ -43,10 +43,9 @@ GLOBAL_PROTECT(revision_info) // Dont mess with this
 /client/verb/get_revision_info()
 	set name = "Информация о сборке"
 	set desc = "Retrieve technical information about the server"
-	set category = STATPANEL_OOC
+	set category = VERB_CATEGORY_OOC
 
 	var/list/msg = list()
-	msg += "<span class='notice'><b>Server Revision Info</b></span>"
 	// Round ID first
 	msg += "<b>Round ID:</b> [GLOB.round_id ? GLOB.round_id : "NULL"]"
 
@@ -61,4 +60,4 @@ GLOBAL_PROTECT(revision_info) // Dont mess with this
 	// And the clients for good measure
 	msg += "<b>Client (your) BYOND Version:</b> [byond_version].[byond_build]"
 
-	to_chat(usr, chat_box_examine(msg.Join("<br>")))
+	to_chat(usr, fieldset_block(span_notice("Server Revision Info"), msg.Join("<br>"), "boxed_message"))

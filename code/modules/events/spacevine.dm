@@ -24,7 +24,7 @@
 
 	var/obj/structure/spacevine/SV = new()
 
-	for(var/area/hallway/A in GLOB.areas)
+	for(var/area/station/hallway/A in GLOB.areas)
 		for(var/turf/F in A)
 			if(F.Enter(SV))
 				turfs += F
@@ -152,7 +152,7 @@
 	if(prob(20))
 		ChangeTurf(baseturf) //nar sie eats this shit
 
-/turf/simulated/floor/vines/singularity_pull(S, current_size)
+/turf/simulated/floor/vines/singularity_pull(atom/singularity, current_size)
 	if(current_size >= STAGE_FIVE)
 		if(prob(50))
 			ChangeTurf(baseturf)
@@ -349,7 +349,7 @@
 	holder.update_integrity(holder.max_integrity)
 
 /datum/spacevine_mutation/woodening/on_hit(obj/structure/spacevine/holder, mob/living/hitter, obj/item/item, expected_damage)
-	if(!is_sharp(item))
+	if(!item.sharp)
 		. = expected_damage * 0.5
 	else
 		. = expected_damage
@@ -437,6 +437,7 @@
 	mouse_opacity = MOUSE_OPACITY_OPAQUE //Clicking anywhere on the turf is good enough
 	pass_flags = PASSTABLE | PASSGRILLE
 	max_integrity = 50
+	cares_about_temperature = TRUE
 	var/energy = 0
 	var/obj/structure/spacevine_controller/master = null
 	var/list/mutations = list()
@@ -548,7 +549,7 @@
 			return ATTACK_CHAIN_BLOCKED_ALL
 		return .
 
-	if(is_sharp(item) || item.damtype == BURN)
+	if(item.sharp || item.damtype == BURN)
 		damage_dealt *= 4
 
 	for(var/datum/spacevine_mutation/mutation as anything in mutations)
@@ -603,7 +604,8 @@
 	spreads_per_process = 3
 	vines_per_spread = 3
 
-/obj/structure/spacevine_controller/New(loc, list/muts, potency, production)
+/obj/structure/spacevine_controller/Initialize(mapload, list/muts, potency, production)
+	. = ..()
 	color = "#ffffff"
 	spawn_spacevine_piece(loc, null, muts)
 	START_PROCESSING(SSobj, src)
@@ -611,7 +613,8 @@
 	// 1 mutativeness at 10 potency
 	// 4 mutativeness at 100 potency
 	if(potency)
-		mutativeness = log(10, potency) ** 2
+		var/potency_log10 = log(10, potency)
+		mutativeness = POW2(potency_log10)
 
 	if(production != null)
 		// 1 production is crazy powerful
@@ -623,15 +626,13 @@
 		// ~2.5 vines/spread at 1 production
 		spread_multiplier /= spread_value / 5
 
-	..()
-
 /obj/structure/spacevine_controller/ex_act() //only killing all vines will end this suffering
 	return
 
 /obj/structure/spacevine_controller/singularity_act()
 	return
 
-/obj/structure/spacevine_controller/singularity_pull()
+/obj/structure/spacevine_controller/singularity_pull(atom/singularity, current_size)
 	return
 
 /obj/structure/spacevine_controller/Destroy()
@@ -761,11 +762,11 @@
 	if(!i && prob(100/severity))
 		wither()
 
-/obj/structure/spacevine/temperature_expose(null, temp, volume)
+/obj/structure/spacevine/temperature_expose(exposed_temperature, exposed_volume)
 	..()
 	var/override = 0
 	for(var/datum/spacevine_mutation/SM in mutations)
-		override += SM.process_temperature(src, temp, volume)
+		override += SM.process_temperature(src, exposed_temperature, exposed_volume)
 	if(!override)
 		wither()
 

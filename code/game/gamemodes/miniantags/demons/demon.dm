@@ -30,7 +30,7 @@
 	var/datum/action/innate/demon/whisper/whisper_action
 
 /mob/living/simple_animal/demon/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "обычный демон",
 		GENITIVE = "обычного демона",
 		DATIVE = "обычному демону",
@@ -91,7 +91,7 @@
 	to_chat(usr, span_notice("<b>Вы шепчете [choice]: </b>[msg]"))
 	to_chat(choice, "[span_deadsay("<b>Внезапно странный демонический голос звучит у вас в голове... </b>")][span_danger("<i> [msg]</i>")]")
 	for(var/mob/dead/observer/G in GLOB.player_list)
-		G.show_message("<i>Демоническое сообщение от <b>[usr]</b> ([ghost_follow_link(usr, ghost=G)]) к <b>[choice]</b> ([ghost_follow_link(choice, ghost=G)]): [msg]</i>")
+		G.show_message("<i>Демоническое сообщение от ([ghost_follow_link(usr, ghost = G)]) <b>[usr]</b> к ([ghost_follow_link(choice, ghost = G)]) <b>[choice]</b>: [msg]</i>")
 
 /obj/item/organ/internal/heart/demon
 	name = "demon heart"
@@ -100,7 +100,7 @@
 	origin_tech = "combat=5;biotech=7"
 
 /obj/item/organ/internal/heart/demon/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "демоническое сердце",
 		GENITIVE = "демонического сердца",
 		DATIVE = "демоническому сердцу",

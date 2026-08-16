@@ -1,4 +1,3 @@
-#define SHEET_VOLUME 1000 //cm3
 
 #define TEMPERATURE_DIVISOR 40
 #define TEMPERATURE_CHANGE_MAX 20
@@ -21,7 +20,7 @@
 
 /obj/machinery/power/port_gen/Initialize(mapload)
 	. = ..()
-	soundloop = new(list(src), active)
+	soundloop = new(src, active)
 
 /obj/machinery/power/port_gen/Destroy()
 	QDEL_NULL(soundloop)
@@ -78,12 +77,16 @@
 	switch(severity)
 		if(1)
 			stat &= BROKEN
-			if(prob(75)) explode()
+			if(prob(75))
+				explode()
 		if(2)
-			if(prob(25)) stat &= BROKEN
-			if(prob(10)) explode()
+			if(prob(25))
+				stat &= BROKEN
+			if(prob(10))
+				explode()
 		if(3)
-			if(prob(10)) stat &= BROKEN
+			if(prob(10))
+				stat &= BROKEN
 			duration = 300
 
 	stat |= EMPED
@@ -209,10 +212,11 @@
 		Gives traitors more opportunities to sabotage the generator or allows enterprising engineers to build additional
 		cooling in order to get more power out.
 	*/
-	var/datum/gas_mixture/environment = loc.return_air()
+	var/turf/location = get_turf(src)
+	var/datum/gas_mixture/environment = location.get_readonly_air()
 	if(environment)
 		var/ratio = min(environment.return_pressure()/ONE_ATMOSPHERE, 1)
-		var/ambient = environment.temperature - T20C
+		var/ambient = environment.temperature() - T20C
 		lower_limit += ambient*ratio
 		upper_limit += ambient*ratio
 
@@ -238,10 +242,11 @@
 
 /obj/machinery/power/port_gen/pacman/handleInactive()
 	var/cooling_temperature = 20
-	var/datum/gas_mixture/environment = loc.return_air()
+	var/turf/location = get_turf(src)
+	var/datum/gas_mixture/environment = location.get_readonly_air()
 	if(environment)
 		var/ratio = min(environment.return_pressure()/ONE_ATMOSPHERE, 1)
-		var/ambient = environment.temperature - T20C
+		var/ambient = environment.temperature() - T20C
 		cooling_temperature += ambient*ratio
 
 	if(temperature > cooling_temperature)
@@ -360,9 +365,9 @@
 	var/list/data = list()
 
 	data["active"] = active
-	if(istype(user, /mob/living/silicon/ai))
+	if(isAI(user))
 		data["is_ai"] = TRUE
-	else if(istype(user, /mob/living/silicon/robot) && !Adjacent(user))
+	else if(isrobot(user) && !Adjacent(user))
 		data["is_ai"] = TRUE
 	else
 		data["is_ai"] = FALSE
@@ -426,21 +431,13 @@
 	component_parts += new board_path(null)
 	RefreshParts()
 
-/obj/machinery/power/port_gen/pacman/super/UseFuel()
-	//produces a tiny amount of radiation when in use
-	if(prob(2*power_output))
-		for(var/mob/living/L in range(src, 5))
-			L.apply_effect(1, IRRADIATE) //should amount to ~5 rads per minute at max safe power
-	..()
-
 /obj/machinery/power/port_gen/pacman/super/explode()
-	//a nice burst of radiation
-	var/rads = 50 + (sheets + sheet_left)*1.5
-	for(var/mob/living/L in range(src, 10))
-		//should really fall with the square of the distance, but that makes the rads value drop too fast
-		//I dunno, maybe physics works different when you live in 2D -- SM radiation also works like this, apparently
-		L.apply_effect(max(20, round(rads/get_dist(L,src))), IRRADIATE)
-
+	radiation_pulse(
+		source = src,
+		max_range = 10,
+		threshold = 0.1,
+		chance = 80,
+	)
 	explosion(loc, devastation_range = 3, heavy_impact_range = 3, light_impact_range = 5, flash_range = 3, cause = src)
 	qdel(src)
 
@@ -478,6 +475,5 @@
 	explosion(loc, devastation_range = 3, heavy_impact_range = 6, light_impact_range = 12, flash_range = 16, adminlog = TRUE, cause = src)
 	qdel(src)
 
-#undef SHEET_VOLUME
 #undef TEMPERATURE_DIVISOR
 #undef TEMPERATURE_CHANGE_MAX

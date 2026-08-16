@@ -116,7 +116,8 @@
 		Mx.Translate(0,0)
 	transform = Mx
 
-	var/datum/gas_mixture/environment = loc?.return_air()
+	var/turf/location = get_turf(src)
+	var/datum/gas_mixture/environment = location.get_readonly_air()
 	var/modifier = 0
 	var/pressure = environment?.return_pressure()
 	switch(pressure)
@@ -188,7 +189,7 @@
 /mob/living/simple_animal/hulk/proc/attack_hulk(obj/machinery/door/D)
 	do_attack_animation(D)
 	changeNext_move(CLICK_CD_MELEE)
-	if(istype(D,/obj/machinery/door/airlock))
+	if(is_airlock(D))
 		var/obj/machinery/door/airlock/A = D
 		if(A.welded || A.locked)
 			if(hulk_scream(A, 75))
@@ -205,8 +206,8 @@
 		playsound(D, 'sound/machines/airlock_force_open.ogg', CHANNEL_BUZZ, 30, null, -4)
 		D.open(1)
 
-/mob/living/simple_animal/hulk/New()
-	..()
+/mob/living/simple_animal/hulk/Initialize(mapload)
+	. = ..()
 	name = text("[initial(name)] ([rand(1, 1000)])")
 	real_name = name
 	status_flags ^= CANPUSH

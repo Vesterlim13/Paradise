@@ -36,7 +36,7 @@
 	GLOB.major_announcement.announce(
 		message = "Вспышка вирусной угрозы 7-го уровня зафиксирована на борту станции [station_name()]. Всему персоналу надлежит сдержать ее распространение.",
 		new_title = ANNOUNCE_BIOHAZARD_RU,
-		new_sound2 = 'sound/AI/outbreak7.ogg'
+		new_sound2 = ANNOUNCER_OUTBREAK7,
 	)
 
 /datum/event/disease_outbreak/start()
@@ -58,6 +58,6 @@
 		patient_zero = H
 
 		for(var/mob/M in GLOB.dead_mob_list)
-			to_chat(M, "<span class='deadsay'><b>[patient_zero]</b> был(а) заражён(а) <b>[D.name]</b> ([ghost_follow_link(patient_zero, M)])</span>")
+			to_chat(M, span_deadsay("([ghost_follow_link(patient_zero, M)]) <b>[patient_zero]</b> был[GEND_A_O_I(patient_zero)] заражён[GEND_A_O_Y(patient_zero)] <b>[D.name]</b>"))
 
 		break

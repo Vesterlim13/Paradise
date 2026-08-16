@@ -8,29 +8,33 @@
 	/// List of refs to falling objects -> how many levels deep we've fallen
 	var/static/list/falling_atoms = list()
 	var/static/list/forbidden_types = typecacheof(list(
-		/obj/machinery/bfl_receiver,
-		/obj/singularity,
+		/mob/living/simple_animal/hostile/asteroid/elite,
+		/mob/living/simple_animal/hostile/megafauna,
+		/obj/bfl_crack,
 		/obj/docking_port,
-		/obj/spacepod,
-		/obj/structure/lattice,
-		/obj/structure/stone_tile,
-		/obj/projectile,
-		/obj/effect/portal,
+		/obj/effect/abstract,
+		/obj/effect/collapse,
+		/obj/effect/ebeam,
 		/obj/effect/hotspot,
 		/obj/effect/landmark,
-		/obj/effect/temp_visual,
 		/obj/effect/light_emitter/tendril,
-		/obj/effect/collapse,
-		/obj/effect/abstract,
 		/obj/effect/particle_effect/fluid/smoke,
 		/obj/effect/particle_effect/ion_trails,
 		/obj/effect/particle_effect/sparks,
-		/obj/effect/wisp,
-		/obj/effect/ebeam,
+		/obj/effect/portal,
+		/obj/effect/projectile,
 		/obj/effect/spawner,
+		/obj/effect/temp_visual,
+		/obj/effect/wisp,
+		/obj/energy_ball,
+		/obj/god,
+		/obj/machinery/bfl_receiver,
+		/obj/projectile,
+		/obj/singularity,
+		/obj/spacepod,
+		/obj/structure/lattice,
 		/obj/structure/railing,
-		/mob/living/simple_animal/hostile/megafauna, //failsafe
-		/mob/living/simple_animal/hostile/asteroid/elite, //failsafe also
+		/obj/structure/stone_tile,
 	))
 
 /datum/component/chasm/Initialize(turf/target_turf, mapload)
@@ -103,7 +107,7 @@
 			if(CHASM_DROPPING)
 				INVOKE_ASYNC(src, PROC_REF(drop), thing)
 			if(CHASM_REGISTER_SIGNALS)
-				RegisterSignal(thing, list(COMSIG_MOVETYPE_FLAG_DISABLED, COMSIG_LIVING_SET_BUCKLED, COMSIG_MOVABLE_THROW_LANDED), PROC_REF(drop_stuff), override = TRUE)
+				RegisterSignals(thing, list(COMSIG_MOVETYPE_FLAG_DISABLED, COMSIG_LIVING_SET_BUCKLED, COMSIG_MOVABLE_THROW_LANDED), PROC_REF(drop_stuff), override = TRUE)
 
 /datum/component/chasm/proc/droppable(atom/movable/dropped_thing)
 	var/atom/atom_parent = parent
@@ -139,12 +143,12 @@
 			if(dropped_living.incorporeal_move)
 				return CHASM_NOT_DROPPING
 			if(ishuman(dropped_mob))
-				var/obj/item/wormhole_jaunter/jaunter = locate() in dropped_mob.GetAllContents()
+				var/obj/item/wormhole_jaunter/jaunter = locate() in dropped_mob.get_all_contents()
 				if(jaunter)
 					var/turf/chasm = get_turf(dropped_mob)
 					var/fall_into_chasm = jaunter.chasm_react(dropped_mob)
 					if(!fall_into_chasm)
-						chasm.visible_message(span_boldwarning("[capitalize(dropped_mob.declent_ru(NOMINATIVE))] пада[PLUR_ET_YUT(dropped_mob)] в [chasm.declent_ru(ACCUSATIVE)]!")) //To freak out any bystanders
+						chasm.visible_message(span_boldwarning("[DECLENT_RU_CAP(dropped_mob, NOMINATIVE)] пада[PLUR_ET_YUT(dropped_mob)] в [chasm.declent_ru(ACCUSATIVE)]!")) //To freak out any bystanders
 					return fall_into_chasm ? CHASM_DROPPING : CHASM_NOT_DROPPING
 
 	return CHASM_DROPPING
@@ -171,8 +175,8 @@
 			qdel(dropped_thing)
 			return
 		// send to the turf below
-		dropped_thing.visible_message(span_boldwarning("[capitalize(dropped_thing.declent_ru(NOMINATIVE))] пада[PLUR_ET_YUT(dropped_thing)] в [atom_parent]!"), span_userdanger("[fall_message]"))
-		below_turf.visible_message(span_boldwarning("[capitalize(dropped_thing.declent_ru(NOMINATIVE))] падает сверху!"))
+		dropped_thing.visible_message(span_boldwarning("[DECLENT_RU_CAP(dropped_thing, NOMINATIVE)] пада[PLUR_ET_YUT(dropped_thing)] в [atom_parent]!"), span_userdanger("[fall_message]"))
+		below_turf.visible_message(span_boldwarning("[DECLENT_RU_CAP(dropped_thing, NOMINATIVE)] падает сверху!"))
 		playsound(below_turf, 'sound/effects/break_stone.ogg', 50, TRUE)
 		dropped_thing.forceMove(below_turf)
 		if(isliving(dropped_thing))
@@ -183,7 +187,7 @@
 		return
 
 	// send to oblivion
-	dropped_thing.visible_message(span_boldwarning("[capitalize(dropped_thing.declent_ru(NOMINATIVE))] пада[PLUR_ET_YUT(dropped_thing)] в [atom_parent]!"), span_userdanger("[oblivion_message]"))
+	dropped_thing.visible_message(span_boldwarning("[DECLENT_RU_CAP(dropped_thing, NOMINATIVE)] пада[PLUR_ET_YUT(dropped_thing)] в [atom_parent]!"), span_userdanger("[oblivion_message]"))
 	if(isliving(dropped_thing))
 		var/mob/living/falling_mob = dropped_thing
 		ADD_TRAIT(falling_mob, TRAIT_NO_TRANSFORM, UNIQUE_TRAIT_SOURCE(src))
@@ -222,7 +226,7 @@
 
 	if(isrobot(dropped_thing))
 		var/mob/living/silicon/robot/robot = dropped_thing
-		qdel(robot.mmi)
+		QDEL_NULL(robot.mmi)
 		qdel(dropped_thing)
 		falling_atoms -= falling_ref
 		return
@@ -239,7 +243,7 @@
 	dropped_thing.pixel_y = oldoffset
 
 	if(!dropped_thing.forceMove(storage))
-		atom_parent.visible_message(span_boldwarning("[capitalize(atom_parent.declent_ru(NOMINATIVE))] выплёвывает [dropped_thing.declent_ru(ACCUSATIVE)]!"))
+		atom_parent.visible_message(span_boldwarning("[DECLENT_RU_CAP(atom_parent, NOMINATIVE)] выплёвывает [dropped_thing.declent_ru(ACCUSATIVE)]!"))
 		dropped_thing.throw_at(get_edge_target_turf(atom_parent, pick(GLOB.alldirs)), rand(1, 10), rand(1, 10))
 		falling_atoms -= falling_ref
 		return
@@ -275,10 +279,10 @@
 	if(isliving(arrived))
 		RegisterSignal(arrived, COMSIG_LIVING_REVIVE, PROC_REF(on_revive))
 
-/obj/effect/abstract/chasm_storage/Exited(atom/movable/departed, atom/newLoc)
+/obj/effect/abstract/chasm_storage/Exited(atom/movable/gone, direction)
 	. = ..()
-	if(isliving(departed))
-		UnregisterSignal(departed, COMSIG_LIVING_REVIVE)
+	if(isliving(gone))
+		UnregisterSignal(gone, COMSIG_LIVING_REVIVE)
 
 /obj/effect/abstract/chasm_storage/proc/get_fish(mob/fish, atom/new_loc)
 	if(!(fish in src))
@@ -302,7 +306,7 @@
 		ourturf.visible_message(span_boldwarning("После долгого подъёма, [escapee.declent_ru(NOMINATIVE)] выпрыгивает из [ourturf.declent_ru(GENITIVE)]!"))
 	else
 		playsound(ourturf, 'sound/effects/bang.ogg', 50, TRUE)
-		ourturf.visible_message(span_boldwarning("[capitalize(escapee.declent_ru(NOMINATIVE))] пробивается сквозь [ourturf.declent_ru(ACCUSATIVE)], выпрыгивая из пропасти под ней!"))
+		ourturf.visible_message(span_boldwarning("[DECLENT_RU_CAP(escapee, NOMINATIVE)] пробивается сквозь [ourturf.declent_ru(ACCUSATIVE)], выпрыгивая из пропасти под ней!"))
 		ourturf.ChangeTurf(ourturf.baseturf)
 	ADD_TRAIT(escapee, TRAIT_MOVE_FLYING, CHASM_TRAIT) //Otherwise they instantly fall back in
 	escapee.forceMove(ourturf)

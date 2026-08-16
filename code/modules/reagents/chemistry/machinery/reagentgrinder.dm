@@ -8,7 +8,7 @@
 	active_power_usage = 100
 	pass_flags = PASSTABLE
 	resistance_flags = ACID_PROOF
-	var/operating = 0
+	var/operating = FALSE
 	var/obj/item/reagent_containers/beaker = new /obj/item/reagent_containers/glass/beaker/large
 	var/limit = null
 	var/efficiency = null
@@ -33,6 +33,7 @@
 			/obj/item/grown/nettle/death = list("facid" = 0, "sacid" = 0),
 			/obj/item/grown/novaflower = list("capsaicin" = 0, "condensedcapsaicin" = 0),
 			/obj/item/stack/sheet/cheese = list("milk" = 20),
+			/obj/item/stack/ammonia_crystals = list("ammonia" = 10),
 
 			//Blender Stuff
 			/obj/item/reagent_containers/food/snacks/grown/tomato = list("ketchup" = 0),
@@ -95,7 +96,7 @@
 	var/list/holdingitems = list()
 
 /obj/machinery/reagentgrinder/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "универсальный блендер",
 		GENITIVE = "универсального блендера",
 		DATIVE = "универсальному блендеру",
@@ -204,7 +205,7 @@
 	if(exchange_parts(user, I))
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
-	if(istype(I, /obj/item/reagent_containers) && (I.container_type & OPENCONTAINER))
+	if(is_reagent_container(I) && (I.container_type & OPENCONTAINER))
 		add_fingerprint(user)
 		if(panel_open)
 			balloon_alert(user, "панель открыта!")
@@ -415,14 +416,13 @@
 				return
 		if(!beaker || (beaker && beaker.reagents.total_volume >= beaker.reagents.maximum_volume))
 				return
-		playsound(src.loc, 'sound/machines/juicer.ogg', 20, TRUE)
-		var/offset = prob(50) ? -2 : 2
-		animate(src, pixel_x = pixel_x + offset, time = 0.2, loop = 250) //start shaking
-		operating = 1
+		playsound(loc, 'sound/machines/juicer.ogg', 20, TRUE)
+		Shake(pixelshiftx = 1, pixelshifty = 0, duration = 4.2 SECONDS)
+		operating = TRUE
 		updateUsrDialog()
 		spawn(50)
 				pixel_x = initial(pixel_x) //return to its spot after shaking
-				operating = 0
+				operating = FALSE
 				updateUsrDialog()
 
 		//Snacks
@@ -453,14 +453,13 @@
 				return
 		if(!beaker || (beaker && beaker.reagents.total_volume >= beaker.reagents.maximum_volume))
 				return
-		playsound(src.loc, 'sound/machines/blender.ogg', 50, TRUE)
-		var/offset = prob(50) ? -2 : 2
-		animate(src, pixel_x = pixel_x + offset, time = 0.2, loop = 250) //start shaking
-		operating = 1
+		playsound(loc, 'sound/machines/blender.ogg', 50, TRUE)
+		Shake(pixelshiftx = 1, pixelshifty = 0, duration = 4.2 SECONDS)
+		operating = TRUE
 		updateUsrDialog()
 		spawn(60)
 				pixel_x = initial(pixel_x) //return to its spot after shaking
-				operating = 0
+				operating = FALSE
 				updateUsrDialog()
 
 		//Snacks and Plants

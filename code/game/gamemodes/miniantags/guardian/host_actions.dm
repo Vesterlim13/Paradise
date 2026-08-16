@@ -27,6 +27,10 @@
 	button_icon_state = "communicate"
 
 /datum/action/guardian/communicate/Trigger(mob/clicker, trigger_flags)
+	. = ..()
+	if(!.)
+		return
+
 	var/input = tgui_input_text(owner, "Введите сообщение для вашего хранителя:", "Сообщение")
 	if(!input)
 		return
@@ -39,7 +43,7 @@
 	// Show the message to any ghosts/dead players.
 	for(var/mob/M in GLOB.dead_mob_list)
 		if(M?.client && M.stat == DEAD && !isnewplayer(M))
-			to_chat(M, span_changeling("<i>Сообщение от хранителя <b>[owner]</b> ([ghost_follow_link(owner, ghost=M)]): [input]</i>"))
+			to_chat(M, span_changeling("([ghost_follow_link(owner, ghost = M)]) <i>Сообщение от хранителя <b>[owner]</b>: [input]</i>"))
 
 /**
  * # Recall guardian action
@@ -52,6 +56,9 @@
 	button_icon_state = "recall"
 
 /datum/action/guardian/recall/Trigger(mob/clicker, trigger_flags)
+	. = ..()
+	if(!.)
+		return
 	guardian.Recall()
 
 /**
@@ -71,6 +78,10 @@
 	return TRUE
 
 /datum/action/guardian/reset_guardian/Trigger(mob/clicker, trigger_flags)
+	. = ..()
+	if(!.)
+		return
+
 	if(cooldown_timer)
 		to_chat(owner, span_warning("Эта способность всё ещё перезаряжается."))
 		return
@@ -85,6 +96,9 @@
 
 	to_chat(owner, span_danger("Поиск подходящего призрака..."))
 	var/list/mob/dead/observer/candidates = SSghost_spawns.poll_candidates("Вы хотите занять роль [guardian.real_name]?", ROLE_GUARDIAN, FALSE, 15 SECONDS, source = guardian)
+
+	if(QDELETED(guardian) || QDELETED(owner))
+		return
 
 	if(!LAZYLEN(candidates))
 		to_chat(owner, span_danger("Не нашлось призраков, готовых взять управление вашим хранителем. Попробуйте снова через 5 минут."))

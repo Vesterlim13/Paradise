@@ -47,6 +47,11 @@
 	index_name = "Fur Gloves"
 	path = /obj/item/clothing/gloves/furgloves
 
+/datum/gear/donor/ecig
+	index_name = "ecig"
+	donator_tier = 1
+	path = /obj/item/ecig
+
 /datum/gear/donor/noble_boot
 	index_name = "Noble Boots"
 	path = /obj/item/clothing/shoes/fluff/noble_boot
@@ -103,6 +108,22 @@
 	index_name = "Spraycan Slavic"
 	path = /obj/item/toy/crayon/spraycan/paintkit/slavic
 
+/datum/gear/donor/ricehat
+	index_name = "Rice cat"
+	path = /obj/item/toy/plushie/cat/ricehat
+
+/datum/gear/donor/kotrazumist
+	index_name = "Razumist cat"
+	path = /obj/item/toy/plushie/cat/kotrazumist
+
+/datum/gear/donor/heartballoon
+	index_name = "Heart balloon"
+	path = /obj/item/toy/balloon/heart
+
+/datum/gear/donor/corgiballoon
+	index_name = "Corgi balloon"
+	path = /obj/item/toy/balloon/corgi
+
 /datum/gear/donor/id_decal_silver
 	index_name = "Silver ID Decal"
 	path = /obj/item/id_decal/silver
@@ -150,12 +171,19 @@
 /datum/gear/donor/zippogold
 	index_name = "gold engraved zippo lighter"
 	display_name = "Золотая зажигалка Зиппо"
-	path =  /obj/item/lighter/zippo/fluff/michael_guess_1
+	path =  /obj/item/lighter/zippo/gold
+	donator_tier = 3
 
 /datum/gear/donor/zippopurple
 	index_name = "purple engraved zippo lighter"
 	display_name = "Фиолетовая зажигалка Зиппо"
-	path = /obj/item/lighter/zippo/fluff/purple
+	path = /obj/item/lighter/zippo/purple
+	donator_tier = 3
+
+/datum/gear/donor/zippogonzo
+	index_name = "gonzo zippo lighter"
+	display_name = "зажигалка Зиппо с кулаком Гонзо"
+	path = /obj/item/lighter/zippo/gonzofist
 	donator_tier = 3
 
 /datum/gear/donor/strip
@@ -164,7 +192,7 @@
 
 /datum/gear/donor/strip/cap
 	index_name = "strip, Captain"
-	path = /obj/item/clothing/accessory/head_strip
+	path = /obj/item/clothing/accessory/head_strip/captain
 	allowed_roles = list(JOB_TITLE_CAPTAIN)
 
 /datum/gear/donor/strip/rd
@@ -175,13 +203,13 @@
 /datum/gear/donor/strip/ce
 	index_name = "strip, Chief Engineer"
 	path = /obj/item/clothing/accessory/head_strip/ce
-	allowed_roles = list(JOB_TITLE_CHIEF)
+	allowed_roles = list(JOB_TITLE_CHIEF_ENGINEER)
 
 /datum/gear/donor/strip/t4ce
 	index_name = "strip, Grand Chief Engineer"
 	path = /obj/item/clothing/accessory/head_strip/t4ce
 	donator_tier = 4
-	allowed_roles = list(JOB_TITLE_CHIEF)
+	allowed_roles = list(JOB_TITLE_CHIEF_ENGINEER)
 
 /datum/gear/donor/strip/cmo
 	index_name = "strip, Chief Medical Officer"
@@ -269,6 +297,46 @@
 	display_name = "Нашивка \"Лягушка\""
 	path = /obj/item/clothing/accessory/head_strip/frog
 
+/datum/gear/donor/strip/whitecat
+	index_name = "strip, White cat"
+	path = /obj/item/clothing/accessory/head_strip/whitecatstrip
+	donator_tier = 3
+
+/datum/gear/donor/strip/orangecat
+	index_name = "strip, Orange cat"
+	path = /obj/item/clothing/accessory/head_strip/orangecatstrip
+	donator_tier = 3
+
+/datum/gear/donor/strip/rat
+	index_name = "strip, Rat"
+	path = /obj/item/clothing/accessory/head_strip/ratstrip
+	donator_tier = 3
+
+/datum/gear/donor/strip/labrat
+	index_name = "strip, Lab rat"
+	path = /obj/item/clothing/accessory/head_strip/labratstrip
+	donator_tier = 3
+
+/datum/gear/donor/strip/krampus
+	index_name = "strip, Krampus"
+	path = /obj/item/clothing/accessory/head_strip/krampusstrip
+	donator_tier = 3
+
+/datum/gear/donor/strip/pursuit
+	index_name = "strip, Pursuit"
+	path = /obj/item/clothing/accessory/head_strip/pursuitstrip
+	donator_tier = 4
+
+/datum/gear/donor/strip/tv
+	index_name = "strip, TV"
+	path = /obj/item/clothing/accessory/head_strip/tvstrip
+	donator_tier = 3
+
+/datum/gear/donor/strip/devil
+	index_name = "strip, Devil"
+	path = /obj/item/clothing/accessory/head_strip/devilstrip
+	donator_tier = 4
+
 /datum/gear/donor/heartglasses
 	index_name = "heart-shaped glasses, color"
 	path = /obj/item/clothing/glasses/heart
@@ -285,7 +353,7 @@
 	donator_tier = 4
 	cost = 2
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_CHIEF, JOB_TITLE_ENGINEER, JOB_TITLE_ATMOSTECH, JOB_TITLE_MECHANIC, JOB_TITLE_QUARTERMASTER, JOB_TITLE_MINER, JOB_TITLE_MINING_MEDIC, JOB_TITLE_CAPTAIN, JOB_TITLE_ENGINEER_TRAINEE)
+	allowed_roles = list(JOB_TITLE_CHIEF_ENGINEER, JOB_TITLE_ENGINEER, JOB_TITLE_ATMOSTECH, JOB_TITLE_SPACEPOD_TECHNICIAN, JOB_TITLE_QUARTERMASTER, JOB_TITLE_MINER, JOB_TITLE_MINING_MEDIC, JOB_TITLE_CAPTAIN, JOB_TITLE_ENGINEER_TRAINEE)
 
 /datum/gear/donor/heart_science
 	index_name = "Heart Science Glasses"
@@ -293,7 +361,7 @@
 	donator_tier = 4
 	cost = 2
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_SCIENTIST, JOB_TITLE_ROBOTICIST, JOB_TITLE_RD, JOB_TITLE_GENETICIST, JOB_TITLE_CHEMIST, JOB_TITLE_SCIENTIST_STUDENT)
+	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_SCIENTIST, JOB_TITLE_ROBOTICIST, JOB_TITLE_RD, JOB_TITLE_GENETICIST, JOB_TITLE_CHEMIST, JOB_TITLE_SCIENCE_STUDENT)
 
 /datum/gear/donor/heart_health
 	index_name = "Heart Medical Glasses"
@@ -301,7 +369,7 @@
 	donator_tier = 4
 	cost = 2
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_CMO, JOB_TITLE_INTERN, JOB_TITLE_PARAMEDIC, JOB_TITLE_VIROLOGIST, JOB_TITLE_BLUESHIELD, JOB_TITLE_PSYCHIATRIST, JOB_TITLE_DOCTOR, JOB_TITLE_MINING_MEDIC, JOB_TITLE_CORONER)
+	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_CMO, JOB_TITLE_MEDICAL_INTERN, JOB_TITLE_PARAMEDIC, JOB_TITLE_VIROLOGIST, JOB_TITLE_BLUESHIELD, JOB_TITLE_PSYCHIATRIST, JOB_TITLE_DOCTOR, JOB_TITLE_MINING_MEDIC, JOB_TITLE_CORONER)
 
 /datum/gear/donor/heart_diagnostic
 	index_name = "Heart Diagnostic Glasses"
@@ -317,10 +385,10 @@
 	donator_tier = 4
 	cost = 2
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_DETECTIVE, JOB_TITLE_PILOT, JOB_TITLE_HOS, JOB_TITLE_WARDEN, JOB_TITLE_BLUESHIELD, JOB_TITLE_JUDGE, JOB_TITLE_OFFICER)
+	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_DETECTIVE, JOB_TITLE_PILOT, JOB_TITLE_HOS, JOB_TITLE_WARDEN, JOB_TITLE_BLUESHIELD, JOB_TITLE_MAGISTRATE, JOB_TITLE_OFFICER)
 
 /datum/gear/donor/heartsec_read
-	index_name = "Heart Security Glasses"
+	index_name = "Heart Security Glasses (read-only)"
 	path = /obj/item/clothing/glasses/hud/security/sunglasses/heart/read_only
 	donator_tier = 4
 	cost = 2
@@ -348,21 +416,21 @@
 	path = /obj/item/clothing/glasses/hud/security/sunglasses/visor
 	donator_tier = 3
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_HOS, JOB_TITLE_WARDEN, JOB_TITLE_OFFICER, JOB_TITLE_DETECTIVE, JOB_TITLE_PILOT, JOB_TITLE_JUDGE)
+	allowed_roles = list(JOB_TITLE_HOS, JOB_TITLE_WARDEN, JOB_TITLE_OFFICER, JOB_TITLE_DETECTIVE, JOB_TITLE_PILOT, JOB_TITLE_MAGISTRATE)
 
 /datum/gear/donor/visor_medical
 	index_name = "Optical Medical Visor"
 	path = /obj/item/clothing/glasses/hud/health/visor
 	donator_tier = 3
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_CMO, JOB_TITLE_DOCTOR, JOB_TITLE_MINING_MEDIC, JOB_TITLE_INTERN, JOB_TITLE_CORONER, JOB_TITLE_CHEMIST, JOB_TITLE_GENETICIST, JOB_TITLE_VIROLOGIST, JOB_TITLE_PSYCHIATRIST, JOB_TITLE_PARAMEDIC, JOB_TITLE_BRIGDOC)
+	allowed_roles = list(JOB_TITLE_CMO, JOB_TITLE_DOCTOR, JOB_TITLE_MINING_MEDIC, JOB_TITLE_MEDICAL_INTERN, JOB_TITLE_CORONER, JOB_TITLE_CHEMIST, JOB_TITLE_GENETICIST, JOB_TITLE_VIROLOGIST, JOB_TITLE_PSYCHIATRIST, JOB_TITLE_PARAMEDIC, JOB_TITLE_BRIGDOC)
 
 /datum/gear/donor/visor_science
 	index_name = "Optical Science Visor"
 	path = /obj/item/clothing/glasses/science/visor
 	donator_tier = 3
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_SCIENTIST, JOB_TITLE_RD, JOB_TITLE_SCIENTIST_STUDENT, JOB_TITLE_ROBOTICIST, JOB_TITLE_GENETICIST, JOB_TITLE_CHEMIST)
+	allowed_roles = list(JOB_TITLE_SCIENTIST, JOB_TITLE_RD, JOB_TITLE_SCIENCE_STUDENT, JOB_TITLE_ROBOTICIST, JOB_TITLE_GENETICIST, JOB_TITLE_CHEMIST)
 
 /datum/gear/donor/visor_diagnostic
 	index_name = "Optical Diagnostic Visor"
@@ -376,7 +444,7 @@
 	path = /obj/item/clothing/glasses/meson/visor
 	donator_tier = 3
 	slot = ITEM_SLOT_EYES
-	allowed_roles = list(JOB_TITLE_CHIEF, JOB_TITLE_ENGINEER, JOB_TITLE_ENGINEER_TRAINEE, JOB_TITLE_ATMOSTECH, JOB_TITLE_MECHANIC, JOB_TITLE_QUARTERMASTER, JOB_TITLE_MINER, JOB_TITLE_MINING_MEDIC)
+	allowed_roles = list(JOB_TITLE_CHIEF_ENGINEER, JOB_TITLE_ENGINEER, JOB_TITLE_ENGINEER_TRAINEE, JOB_TITLE_ATMOSTECH, JOB_TITLE_SPACEPOD_TECHNICIAN, JOB_TITLE_QUARTERMASTER, JOB_TITLE_MINER, JOB_TITLE_MINING_MEDIC)
 
 /datum/gear/donor/visor_skill
 	index_name = "Optical Skill Visor"
@@ -412,7 +480,7 @@
 	index_name = "strip, Great fellow"
 	path = /obj/item/clothing/accessory/head_strip/cheese_badge
 	donator_tier = 4
-	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_QUARTERMASTER, JOB_TITLE_RD, JOB_TITLE_HOS, JOB_TITLE_HOP, JOB_TITLE_CMO, JOB_TITLE_CHIEF, JOB_TITLE_REPRESENTATIVE, JOB_TITLE_JUDGE)
+	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_QUARTERMASTER, JOB_TITLE_RD, JOB_TITLE_HOS, JOB_TITLE_HOP, JOB_TITLE_CMO, JOB_TITLE_CHIEF_ENGINEER, JOB_TITLE_REPRESENTATIVE, JOB_TITLE_MAGISTRATE)
 
 /datum/gear/donor/smile_pin
 	index_name = "smiling pin"
@@ -444,10 +512,39 @@
 	index_name = "backpack, Military Satchel"
 	path = /obj/item/storage/backpack/fluff/syndiesatchel
 
+/datum/gear/donor/backpack_shitsec
+	donator_tier = 3
+	index_name = "backpack of justice"
+	path = /obj/item/storage/backpack/justice
+	allowed_roles = list(JOB_TITLE_HOS, JOB_TITLE_WARDEN, JOB_TITLE_OFFICER, JOB_TITLE_PILOT)
+
 /datum/gear/donor/spacecloak
 	donator_tier = 3
 	index_name = "Space cloak"
 	path = /obj/item/clothing/neck/cloak/spacecloak
+
+/datum/gear/donor/civil_cape
+	donator_tier = 3
+	index_name = "Civil cape"
+	path = /obj/item/clothing/neck/cloak/civil_cape
+
+/datum/gear/donor/commander_cape
+	donator_tier = 4
+	index_name = "Commander cape"
+	path = /obj/item/clothing/neck/cloak/commander_cape
+	allowed_roles = list(JOB_TITLE_CAPTAIN, JOB_TITLE_QUARTERMASTER, JOB_TITLE_RD, JOB_TITLE_HOS, JOB_TITLE_HOP, JOB_TITLE_CMO, JOB_TITLE_CHIEF_ENGINEER, JOB_TITLE_REPRESENTATIVE, JOB_TITLE_MAGISTRATE)
+
+/datum/gear/donor/sec_cape
+	donator_tier = 3
+	index_name = "Security cape"
+	path = /obj/item/clothing/neck/cloak/sec_cape
+	allowed_roles = list(JOB_TITLE_HOS, JOB_TITLE_WARDEN, JOB_TITLE_DETECTIVE, JOB_TITLE_OFFICER, JOB_TITLE_PILOT)
+
+/datum/gear/donor/hos_cape
+	donator_tier = 4
+	index_name = "Marine cape"
+	path = /obj/item/clothing/neck/cloak/hos_cape
+	allowed_roles = list(JOB_TITLE_HOS)
 
 /datum/gear/donor/golden_wheelchair
 	donator_tier = 4
@@ -458,18 +555,13 @@
 	index_name = "hazard vest alt"
 	path = /obj/item/clothing/suit/storage/hazardvest/beltdonor
 	donator_tier = 3
-	allowed_roles = list(JOB_TITLE_CHIEF, JOB_TITLE_ENGINEER)
+	allowed_roles = list(JOB_TITLE_CHIEF_ENGINEER, JOB_TITLE_ENGINEER)
 
 /datum/gear/donor/atmosbelt
 	index_name = "hazard vest alt (atmos)"
 	path = /obj/item/clothing/suit/storage/hazardvest/beltdonor/atmos
 	donator_tier = 3
-	allowed_roles = list(JOB_TITLE_CHIEF, JOB_TITLE_ATMOSTECH)
-
-/datum/gear/donor/beaver
-	index_name = "Beaver Plushie"
-	path = /obj/item/toy/plushie/beaver
-	donator_tier = 3
+	allowed_roles = list(JOB_TITLE_CHIEF_ENGINEER, JOB_TITLE_ATMOSTECH)
 
 /datum/gear/donor/earring_NT
 	index_name = "Earrings NT"
@@ -516,6 +608,16 @@
 	path = /obj/item/pda_case/beer
 	donator_tier = 1
 
+/datum/gear/donor/pda_rat
+	index_name = "PDA case \"RAT\""
+	path = /obj/item/pda_case/rat
+	donator_tier = 1
+
+/datum/gear/donor/pda_swaga
+	index_name = "PDA case \"SWAGA\""
+	path = /obj/item/pda_case/swaga
+	donator_tier = 1
+
 /datum/gear/donor/maid
 	index_name = "Short maid costume"
 	path = /obj/item/clothing/under/maid/short
@@ -530,11 +632,30 @@
 	index_name = "GSBussy doll"
 	path = /obj/item/toy/plushie/gsbplushie
 
-/datum/gear/donor/backpack_shitsec
+/datum/gear/donor/cmoplushie
 	donator_tier = 3
-	index_name = "backpack of justice"
-	path = /obj/item/storage/backpack/justice
-	allowed_roles = list(JOB_TITLE_HOS, JOB_TITLE_WARDEN, JOB_TITLE_OFFICER, JOB_TITLE_PILOT)
+	index_name = "CMO doll"
+	path = /obj/item/toy/plushie/cmoplushie
+
+/datum/gear/donor/hopplushie
+	donator_tier = 3
+	index_name = "HoPussy doll"
+	path = /obj/item/toy/plushie/hopplushie
+
+/datum/gear/donor/glorp
+	donator_tier = 3
+	index_name = "plushie glorp"
+	path = /obj/item/toy/plushie/glorp
+
+/datum/gear/donor/beaver
+	index_name = "Beaver Plushie"
+	path = /obj/item/toy/plushie/beaver
+	donator_tier = 3
+
+/datum/gear/donor/chikaboomchik
+	index_name = "Chikaboomchik Plushie"
+	path = /obj/item/toy/plushie/chikaboomchik
+	donator_tier = 3
 
 /datum/gear/donor/masterli
 	donator_tier = 1

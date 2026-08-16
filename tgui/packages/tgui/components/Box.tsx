@@ -11,6 +11,7 @@ import {
   type MouseEventHandler,
   type ReactNode,
   type UIEventHandler,
+  WheelEventHandler,
   createElement,
 } from 'react';
 import type { BooleanLike } from 'common/react';
@@ -29,11 +30,13 @@ type EventHandlers = {
   onKeyDown: KeyboardEventHandler<HTMLDivElement>;
   onKeyUp: KeyboardEventHandler<HTMLDivElement>;
   onMouseDown: MouseEventHandler<HTMLDivElement>;
+  onMouseEnter: MouseEventHandler<HTMLDivElement>;
   onMouseLeave: MouseEventHandler<HTMLDivElement>;
   onMouseMove: MouseEventHandler<HTMLDivElement>;
   onMouseOver: MouseEventHandler<HTMLDivElement>;
   onMouseUp: MouseEventHandler<HTMLDivElement>;
   onScroll: UIEventHandler<HTMLDivElement>;
+  onWheel: WheelEventHandler<HTMLDivElement>;
 };
 
 type InternalProps = {

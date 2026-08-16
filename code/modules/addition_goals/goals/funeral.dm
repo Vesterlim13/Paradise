@@ -134,7 +134,7 @@
 					report_text += "тело не находится в гробу.<br>"
 					continue
 				var/obj/structure/closet/coffin/coffin = corpse.loc
-				if(istype(coffin.loc, /turf/space))
+				if(isspaceturf(coffin.loc))
 					report_text += "успешно похоронен.<br>"
 					complete_count++
 				else
@@ -153,7 +153,7 @@
 	if(reward_cargopoints > 0)
 		report_text += "[reward_number]. [reward_cargopoints] очков поставки в карго.<br>"
 	system.add_reward(reward_credits, reward_cargopoints)
-	var/paper_content = system.create_paper_content("Отчет о проведении погребения №[request_number]", report_text, "Официальный документ заверенный печатью Центрального командования Нанотрейзен")
+	var/paper_content = system.create_paper_content("Отчет о проведении погребения №[request_number]", report_text, "Официальный документ, заверенный печатью Центрального командования \"Нанотрейзен\"")
 	system.print_report_on_console("Отчет [name]", paper_content, stamp = TRUE)
 
 ////////////////////////////////////////

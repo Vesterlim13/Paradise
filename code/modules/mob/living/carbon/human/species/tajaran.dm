@@ -27,11 +27,12 @@
 	inherent_traits = list(
 		TRAIT_HAS_LIPS,
 		TRAIT_HAS_REGENERATION,
+		TRAIT_WATER_HATER,
 	)
 	clothing_flags = HAS_UNDERWEAR | HAS_UNDERSHIRT | HAS_SOCKS
-	bodyflags = HAS_TAIL | HAS_HEAD_ACCESSORY | HAS_MARKINGS | HAS_SKIN_COLOR | TAIL_WAGGING
+	bodyflags = HAS_TAIL | HAS_HEAD_ACCESSORY | HAS_MARKINGS | HAS_SKIN_COLOR | TAIL_WAGGING | HAS_HAIR
 	taste_sensitivity = TASTE_SENSITIVITY_SHARP
-	reagent_tag = PROCESS_ORG
+	reagent_tag = ORGANIC
 
 	blood_species = "Tajaran"
 	flesh_color = "#b5a69b"
@@ -93,6 +94,11 @@
 	)
 	autohiss_exempt = list("Сик'таир")
 
+	max_select_skills = list(
+		/datum/skill/general/cooking = 1,
+		/datum/skill/medical/surgery = 1,
+	)
+
 /datum/species/tajaran/handle_death(gibbed, mob/living/carbon/human/H)
 	H.stop_tail_wagging()
 
@@ -117,3 +123,6 @@
 	remove_verb(H, /mob/living/carbon/human/proc/emote_purr)
 	remove_verb(H, /mob/living/carbon/human/proc/emote_purrl)
 	remove_verb(H, /mob/living/carbon/human/proc/emote_hiss_tajaran)
+
+/datum/species/tajaran/compressor_grind(location)
+	new /obj/item/reagent_containers/food/snacks/tajaroni(location)

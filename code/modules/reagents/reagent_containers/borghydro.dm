@@ -24,7 +24,7 @@
 		"hydrocodone" = list('icons/mob/actions/actions.dmi', "magicm"))
 
 /obj/item/reagent_containers/borghypo/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "робо-гипоспрей",
 		GENITIVE = "робо-гипоспрея",
 		DATIVE = "робо-гипоспрею",
@@ -35,7 +35,7 @@
 
 /obj/item/reagent_containers/borghypo/syndicate
 	name = "syndicate cyborg hypospray"
-	desc = "Передовой химический синтезатор, оборудованный системой инъекции, разработанный для тяжёлого медицинского оборудования. Специальная версия, производимая Синдикатом для установки в боевых роботов поддержики, оснащённая передовыми лечебными препаратами."
+	desc = "Передовой химический синтезатор, оборудованный системой инъекции, разработанный для тяжёлого медицинского оборудования. Специальная версия, производимая \"Синдикатом\" для установки в боевых роботов поддержики, оснащённая передовыми лечебными препаратами."
 	icon_state = "borghypo_s"
 	charge_cost = 20
 	recharge_time = 2
@@ -49,7 +49,7 @@
 	upgrade_path = null //no upgrades
 
 /obj/item/reagent_containers/borghypo/syndicate/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "Синди-робо-гипоспрей",
 		GENITIVE = "Синди-робо-гипоспрея",
 		DATIVE = "Синди-робо-гипоспрею",
@@ -74,7 +74,7 @@
 	upgrade_path = null //no upgrades
 
 /obj/item/reagent_containers/borghypo/upgraded/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "улучшенный робо-гипоспрей",
 		GENITIVE = "улучшенного робо-гипоспрея",
 		DATIVE = "улучшенному робо-гипоспрею",
@@ -212,7 +212,7 @@
 	upgrade_path = /obj/item/reagent_containers/borghypo/basic/upgraded
 
 /obj/item/reagent_containers/borghypo/basic/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "стандартный медицинский гипоспрей",
 		GENITIVE = "стандартного медицинского гипоспрея",
 		DATIVE = "стандартному медицинскому гипоспрею",
@@ -233,7 +233,7 @@
 	upgrade_path = null //no upgrades
 
 /obj/item/reagent_containers/borghypo/basic/upgraded/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "улучшенный медицинский гипоспрей",
 		GENITIVE = "улучшенного медицинского гипоспрея",
 		DATIVE = "улучшенному медицинскому гипоспрею",
@@ -244,12 +244,11 @@
 
 /obj/item/reagent_containers/borghypo/emagged
 	name = "ERR3NU1l_INJ3C70R"
-	desc = "Этот инъектор будет впрыскивать смертоносные химикаты в каждого, кому не посчастливилось оказаться врагом Синдиката. Кто бы мог подумать, что роботы Нанотрейзен способы синтезировать такое?"
+	desc = "Этот инъектор будет впрыскивать смертоносные химикаты в каждого, кому не посчастливилось оказаться врагом \"Синдиката\". Кто бы мог подумать, что роботы \"Нанотрейзен\" способы синтезировать такое?"
 	item_state = "borghypo_emag"
 	icon_state = "borghypo_emag"
 	amount_per_transfer_from_this = 10
-	// volume = 30
-	var/emagged = TRUE
+	emagged = TRUE
 	var/safety_hypo = FALSE
 	reagent_ids = list( \
 		"amanitin" = list('icons/obj/hydroponics/harvest.dmi', "amanita"), \
@@ -258,7 +257,7 @@
 	upgrade_path = null //no upgrades
 
 /obj/item/reagent_containers/borghypo/emagged/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "0ШNBK4_IИБ3KT0Я",
 		GENITIVE = "0ШNBK4_IИБ3KT0Я",
 		DATIVE = "0ШNBK4_IИБ3KT0Я",

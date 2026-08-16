@@ -48,7 +48,7 @@ Made by Xhuis
 	required_enemies = 2
 	recommended_enemies = 2
 	restricted_jobs = list(JOB_TITLE_AI, JOB_TITLE_CYBORG)
-	protected_jobs = list(JOB_TITLE_OFFICER, JOB_TITLE_WARDEN, JOB_TITLE_DETECTIVE, JOB_TITLE_HOS, JOB_TITLE_HOP, JOB_TITLE_CAPTAIN, JOB_TITLE_BLUESHIELD, JOB_TITLE_REPRESENTATIVE, JOB_TITLE_PILOT, JOB_TITLE_JUDGE, JOB_TITLE_BRIGDOC, JOB_TITLE_LAWYER, JOB_TITLE_CCOFFICER, JOB_TITLE_CCFIELD, JOB_TITLE_CCSPECOPS, JOB_TITLE_CCSUPREME, JOB_TITLE_SYNDICATE, JOB_TITLE_PRISONER, JOB_TITLE_CMO, JOB_TITLE_RD, JOB_TITLE_QUARTERMASTER, JOB_TITLE_HOP, JOB_TITLE_CHIEF)
+	protected_jobs = list(JOB_TITLE_OFFICER, JOB_TITLE_WARDEN, JOB_TITLE_DETECTIVE, JOB_TITLE_HOS, JOB_TITLE_HOP, JOB_TITLE_CAPTAIN, JOB_TITLE_BLUESHIELD, JOB_TITLE_REPRESENTATIVE, JOB_TITLE_PILOT, JOB_TITLE_MAGISTRATE, JOB_TITLE_BRIGDOC, JOB_TITLE_LAWYER, JOB_TITLE_CCOFFICER, JOB_TITLE_CCFIELD, JOB_TITLE_CCSPECOPS, JOB_TITLE_CCCAPTAIN, JOB_TITLE_SYNDICATE_OFFICER, JOB_TITLE_PRISONER, JOB_TITLE_CMO, JOB_TITLE_RD, JOB_TITLE_QUARTERMASTER, JOB_TITLE_HOP, JOB_TITLE_CHIEF_ENGINEER)
 
 /datum/game_mode/shadowling/announce()
 	to_chat(world, "<b>The current game mode is - Shadowling!</b>")
@@ -89,7 +89,7 @@ Made by Xhuis
 			messages.Add(greet_shadow(shadow))
 			messages.Add(process_shadow_objectives(shadow))
 			finalize_shadowling(shadow)
-			to_chat(shadow.current, chat_box_red(messages.Join("<br>")))
+			to_chat(shadow.current, custom_boxed_message("red_box center", messages.Join("<br>")))
 		//give_shadowling_abilities(shadow)
 	..()
 
@@ -139,7 +139,7 @@ Made by Xhuis
 		messages.Add(span_shadowling("Твоё тело необратимо изменилось. Внимательный может это увидеть — ты можешь скрыть это, надев маску."))
 		messages.Add(span_shadowling("Хотя ты и не так силён, как твои хозяева, но ты обладаете некоторыми способностями."))
 		messages.Add(span_shadowling("Ты можете общаться со своими союзниками, используя Телепатическую сеть тенелингов. '[get_language_prefix(LANGUAGE_HIVE_SHADOWLING)]'."))
-		to_chat(new_thrall_mind.current, chat_box_red(messages.Join("<br>")))
+		to_chat(new_thrall_mind.current, custom_boxed_message("red_box center", messages.Join("<br>")))
 		if(jobban_isbanned(new_thrall_mind.current, ROLE_SHADOWLING) || jobban_isbanned(new_thrall_mind.current, ROLE_SYNDICATE))
 			replace_jobbanned_player(new_thrall_mind.current, ROLE_SHADOWLING)
 
@@ -157,14 +157,14 @@ Made by Xhuis
 			for(var/mob/shadowling in GLOB.alive_mob_list)
 				if(!is_shadow(shadowling))
 					continue
-				to_chat(shadowling, "<span class='shadowling'><b>Тебе хватает сил для трансформации в истинную форму.</b></span>")
+				to_chat(shadowling, span_shadowling("<b>Тебе хватает сил для трансформации в истинную форму.</b>"))
 
 		if(!victory_warning_announced && (length(shadowling_thralls) >= warning_threshold))//are the slings very close to winning?
 			victory_warning_announced = TRUE	//then let's give the station a warning
 			GLOB.major_announcement.announce(
 				message = "Сканерами дальнего действия обнаружена большая концентрация психической блюспейс-энергии. Вероятность вознесения тенеморфов высока, всему экипажу следует предотвратить вознесение любой ценой!",
 				new_title = ANNOUNCE_CCPARANORMAL_RU,
-				new_sound = 'sound/AI/commandreport.ogg'
+				new_sound = SSstation.announcer.get_rand_report_sound(),
 			)
 			log_game("Shadowling reveal. Powergame and validhunt allowed.")
 		return 1
@@ -240,7 +240,7 @@ Made by Xhuis
 	else
 		M.visible_message(
 			span_big("[M] кричит и корчится!"), \
-			"<span class='userdanger'>СВЕТ-- ТВОЙ РАЗУМ-- <i>ГОРИТ--</i></span>"
+			span_userdanger("СВЕТ-- ТВОЙ РАЗУМ-- <i>ГОРИТ--</i>")
 		)
 		spawn(30)
 			if(!M || QDELETED(M))
@@ -262,28 +262,28 @@ Made by Xhuis
 	if(check_shadow_victory() && EMERGENCY_ESCAPED_OR_ENDGAMED) //Doesn't end instantly - this is hacky and I don't know of a better way ~X
 		SSticker.mode_result = "Победа тенелингов — тенелинги возвысились"
 		to_chat(world, span_fontsize3("<b>Победа тенелингов</b>"))
-		to_chat(world, "<span class='greentext'><b>Тенелинги возвысились и полностью захватили станцию!</b></span>")
+		to_chat(world, span_greentext("<b>Тенелинги возвысились и полностью захватили станцию!</b>"))
 	else if(shadowling_dead && !check_shadow_victory()) //If the shadowlings have ascended, they can not lose the round
 		SSticker.mode_result = "Тенелинги проиграли — тенелинги погибли"
 		to_chat(world, span_fontsize3("<b>Крупная победа экипажа</b>"))
-		to_chat(world, "<span class='redtext'><b>Тенелинги были убиты экипажем!</b></span>")
+		to_chat(world, span_redtext("<b>Тенелинги были убиты экипажем!</b>"))
 	else if(!check_shadow_victory() && EMERGENCY_ESCAPED_OR_ENDGAMED)
 		SSticker.mode_result = "Тенелинги проиграли — экипаж сбежал"
 		to_chat(world, span_fontsize3("<b>Мелкая победа экипажа</b>"))
-		to_chat(world, "<span class='redtext'><b>Экипаж сбежал со станции до того, как тенелинги возвысились!</b></span>")
+		to_chat(world, span_redtext("<b>Экипаж сбежал со станции до того, как тенелинги возвысились!</b>"))
 	else
 		SSticker.mode_result = "Тенелинги проиграли — тенелинги не справились"
 		to_chat(world, span_fontsize3("<b>Крупная победа экипажа</b>"))
-		to_chat(world, "<span class='redtext'><b>Тенелинги не смогли возвыситься!</b></span>")
+		to_chat(world, span_redtext("<b>Тенелинги не смогли возвыситься!</b>"))
 	..()
 	return 1
 
 /datum/game_mode/proc/auto_declare_completion_shadowling()
 	var/list/text = list("")
 	if(length(shadows))
-		text += "<br><span class='big'><b>Тенелингами были:</b></span>"
+		text += "<br>[span_big("<b>Тенелингами были:</b>")]"
 		for(var/datum/mind/shadow in shadows)
-			text += "<br>[shadow.get_display_key()] was [shadow.name] ("
+			text += "<br>[shadow.get_mind_key()] was [shadow.name] ("
 			if(shadow.current)
 				if(shadow.current.stat == DEAD)
 					text += "мертвы"
@@ -296,9 +296,9 @@ Made by Xhuis
 			text += ")"
 		text += "<br>"
 		if(length(shadowling_thralls))
-			text += "<br><span class='big'><b>Рабами были:</b></span>"
+			text += "<br>[span_big("<b>Рабами были:</b>")]"
 			for(var/datum/mind/thrall in shadowling_thralls)
-				text += "<br>[thrall.get_display_key()] was [thrall.name] ("
+				text += "<br>[thrall.get_mind_key()] was [thrall.name] ("
 				if(thrall.current)
 					if(thrall.current.stat == DEAD)
 						text += "мертвы"

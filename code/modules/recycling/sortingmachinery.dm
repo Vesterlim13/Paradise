@@ -1,7 +1,7 @@
 /obj/structure/bigDelivery
 	name = "large parcel"
 	desc = "A big wrapped package."
-	icon = 'icons/obj/storage.dmi'
+	icon = 'icons/obj/storage/boxes.dmi'
 	icon_state = "deliverycloset"
 	density = TRUE
 	mouse_drag_pointer = MOUSE_ACTIVE_POINTER
@@ -48,7 +48,7 @@
 	playsound(our_turf, 'sound/items/poster_ripped.ogg', 50, TRUE)
 	if(wrapped)
 		wrapped.forceMove(our_turf)
-		if(istype(wrapped, /obj/structure/closet))
+		if(iscloset(wrapped))
 			var/obj/structure/closet/closet = wrapped
 			closet.add_fingerprint(user)
 			closet.welded = init_welded
@@ -62,9 +62,9 @@
 	if(!wrapped)
 		icon_state = initial(icon_state)
 		return
-	var/holding_crate = istype(wrapped, /obj/structure/closet/crate)
+	var/holding_crate = is_crate(wrapped)
 	if(giftwrapped)
-		icon_state = holding_crate ? "giftcrate" : "giftcloset"
+		icon_state = holding_crate ? "deliverycrate" : "deliverycloset"
 		return
 	icon_state = "delivery[holding_crate ? "crate" : "closet"][(sortTag || cc_tag) ? "_labeled" : ""]"	// label should be an overlay
 
@@ -123,6 +123,8 @@
 		)
 		giftwrapped = TRUE
 		update_icon(UPDATE_ICON_STATE)
+		greyscale_config = text2path("/datum/greyscale_config/gift[icon_state]")
+		set_greyscale_colors(colors = paper.greyscale_colors)
 		if(create_tube)
 			var/obj/item/c_tube/tube = new(user.drop_location())
 			tube.add_fingerprint(user)
@@ -133,9 +135,11 @@
 /obj/item/smallDelivery
 	name = "small parcel"
 	desc = "A small wrapped package."
-	icon = 'icons/obj/storage.dmi'
-	icon_state = "deliverycrateSmall"
-	item_state = "deliverypackage"
+	icon = 'icons/obj/storage/boxes.dmi'
+	righthand_file = 'icons/mob/inhands/storage_righthand.dmi'
+	lefthand_file = 'icons/mob/inhands/storage_lefthand.dmi'
+	icon_state = "deliverycrate1"
+	item_state = "delivery_crate5"
 	var/obj/item/wrapped
 	var/giftwrapped = FALSE
 	var/sortTag = 0
@@ -185,7 +189,7 @@
 	else
 		weight_number = wrapped.w_class
 	if(giftwrapped)
-		icon_state = "giftcrate[weight_number]"
+		icon_state = "deliverypackage[weight_number]"
 		return
 	icon_state = "deliverycrate[weight_number][sortTag ? "_labeled" : ""]"	// label should be an overlay
 
@@ -237,6 +241,8 @@
 		)
 		giftwrapped = TRUE
 		update_icon(UPDATE_ICON_STATE)
+		greyscale_config = text2path("/datum/greyscale_config/gift[icon_state]")
+		set_greyscale_colors(colors = paper.greyscale_colors)
 		if(create_tube)
 			var/obj/item/c_tube/tube = new(user.drop_location())
 			tube.add_fingerprint(user)
@@ -263,8 +269,8 @@
 		/obj/item/mecha_parts/chassis
 	))
 
-/obj/item/stack/packageWrap/afterattack(obj/target, mob/user, proximity, params)
-	if(!proximity)
+/obj/item/stack/packageWrap/afterattack(obj/target, mob/user, proximity_flag, list/modifiers, status)
+	if(!proximity_flag)
 		return
 	if(!istype(target))	//this really shouldn't be necessary (but it is).	-Pete
 		return
@@ -297,7 +303,7 @@
 		item.add_fingerprint(user)
 		package.update_icon(UPDATE_ICON_STATE)
 
-	else if(istype(target, /obj/structure/closet))
+	else if(iscloset(target))
 		var/obj/structure/closet/container = target
 		if(container.opened)
 			to_chat(user, span_warning("The [container.name] should be closed."))
@@ -324,7 +330,7 @@
 		package.add_fingerprint(user)
 		container.add_fingerprint(user)
 		package.update_icon(UPDATE_ICON_STATE)
-		if(!istype(container, /obj/structure/closet/crate))
+		if(!is_crate(container))
 			container.welded = TRUE
 
 	else
@@ -419,8 +425,11 @@
 /obj/item/shippingPackage
 	name = "Shipping package"
 	desc = "A pre-labeled package for shipping an item to coworkers."
-	icon = 'icons/obj/storage.dmi'
+	icon = 'icons/obj/storage/boxes.dmi'
+	righthand_file = 'icons/mob/inhands/storage_righthand.dmi'
+	lefthand_file = 'icons/mob/inhands/storage_lefthand.dmi'
 	icon_state = "shippack"
+	item_state = "shippack"
 	var/obj/item/wrapped = null
 	var/sortTag = 0
 	var/sealed = FALSE

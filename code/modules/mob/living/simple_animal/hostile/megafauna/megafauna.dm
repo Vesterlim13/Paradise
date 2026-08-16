@@ -1,6 +1,7 @@
 /mob/living/simple_animal/hostile/megafauna
 	name = "megafauna"
 	desc = "Атакуйте слабое место для нанесения массивного урона."
+	abstract_type = /mob/living/simple_animal/hostile/megafauna
 	health = 1000
 	maxHealth = 1000
 	sentience_type = SENTIENCE_BOSS
@@ -29,9 +30,8 @@
 	var/achievement_type
 	var/crusher_achievement_type
 	var/score_achievement_type
-	var/elimination = 0
+	var/elimination = FALSE
 	var/anger_modifier = 0
-	var/obj/item/gps/internal_gps
 	var/internal_type
 	var/recovery_time = 0
 	var/true_spawn = TRUE // if this is a megafauna that should grant achievements, or have a gps signal
@@ -47,7 +47,7 @@
 	/// Only one loot from hardmode
 
 /mob/living/simple_animal/hostile/megafauna/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "мегафауна",
 		GENITIVE = "мегафауны",
 		DATIVE = "мегафауне",
@@ -60,6 +60,8 @@
 	. = ..()
 	if(internal_type && true_spawn)
 		internal = new internal_type(src)
+	if(islist(crusher_loot))
+		crusher_loot = string_list(crusher_loot)
 	for(var/action_type in attack_action_types)
 		var/datum/action/innate/megafauna_attack/attack_action = new action_type()
 		attack_action.Grant(src)
@@ -122,7 +124,7 @@
 
 /mob/living/simple_animal/hostile/megafauna/on_changed_z_level(turf/old_turf, turf/new_turf, same_z_layer, notify_contents = TRUE)
 	. = ..()
-	if(!istype(get_area(src), /area/shuttle)) //I'll be funny and make non teleported enrage mobs not lose enrage. Harder to pull off, and also funny when it happens accidently. Or if one gets on the escape shuttle.
+	if(!is_area_shuttle(get_area(src))) //I'll be funny and make non teleported enrage mobs not lose enrage. Harder to pull off, and also funny when it happens accidently. Or if one gets on the escape shuttle.
 		unrage()
 
 /mob/living/simple_animal/hostile/megafauna/onShuttleMove(turf/oldT, turf/T1, rotation, mob/requester)
@@ -141,7 +143,7 @@
 	if(!L)
 		return FALSE
 	visible_message(
-		span_danger("[capitalize(declent_ru(NOMINATIVE))] пожирает [L.declent_ru(ACCUSATIVE)]!"),
+		span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] пожирает [L.declent_ru(ACCUSATIVE)]!"),
 		span_userdanger("Вы пожираете [L.declent_ru(ACCUSATIVE)], восстанавливая своё здоровье!")
 	)
 	if(!is_station_level(z) || client) //NPC monsters won't heal while on station

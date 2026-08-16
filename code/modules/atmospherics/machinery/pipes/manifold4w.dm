@@ -15,19 +15,14 @@
 
 	level = 1
 
-/obj/machinery/atmospherics/pipe/manifold4w/New()
-	..()
+/obj/machinery/atmospherics/pipe/manifold4w/Initialize(mapload)
+	. = ..()
+	
 	alpha = 255
 	icon = null
 
 /obj/machinery/atmospherics/pipe/manifold4w/pipeline_expansion()
 	return list(node1, node2, node3, node4)
-
-/obj/machinery/atmospherics/pipe/manifold4w/process_atmos()
-	if(!parent)
-		..()
-	else
-		. = PROCESS_KILL
 
 /obj/machinery/atmospherics/pipe/manifold4w/Destroy()
 	. = ..()
@@ -133,10 +128,6 @@
 	// 1: 1-4 nodes exist, we continue existing
 	return 1
 
-/obj/machinery/atmospherics/pipe/manifold4w/hide(i)
-	if(level == 1 && issimulatedturf(loc))
-		invisibility = i ? INVISIBILITY_MAXIMUM : 0
-
 /obj/machinery/atmospherics/pipe/manifold4w/atmos_init()
 	..()
 	for(var/D in GLOB.cardinal)
@@ -163,9 +154,6 @@
 					node4 = target
 				break
 
-	var/turf/T = src.loc			// hide if turf is not intact
-	if(!T.transparent_floor)
-		hide(T.intact)
 	update_icon()
 
 /obj/machinery/atmospherics/pipe/manifold4w/visible

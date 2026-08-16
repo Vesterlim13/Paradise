@@ -15,6 +15,7 @@
 #define HIDEHAIR (1<<10)
 #define HIDEHEADHAIR (1<<11)
 #define HIDEFACIALHAIR (1<<12)
+#define HIDE_ALL_HAIR (HIDEHAIR|HIDEHEADHAIR|HIDEFACIALHAIR)
 
 // ITEM INVENTORY SLOT BITMASKS
 // Update "ITEM_SLOT_X_STRING" below, if you change slots here
@@ -109,6 +110,13 @@
 #define TAIL (1<<12)
 #define WING (1<<13)
 
+//flags for covering body parts
+#define GLASSESCOVERSEYES (1<<0)
+#define MASKCOVERSEYES (1<<1) // get rid of some of the other mess in these flags
+#define HEADCOVERSEYES (1<<2) // feel free to realloc these numbers for other purposes
+#define MASKCOVERSMOUTH (1<<3) // on other items, these are just for mask/head
+#define HEADCOVERSMOUTH (1<<4)
+
 //defines for the index of hands
 #define LEFT_HANDS 1
 #define RIGHT_HANDS 2
@@ -129,18 +137,21 @@
 #define THERMAL_PROTECTION_HAND_LEFT 0.025
 #define THERMAL_PROTECTION_HAND_RIGHT 0.025
 
-//flags for covering body parts
-#define GLASSESCOVERSEYES (1<<0)
-#define MASKCOVERSEYES (1<<1)		// get rid of some of the other mess in these flags
-#define HEADCOVERSEYES (1<<2)		// feel free to realloc these numbers for other purposes
-#define MASKCOVERSMOUTH (1<<3)		// on other items, these are just for mask/head
-#define HEADCOVERSMOUTH (1<<4)
-
 // Suit sensor levels
 #define SUIT_SENSOR_OFF 0
 #define SUIT_SENSOR_BINARY 1
 #define SUIT_SENSOR_VITAL 2
 #define SUIT_SENSOR_TRACKING 3
+
+//suit sensors: sensor_mode defines
+/// Suit sensor is turned off
+#define SENSOR_OFF 0
+/// Suit sensor displays the mob as alive or dead
+#define SENSOR_LIVING 1
+/// Suit sensor displays the mob damage values
+#define SENSOR_VITALS 2
+/// Suit sensor displays the mob damage values and exact location
+#define SENSOR_COORDS 3
 
 //flags for muzzle speech blocking
 #define MUZZLE_MUTE_NONE 0 // Does not mute you.
@@ -197,4 +208,3 @@
 #define ADD_CLOTHING_TRAIT(mob, cloth, trait) ADD_TRAIT(mob, trait, "[CLOTHING_TRAIT]_[UID_of(cloth)]")
 /// Wrapper for removing clothing based traits
 #define REMOVE_CLOTHING_TRAIT(mob, cloth, trait) REMOVE_TRAIT(mob, trait, "[CLOTHING_TRAIT]_[UID_of(cloth)]")
-

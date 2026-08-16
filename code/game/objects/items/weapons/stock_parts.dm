@@ -3,8 +3,11 @@
 /obj/item/storage/part_replacer
 	name = "Rapid Part Exchange Device"
 	desc = "Special mechanical module made to store, sort, and apply standard machine parts."
+	icon = 'icons/obj/storage/boxes.dmi'
 	icon_state = "RPED"
-	item_state = "RPED"
+	righthand_file = 'icons/mob/inhands/storage_righthand.dmi'
+	lefthand_file = 'icons/mob/inhands/storage_lefthand.dmi'
+	item_state = "rped"
 	w_class = WEIGHT_CLASS_HUGE
 	can_hold = list(/obj/item/stock_parts)
 	storage_slots = 50
@@ -19,23 +22,23 @@
 	var/alt_sound = null
 	usesound = 'sound/items/rped.ogg'
 
-/obj/item/storage/part_replacer/afterattack(obj/machinery/M, mob/user, flag, params)
-	if(!flag && works_from_distance && istype(M))
+/obj/item/storage/part_replacer/afterattack(obj/machinery/target, mob/user, proximity_flag, list/modifiers, status)
+	if(!proximity_flag && works_from_distance && istype(target))
 		// Make sure its in range
-		if(get_dist(src, M) <= (user.client.maxview() + 2))
-			if(M.component_parts)
-				M.exchange_parts(user, src)
-				user.Beam(M,icon_state="rped_upgrade", icon='icons/effects/effects.dmi', time=5)
+		if(get_dist(src, target) <= (user.client.maxview() + 2))
+			if(target.component_parts)
+				target.exchange_parts(user, src)
+				user.Beam(target, icon_state = "rped_upgrade", icon = 'icons/effects/effects.dmi', time = 0.5 SECONDS)
 		else
 			message_admins("\[EXPLOIT] [key_name_admin(user)] attempted to upgrade machinery with a BRPED via a camera console. (Attempted range exploit)")
 			playsound(src, 'sound/machines/synth_no.ogg', 15, TRUE)
-			to_chat(user, span_notice("ERROR: [M] is out of [src]'s range!"))
+			to_chat(user, span_notice("ERROR: [target] is out of [src]'s range!"))
 
 /obj/item/storage/part_replacer/bluespace
 	name = "bluespace rapid part exchange device"
 	desc = "A version of the RPED that allows for replacement of parts and scanning from a distance, along with higher capacity for parts."
 	icon_state = "BS_RPED"
-	item_state = "BS_RPED"
+	item_state = "bs_rped"
 	w_class = WEIGHT_CLASS_NORMAL
 	storage_slots = 400
 	max_combined_w_class = 800
@@ -56,12 +59,13 @@
 		new /obj/item/stock_parts/cell/bluespace(src)
 
 /obj/item/storage/part_replacer/bluespace/experimental/populate_contents()
-	for(var/amount in 1 to 10)
+	for(var/amount in 1 to 30)
 		new /obj/item/stock_parts/capacitor/purple(src)
 		new /obj/item/stock_parts/manipulator/purple(src)
 		new /obj/item/stock_parts/matter_bin/purple(src)
 		new /obj/item/stock_parts/micro_laser/purple(src)
 		new /obj/item/stock_parts/scanning_module/purple(src)
+		new /obj/item/stock_parts/cell/bluespace(src)
 
 /obj/item/storage/part_replacer/bluespace/drop_inventory(mob/user)
 	if(user.a_intent == INTENT_HARM) //Меняем режим выгрузки
@@ -99,6 +103,7 @@
 	usesound = 'sound/items/deconstruct.ogg'
 	pickup_sound = 'sound/items/handling/pickup/component_pickup.ogg'
 	drop_sound = 'sound/items/handling/drop/component_drop.ogg'
+	abstract_type = /obj/item/stock_parts
 
 /obj/item/stock_parts/Initialize(mapload)
 	. = ..()

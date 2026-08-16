@@ -1,23 +1,14 @@
-
-/client/proc/forceEvent()
-	set name = "Trigger Event"
-	set category = STATPANEL_ADMIN_EVENT
-
-	if(!check_rights(R_EVENT))
-		return
-
-	var/datum/event/type = tgui_input_list(src, "Выберите событие для запуска", "Выбор события", SSevents.allEvents)
+ADMIN_VERB(trigger_event, R_EVENT, "Trigger Event", "Trigger Event.", ADMIN_CATEGORY_EVENTS)
+	var/datum/event/type = tgui_input_list(user, "Выберите событие для запуска", "Выбор события", SSevents.allEvents)
 	if(!ispath(type))
 		return
 
 	new type(new /datum/event_meta/force(EVENT_LEVEL_MAJOR, "Зафоршенное событие [type.name || type]"), forced = TRUE)
 	log_and_message_admins("has triggered an event. ([type])")
 
-/client/proc/event_manager_panel()
-	set name = "Event Manager Panel"
-	set category = STATPANEL_ADMIN_EVENT
+ADMIN_VERB(event_manager_panel, R_EVENT, "Event Manager Panel", "Event Manager Panel.", ADMIN_CATEGORY_EVENTS)
 	if(SSevents)
-		SSevents.Interact(usr)
+		SSevents.Interact(user.mob)
 	BLACKBOX_LOG_ADMIN_VERB("Event Manager")
 	return
 
@@ -25,24 +16,22 @@
 	var/static/list/possible_areas
 	if(!length(possible_areas))
 		var/list/safe_areas = typecacheof(list(
-			/area/turret_protected/ai,
-			/area/turret_protected/ai_upload,
-			/area/engineering,
+			/area/station/ai/satellite/chamber,
+			/area/station/ai/upload/chamber,
+			/area/station/engineering,
 			/area/holodeck,
 			/area/shuttle,
-			/area/maintenance,
-			/area/toxins/test_area,
+			/area/station/maintenance,
+			/area/station/science/toxins/test,
 			/area/space,
-			/area/solar,
-			/area/crew_quarters/sleep))
+			/area/station/solars,
+			/area/station/commons/sleep))
 
 		//These are needed because /area/station/engineering has to be removed from the list, but we still want these areas to get fucked up.
 		var/list/allowed_areas = list(
-			/area/engineering/break_room,
-			/area/engineering/equipmentstorage,
-			/area/engineering/chiefs_office,
-			/area/engineering/controlroom,
-			/area/engineering/mechanic_workshop
+			/area/station/engineering/break_room,
+			/area/station/engineering/supermatter/room,
+			/area/station/engineering/mechanic_workshop
 		)
 
 		var/list/remove_these_areas = safe_areas - allowed_areas
@@ -70,7 +59,7 @@
 		if(!M.mind || !M.client || M.client.inactivity > 10 * 10 * 60) // longer than 10 minutes AFK counts them as inactive
 			continue
 
-		if(istype(M, /mob/living/silicon/robot))
+		if(isrobot(M))
 			var/mob/living/silicon/robot/R = M
 			if(R.module && (R.module.name == "engineering robot module"))
 				active_with_role["Engineer"]++
@@ -81,16 +70,16 @@
 			if(R.module && (R.module.name == "security robot module"))
 				active_with_role["Security"]++
 
-		if(M.mind.assigned_role in list(JOB_TITLE_CHIEF, JOB_TITLE_ENGINEER, JOB_TITLE_ENGINEER_TRAINEE))
+		if(M.mind.assigned_role in list(JOB_TITLE_CHIEF_ENGINEER, JOB_TITLE_ENGINEER, JOB_TITLE_ENGINEER_TRAINEE))
 			active_with_role["Engineer"]++
 
-		if(M.mind.assigned_role in list(JOB_TITLE_CMO, JOB_TITLE_DOCTOR, JOB_TITLE_MINING_MEDIC, JOB_TITLE_INTERN))
+		if(M.mind.assigned_role in list(JOB_TITLE_CMO, JOB_TITLE_DOCTOR, JOB_TITLE_MINING_MEDIC, JOB_TITLE_MEDICAL_INTERN))
 			active_with_role["Medical"]++
 
 		if(M.mind.assigned_role in GLOB.security_positions)
 			active_with_role["Security"]++
 
-		if(M.mind.assigned_role in list(JOB_TITLE_RD, JOB_TITLE_SCIENTIST, JOB_TITLE_SCIENTIST_STUDENT))
+		if(M.mind.assigned_role in list(JOB_TITLE_RD, JOB_TITLE_SCIENTIST, JOB_TITLE_SCIENCE_STUDENT))
 			active_with_role["Scientist"]++
 
 		if(M.mind.assigned_role == JOB_TITLE_AI)

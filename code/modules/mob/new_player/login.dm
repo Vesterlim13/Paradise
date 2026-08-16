@@ -10,7 +10,9 @@
 				src << link(CONFIG_GET(string/overflow_server_url))
 
 	if(GLOB.join_motd)
-		to_chat(src, "<div class=\"motd\">[GLOB.join_motd]</div>")
+		// Strip source newlines so to_chat() does not turn HTML indentation into <br>.
+		var/motd_html = replacetext(GLOB.join_motd, "\n", "")
+		to_chat(src, span_infoplain("<div class=\"motd\">[motd_html]</div>"))
 
 	if(!mind)
 		mind = new /datum/mind(key)
@@ -24,7 +26,7 @@
 
 	lastarea = loc
 
-	client.screen = list() // Remove HUD items just in case.
+	client.clear_screen() // Remove HUD items just in case.
 	client.images = list()
 	if(!hud_used)
 		create_mob_hud()	 // creating a hud will add it to the client's screen, which can process a disconnect
@@ -45,12 +47,11 @@
 
 	SStitle.show_title_screen_to(client)
 
-	spawn(4 SECONDS)
-		client?.playtitlemusic()
+	client?.playtitlemusic()
 
 /mob/new_player/proc/whitelist_check()
 	// Admins are immune to overflow rerouting
-	if(check_rights(rights_required = 0, show_msg = 0))
+	if(check_rights(rights_required = R_NONE, show_msg = FALSE))
 		return TRUE
 
 	if(CONFIG_GET(flag/usewhitelist_nojobbanned) && GLOB.jobban_assoclist[src.ckey])

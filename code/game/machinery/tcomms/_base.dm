@@ -19,6 +19,13 @@
 /// Global list for all telecomms machines in the world
 GLOBAL_LIST_EMPTY(tcomms_machines)
 
+/proc/find_functional_tcomms_core()
+	for(var/obj/machinery/tcomms/core/core in GLOB.tcomms_machines)
+		if(!core.active)
+			continue
+		return TRUE
+	return FALSE
+
 /**
  * # Telecommunications Device
  *
@@ -43,7 +50,7 @@ GLOBAL_LIST_EMPTY(tcomms_machines)
 	var/ion = FALSE
 
 /obj/machinery/tcomms/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "устройство телекоммуникаций",
 		GENITIVE = "устройства телекоммуникаций",
 		DATIVE = "устройству телекоммуникаций",
@@ -289,7 +296,7 @@ GLOBAL_LIST_EMPTY(tcomms_machines)
 
 	if(tcm.data == SIGNALTYPE_INTERCOM && !bad_connection)
 
-		for(var/obj/item/radio/intercom/R in new_connection.devices["[RADIO_CHAT]"])
+		for(var/obj/item/radio/intercom/R in GLOB.all_radios["[new_connection.frequency]"])
 			if(R.receive_range(display_freq, tcm.zlevels) > -1)
 				radios += R
 
@@ -297,7 +304,7 @@ GLOBAL_LIST_EMPTY(tcomms_machines)
 
 	else if(tcm.data == SIGNALTYPE_INTERCOM_SBR && !bad_connection)
 
-		for(var/obj/item/radio/R in new_connection.devices["[RADIO_CHAT]"])
+		for(var/obj/item/radio/R in GLOB.all_radios["[new_connection.frequency]"])
 
 			if(istype(R, /obj/item/radio/headset))
 				continue
@@ -309,20 +316,20 @@ GLOBAL_LIST_EMPTY(tcomms_machines)
 
 	else if(!bad_connection)
 
-		for(var/obj/item/radio/R in new_connection.devices["[RADIO_CHAT]"])
+		for(var/obj/item/radio/R in GLOB.all_radios["[new_connection.frequency]"])
 			if(R.receive_range(display_freq, tcm.zlevels) > -1)
 				radios += R
 
 	// Add syndie radios for intercepts if its a regular department frequency
 		for(var/antag_freq in SSradio.ANTAG_FREQS)
 			var/datum/radio_frequency/antag_connection = SSradio.return_frequency(antag_freq)
-			for(var/obj/item/radio/R in antag_connection.devices["[RADIO_CHAT]"])
+			for(var/obj/item/radio/R in GLOB.all_radios["[antag_connection.frequency]"])
 				if(R.receive_range(display_freq, tcm.zlevels) > -1)
 					// Only add if it wasnt there already
 					radios |= R
 
 	// Get a list of mobs who can hear from the radios we collected.
-	var/list/receive = get_hearers_in_radio_ranges(radios)
+	var/list/receive = get_hearers_in_radio_ranges(radios) | GLOB.permanent_radio_listeners
 
 	/* ###### Organize the receivers into categories for displaying the message ###### */
 
@@ -335,7 +342,7 @@ GLOBAL_LIST_EMPTY(tcomms_machines)
 	var/list/heard_garbled	= list() // garbled message (ie "f*c* **u, **i*er!")
 	var/list/heard_gibberish= list() // completely screwed over message (ie "F%! (O*# *#!<>&**%!")
 
-	for(var/mob/R in receive | GLOB.dead_player_list)
+	for(var/mob/R in receive)
 
 		/* --- Loop through the receivers and categorize them --- */
 
@@ -343,9 +350,6 @@ GLOBAL_LIST_EMPTY(tcomms_machines)
 			continue
 
 		if(isnewplayer(R)) // we don't want new players to hear messages. rare but generates runtimes.
-			continue
-
-		if(isobserver(R) && !R.get_preference(PREFTOGGLE_CHAT_GHOSTRADIO))
 			continue
 
 		// --- Can understand the speech ---
@@ -434,7 +438,7 @@ GLOBAL_LIST_EMPTY(tcomms_machines)
 	desc = "Памятка, содержащая коды для изменения конфигурации телекоммуникационных систем."
 
 /obj/item/paper/tcommskey/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "\"Пароль привязки телекоммуникаций\"",
 		GENITIVE = "\"Пароль привязки телекоммуникаций\"",
 		DATIVE = "\"Пароль привязки телекоммуникаций\"",

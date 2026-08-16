@@ -43,14 +43,14 @@
 /mob/living/proc/is_eyes_covered(check_glasses = TRUE, check_head = TRUE, check_mask = TRUE)
 	return FALSE
 
-/mob/living/bullet_act(obj/projectile/P, def_zone)
+/mob/living/bullet_act(obj/projectile/proj, def_zone)
 	//Armor
-	var/armor = run_armor_check(def_zone, P.flag, armour_penetration = P.armour_penetration)
-	if(!P.nodamage)
-		apply_damage(P.damage, P.damage_type, def_zone, armor)
-		if(P.dismemberment)
-			check_projectile_dismemberment(P, def_zone)
-	return P.on_hit(src, armor, def_zone)
+	var/armor = run_armor_check(def_zone, proj.flag, armour_penetration = proj.armour_penetration)
+	if(!proj.nodamage)
+		apply_damage(proj.damage, proj.damage_type, def_zone, armor)
+		if(proj.dismemberment)
+			check_projectile_dismemberment(proj, def_zone)
+	return proj.on_hit(src, armor, def_zone)
 
 /mob/living/proc/check_projectile_dismemberment(obj/projectile/P, def_zone)
 	return 0
@@ -59,7 +59,7 @@
 /mob/living/proc/electrocute_act(shock_damage, atom/source, siemens_coeff = 1, flags = NONE, jitter_time = 10 SECONDS, stutter_time = 6 SECONDS, stun_duration = 4 SECONDS)
 	if(SEND_SIGNAL(src, COMSIG_LIVING_ELECTROCUTE_ACT, shock_damage, source, siemens_coeff, flags) & COMPONENT_LIVING_BLOCK_SHOCK)
 		return FALSE
-	if(HAS_TRAIT(src, TRAIT_GODMODE))	//godmode
+	if(HAS_TRAIT(src, TRAIT_GODMODE)) //godmode
 		return FALSE
 	shock_damage *= siemens_coeff
 	if(!(flags & SHOCK_IGNORE_IMMUNITY))
@@ -69,12 +69,16 @@
 			return FALSE
 	if(shock_damage < 1)
 		return FALSE
+	var/is_atom_source = istype(source)
 	if(!(flags & SHOCK_ILLUSION))
 		apply_damage(shock_damage, BURN, spread_damage = TRUE)
+		if(getFireLoss() > 100)
+			add_shared_particles(/particles/smoke/burning)
+			addtimer(CALLBACK(src, TYPE_PROC_REF(/atom/movable, remove_shared_particles), /particles/smoke/burning), 10 SECONDS)
 		if(shock_damage > 200)
 			visible_message(
-				span_danger("[capitalize(source.declent_ru(NOMINATIVE))] поразил электрической дугой [declent_ru(ACCUSATIVE)]!"),
-				span_userdanger("Электрическая дуга от [source.declent_ru(GENITIVE)] вспыхивает и убивает вас!"),
+				span_danger("[capitalize(is_atom_source? source.declent_ru(NOMINATIVE) : "[source]")] поразил электрической дугой [declent_ru(ACCUSATIVE)]!"),
+				span_userdanger("Электрическая дуга от [is_atom_source? source.declent_ru(GENITIVE) : "[source]" ] вспыхивает и убивает вас!"),
 				span_italics("Вы слышите треск, похожий на молнию!")
 			)
 			playsound(loc, 'sound/effects/eleczap.ogg', 50, TRUE, -1)
@@ -83,7 +87,7 @@
 		apply_damage(shock_damage, STAMINA)
 	if(!(flags & SHOCK_SUPPRESS_MESSAGE))
 		visible_message(
-			span_danger("[capitalize(source.declent_ru(NOMINATIVE))] ударил[GEND_A_O_I(source)] током [declent_ru(ACCUSATIVE)]!"),
+			span_danger("[capitalize(is_atom_source? source.declent_ru(NOMINATIVE) : "[source]")] ударил[is_atom_source? GEND_A_O_I(source) : ""] током [declent_ru(ACCUSATIVE)]!"),
 			span_userdanger("Вы чувствуете как через ваше тело проходит электрический разряд!"),
 			span_hear("Вы слышите громкий электрический треск."),
 		)
@@ -133,14 +137,14 @@
 	if(nosell_hit)
 		return ..()
 
-	visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] получа[PLUR_ET_YUT(src)] удар [thrown_item.declent_ru(INSTRUMENTAL)]."),
-					span_userdanger("[capitalize(declent_ru(NOMINATIVE))] получа[PLUR_ET_YUT(src)] удар [thrown_item.declent_ru(INSTRUMENTAL)]."))
+	visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] получа[PLUR_ET_YUT(src)] удар [thrown_item.declent_ru(INSTRUMENTAL)]."),
+					span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] получа[PLUR_ET_YUT(src)] удар [thrown_item.declent_ru(INSTRUMENTAL)]."))
 
 	if(!thrown_item.throwforce)
 		return
 
 	var/armor = run_armor_check(zone, MELEE, "Броня защитила [GLOB.body_zone[zone][ACCUSATIVE]].", "Ваша броня смягчила удар по [GLOB.body_zone[zone][DATIVE]].", thrown_item.armour_penetration)
-	apply_damage(thrown_item.throwforce, thrown_item.damtype, zone, armor, is_sharp(thrown_item), thrown_item)
+	apply_damage(thrown_item.throwforce, thrown_item.damtype, zone, armor, thrown_item.sharp, thrown_item)
 
 	if(QDELETED(src)) //Damage can delete the mob.
 		return
@@ -153,45 +157,47 @@
 /mob/living/proc/is_strong()
 	return FALSE
 
-/mob/living/mech_melee_attack(obj/mecha/M)
-	if(M.occupant.a_intent == INTENT_HARM)
-		if(HAS_TRAIT(M.occupant, TRAIT_PACIFISM) || GLOB.pacifism_after_gt)
-			to_chat(M.occupant, span_warning("Вы не хотите навредить живым существам!"))
+/mob/living/mech_melee_attack(obj/mecha/mech, obj/item/mecha_parts/mecha_equipment/selected_module = null)
+	if(mech.occupant.a_intent == INTENT_HARM)
+		if(HAS_TRAIT(mech.occupant, TRAIT_PACIFISM) || GLOB.pacifism_after_gt)
+			to_chat(mech.occupant, span_warning("Вы не хотите навредить живым существам!"))
 			return
-		M.do_attack_animation(src)
-		if(M.damtype == "brute" && !is_strong())
-			step_away(src,M,15)
-		switch(M.damtype)
-			if("brute")
+		mech.do_attack_animation(src, used_item = selected_module)
+		if(mech.damtype == BRUTE && !is_strong())
+			step_away(src, mech, 15)
+		switch(mech.damtype)
+			if(BRUTE)
 				if(!is_strong())
-					Paralyse(2 SECONDS)
-				take_overall_damage(rand(M.force/2, M.force))
+					Weaken(3 SECONDS)
+				take_overall_damage(rand(mech.force / 2, mech.force))
 				playsound(src, 'sound/weapons/punch4.ogg', 50, TRUE)
-			if("fire")
-				take_overall_damage(0, rand(M.force/2, M.force))
+			if(FIRE)
+				take_overall_damage(0, rand(mech.force / 2, mech.force))
 				playsound(src, 'sound/items/welder.ogg', 50, TRUE)
-			if("tox")
-				M.mech_toxin_damage(src)
+			if(TOX)
+				mech.mech_toxin_damage(src)
 			else
 				return
-		M.occupant_message(span_danger("Вы ударяете [declent_ru(ACCUSATIVE)]."))
-		visible_message(span_danger("[capitalize(M.declent_ru(NOMINATIVE))] ударя[PLUR_ET_YUT(M)] [declent_ru(ACCUSATIVE)]!"), span_userdanger("[capitalize(M.declent_ru(NOMINATIVE))] ударя[PLUR_ET_YUT(M)] вас!"))
-		add_attack_logs(M.occupant, src, "Mecha-meleed with [M]")
+		mech.occupant_message(span_danger("Вы ударяете [declent_ru(ACCUSATIVE)]."))
+		visible_message(span_danger("[DECLENT_RU_CAP(mech, NOMINATIVE)] ударя[PLUR_ET_YUT(mech)] [declent_ru(ACCUSATIVE)]!"), span_userdanger("[DECLENT_RU_CAP(mech, NOMINATIVE)] ударя[PLUR_ET_YUT(mech)] вас!"))
+		add_attack_logs(mech.occupant, src, "Mecha-meleed with [mech]")
 	else
 		if(!is_strong())
-			step_away(src,M)
-			add_attack_logs(M.occupant, src, "Mecha-pushed with [M]", ATKLOG_ALL)
-			M.occupant_message(span_warning("Вы толкаете [declent_ru(ACCUSATIVE)] в сторону."))
-			visible_message(span_warning("[capitalize(M.declent_ru(NOMINATIVE))] отталкива[PLUR_ET_YUT(M)] [declent_ru(ACCUSATIVE)] в сторону."))
+			step_away(src, mech)
+			add_attack_logs(mech.occupant, src, "Mecha-pushed with [mech]", ATKLOG_ALL)
+			mech.occupant_message(span_warning("Вы толкаете [declent_ru(ACCUSATIVE)] в сторону."))
+			visible_message(span_warning("[DECLENT_RU_CAP(mech, NOMINATIVE)] отталкива[PLUR_ET_YUT(mech)] [declent_ru(ACCUSATIVE)] в сторону."))
 		else
-			M.occupant_message(span_warning("Вы пытаетесь оттолкнуть [declent_ru(ACCUSATIVE)] в сторону, но это не срабатывает."))
-			visible_message(span_warning("[capitalize(M.declent_ru(NOMINATIVE))] безуспешно пытается оттолкнуть [declent_ru(ACCUSATIVE)] в сторону."))
+			mech.occupant_message(span_warning("Вы пытаетесь оттолкнуть [declent_ru(ACCUSATIVE)] в сторону, но это не срабатывает."))
+			visible_message(span_warning("[DECLENT_RU_CAP(mech, NOMINATIVE)] безуспешно пытается оттолкнуть [declent_ru(ACCUSATIVE)] в сторону."))
 
 //Mobs on Fire
 /mob/living/proc/IgniteMob()
 	if(fire_stacks > 0 && !on_fire)
+		if(HAS_TRAIT(src, TRAIT_NO_FIRE))
+			return FALSE
 		on_fire = TRUE
-		visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] загора[PLUR_ET_YUT(src)]ся!"), span_userdanger("Вы загораетесь!"))
+		visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] загора[PLUR_ET_YUT(src)]ся!"), span_userdanger("Вы загораетесь!"))
 		set_light_range(light_range + 3)
 		set_light_color("#ED9200")
 		throw_alert("fire", /atom/movable/screen/alert/fire)
@@ -201,13 +207,15 @@
 	return FALSE
 
 /mob/living/proc/ExtinguishMob()
-	if(on_fire)
-		on_fire = FALSE
-		fire_stacks = 0
-		set_light_range(max(0,light_range - 3))
-		set_light_color(initial(light_color))
-		clear_alert("fire")
-		update_fire()
+	if(!on_fire)
+		return
+
+	on_fire = FALSE
+	fire_stacks = 0
+	set_light_range(max(0,light_range - 3))
+	set_light_color(initial(light_color))
+	clear_alert("fire")
+	update_fire()
 
 /mob/living/proc/update_fire()
 	return
@@ -235,18 +243,18 @@
 	else
 		ExtinguishMob()
 		return FALSE
-	var/datum/gas_mixture/G = loc?.return_air() // Check if we're standing in an oxygenless environment
-	if(!G || G.oxygen < 1)
+	var/turf/location = get_turf(src)
+	var/datum/gas_mixture/gas = location?.get_readonly_air() // Check if we're standing in an oxygenless environment
+	if(!gas || gas.oxygen() < 1)
 		ExtinguishMob() //If there's no oxygen in the tile we're on, put out the fire
 		return FALSE
-	var/turf/location = get_turf(src)
-	location.hotspot_expose(700, 50, 1)
+	location.hotspot_expose(700, 10)
 	SEND_SIGNAL(src, COMSIG_LIVING_FIRE_TICK)
 	return TRUE
 
 /mob/living/proc/WetMob(wet_type = /datum/status_effect/stacking/wet)
 	var/datum/status_effect/stacking/wet/effect = has_status_effect(wet_type)
-	return	effect?.WetMob()
+	return effect?.WetMob()
 
 /mob/living/proc/adjust_wet_stacks(add_wet_stacks, wet_type = /datum/status_effect/stacking/wet) //Adjusting the amount of fire_stacks we have on person
 	var/datum/status_effect/stacking/wet/effect = has_status_effect(wet_type)
@@ -259,7 +267,7 @@
 	var/datum/status_effect/stacking/wet/effect = has_status_effect(wet_type)
 	return effect?.DryMob()
 
-/mob/living/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume, global_overlay = TRUE)
+/mob/living/fire_act(exposed_temperature, exposed_volume)
 	..()
 	adjust_fire_stacks(3)
 	IgniteMob()
@@ -379,7 +387,8 @@
 				add_attack_logs(grabber, src, "attempted to neck grab", ATKLOG_ALL)
 			if(GRAB_NECK)
 				add_attack_logs(grabber, src, "attempted to strangle", ATKLOG_ALL)
-		if(!do_after(grabber, get_grab_upgrade_time(grabber), src, DA_IGNORE_USER_LOC_CHANGE|DA_IGNORE_TARGET_LOC_CHANGE|DA_IGNORE_HELD_ITEM, extra_checks = CALLBACK(src, PROC_REF(grab_checks_callback), grabber, old_grab_state), max_interact_count = 1, cancel_on_max = TRUE, cancel_message = span_notice("Вы перестали усиливать захват.")))
+		CALCULATE_SKILL_MOD(grabber, FISTS_GRAB_MOD, grab_skill_mod)
+		if(!do_after(grabber, get_grab_upgrade_time(grabber) * grab_skill_mod, src, DA_IGNORE_USER_LOC_CHANGE|DA_IGNORE_TARGET_LOC_CHANGE|DA_IGNORE_HELD_ITEM, extra_checks = CALLBACK(src, PROC_REF(grab_checks_callback), grabber, old_grab_state), max_interact_count = 1, cancel_on_max = TRUE, cancel_message = span_notice("Вы перестали усиливать захват.")))
 			return FALSE
 		if(!grab_checks_callback(grabber, old_grab_state))
 			return FALSE
@@ -446,14 +455,9 @@
 	if(vampire_grab)
 		return vampire_grab.grab_speed
 
-	var/mod = 1
-	var/list/mods = list()
-	SEND_SIGNAL(src, COMSIG_GET_GRAB_SPEED_MODIFIERS, mods)
-	for(var/modifier in mods)
-		mod *= modifier
-
+	CALCULATE_SKILL_MOD(src, GRAB_SPEED_MODIFIERS, mod)
 	var/normal_grab_update_time = GRAB_UPGRADE_TIME * mod
-	return isnull(grabber.mind?.martial_art?.grab_speed) ? normal_grab_update_time / mod : grabber.mind.martial_art.grab_speed
+	return isnull(grabber.mind?.martial_art?.grab_speed) ? normal_grab_update_time : grabber.mind.martial_art.grab_speed
 
 /mob/living/attack_slime(mob/living/simple_animal/slime/M)
 	if(!SSticker)
@@ -473,7 +477,7 @@
 		add_attack_logs(M, src, "Slime'd")
 		M.do_attack_animation(src)
 		visible_message(
-			span_danger("[capitalize(M.declent_ru(NOMINATIVE))] поглоща[PLUR_ET_YUT(M)] [declent_ru(ACCUSATIVE)]!"),
+			span_danger("[DECLENT_RU_CAP(M, NOMINATIVE)] поглоща[PLUR_ET_YUT(M)] [declent_ru(ACCUSATIVE)]!"),
 			span_userdanger("[M.declent_ru(NOMINATIVE)] поглоща[PLUR_ET_YUT(M)] вас!"))
 		return TRUE
 
@@ -491,8 +495,8 @@
 	if(M.attack_sound)
 		playsound(loc, M.attack_sound, 50, TRUE, 1)
 	M.do_attack_animation(src)
-	visible_message(span_danger("[capitalize(M.declent_ru(NOMINATIVE))] [M.attacktext] [declent_ru(ACCUSATIVE)]!"), \
-					span_userdanger("[capitalize(M.declent_ru(NOMINATIVE))] [M.attacktext] [declent_ru(ACCUSATIVE)]!"))
+	visible_message(span_danger("[DECLENT_RU_CAP(M, NOMINATIVE)] [M.attacktext] [declent_ru(ACCUSATIVE)]!"), \
+					span_userdanger("[DECLENT_RU_CAP(M, NOMINATIVE)] [M.attacktext] [declent_ru(ACCUSATIVE)]!"))
 	add_attack_logs(M, src, "Animal attacked")
 	SEND_SIGNAL(src, COMSIG_SIMPLE_ANIMAL_ATTACKEDBY, M)
 	return TRUE
@@ -511,13 +515,13 @@
 			L.do_attack_animation(src)
 			if(prob(90))
 				add_attack_logs(L, src, "Larva attacked")
-				visible_message(span_danger("[capitalize(L.declent_ru(NOMINATIVE))] куса[PLUR_ET_YUT(L)] [declent_ru(ACCUSATIVE)]!"), \
-						span_userdanger("[capitalize(L.declent_ru(NOMINATIVE))] куса[PLUR_ET_YUT(L)] [declent_ru(ACCUSATIVE)]!"))
+				visible_message(span_danger("[DECLENT_RU_CAP(L, NOMINATIVE)] куса[PLUR_ET_YUT(L)] [declent_ru(ACCUSATIVE)]!"), \
+						span_userdanger("[DECLENT_RU_CAP(L, NOMINATIVE)] куса[PLUR_ET_YUT(L)] [declent_ru(ACCUSATIVE)]!"))
 				playsound(loc, 'sound/weapons/bite.ogg', 50, TRUE, -1)
 				return TRUE
 			else
-				visible_message(span_danger("[capitalize(L.declent_ru(NOMINATIVE))] пыта[PLUR_ET_YUT(L)]ся укусить [declent_ru(ACCUSATIVE)]!"), \
-					span_userdanger("[capitalize(L.declent_ru(NOMINATIVE))] пыта[PLUR_ET_YUT(L)]ся укусить [declent_ru(ACCUSATIVE)]!"))
+				visible_message(span_danger("[DECLENT_RU_CAP(L, NOMINATIVE)] пыта[PLUR_ET_YUT(L)]ся укусить [declent_ru(ACCUSATIVE)]!"), \
+					span_userdanger("[DECLENT_RU_CAP(L, NOMINATIVE)] пыта[PLUR_ET_YUT(L)]ся укусить [declent_ru(ACCUSATIVE)]!"))
 	return FALSE
 
 /mob/living/attack_alien(mob/living/carbon/alien/humanoid/M)

@@ -13,9 +13,10 @@
 	resistance_flags = ACID_PROOF
 	drop_sound = 'sound/items/handling/drop/drinkglass_drop.ogg'
 	pickup_sound =  'sound/items/handling/pickup/drinkglass_pickup.ogg'
+	custom_price = PAYCHECK_MIN * 0.2
 
 /obj/item/reagent_containers/food/drinks/drinkingglass/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "стакан",
 		GENITIVE = "стакана",
 		DATIVE = "стакану",
@@ -24,13 +25,9 @@
 		PREPOSITIONAL = "стакане",
 	)
 
-/obj/item/reagent_containers/food/drinks/set_APTFT()
-	set hidden = FALSE
-	..()
-
-/obj/item/reagent_containers/food/drinks/empty()
-	set hidden = FALSE
-	..()
+/obj/item/reagent_containers/food/drinks/drinkingglass/Initialize(mapload)
+	. = ..()
+	ADD_TRAIT(src, TRAIT_CAN_ATTACH_TO_TRIPWIRE, INNATE_TRAIT)
 
 /obj/item/reagent_containers/food/drinks/drinkingglass/attackby(obj/item/I, mob/user, params)
 	if(istype(I, /obj/item/reagent_containers/food/snacks/egg)) //breaking eggs
@@ -48,7 +45,7 @@
 
 	return ..()
 
-/obj/item/reagent_containers/food/drinks/drinkingglass/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume, global_overlay = TRUE)
+/obj/item/reagent_containers/food/drinks/drinkingglass/fire_act(exposed_temperature, exposed_volume)
 	if(!reagents.total_volume)
 		return
 	..()
@@ -68,7 +65,9 @@
 	if(length(reagents.reagent_list))
 		var/datum/reagent/check = reagents.get_master_reagent()
 		if(!check.drink_icon)
-			. += mutable_appearance(icon, "glassoverlay", color = mix_color_from_reagents(reagents.reagent_list))
+			var/mutable_appearance/glass_overlay = mutable_appearance(icon, "glassoverlay")
+			glass_overlay.color = get_color_matrix_from_reagents(reagents.reagent_list)
+			. += glass_overlay
 	else
 		icon_state = initial(icon_state)
 
@@ -103,3 +102,19 @@
 
 /obj/item/reagent_containers/food/drinks/drinkingglass/alliescocktail
 	list_reagents = list("alliescocktail" = 25, "omnizine" = 25)
+
+/obj/item/reagent_containers/food/drinks/drinkingglass/mulled_wine
+	list_reagents = list("mulled_wine" = 50)
+
+/obj/item/reagent_containers/food/drinks/drinkingglass/on_tripwire_trigger(obj/item/tripwire/base, mob/user)
+	var/turf/turf = get_turf(base)
+	if(reagents?.total_volume)
+		reagents.reaction(turf, REAGENT_TOUCH)
+		for(var/mob/living/living in turf)
+			reagents.reaction(living, REAGENT_TOUCH)
+		reagents.clear_reagents()
+	playsound(turf, 'sound/effects/glass_step.ogg', 60, TRUE)
+	new /obj/item/shard(turf)
+	base.attached_item = null
+	base.UnregisterSignal(base, COMSIG_TRIPWIRE_TRIGGERED)
+	qdel(src)

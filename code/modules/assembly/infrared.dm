@@ -131,7 +131,7 @@
 
 	COOLDOWN_START(src, cooldown, cooldown_time)
 	pulse(FALSE, triggered)
-	audible_message("[icon2html(src, hearers(loc))] *beep* *beep* *beep*", hearing_distance = 3)
+	audible_message("[get_examine_icon(hearers(loc))] *beep* *beep* *beep*", hearing_distance = 3)
 	playsound(src, 'sound/machines/triple_beep.ogg', 40, extrarange = SHORT_RANGE_SOUND_EXTRARANGE)
 	if(first)
 		qdel(first)
@@ -178,7 +178,7 @@
 
 /obj/item/assembly/infra/verb/rotate_verb()
 	set name = "Повернуть"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in usr
 
 	rotate(usr)
@@ -211,7 +211,7 @@
 
 /obj/effect/beam/i_beam
 	name = "i beam"
-	icon = 'icons/obj/weapons/projectiles.dmi'
+	icon = 'icons/obj/weapons/guns/projectiles.dmi'
 	icon_state = "ibeam"
 	var/obj/effect/beam/i_beam/next = null
 	var/obj/effect/beam/i_beam/previous = null

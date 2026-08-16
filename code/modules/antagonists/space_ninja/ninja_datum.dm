@@ -146,7 +146,7 @@
 /datum/antagonist/ninja/proc/finalize_antag_paradise_mode()
 	give_objectives()
 	announce_objectives()
-	SEND_SOUND(owner.current, sound('sound/ambience/alarm4.ogg'))
+	SEND_SOUND(owner.current, sound('sound/ambience/misc/alarm4.ogg'))
 
 /datum/antagonist/ninja/proc/name_ninja()
 	var/ninja_name_first = pick(GLOB.ninja_titles)
@@ -267,7 +267,7 @@
 /datum/antagonist/ninja/proc/get_dash_charge()
 	if(!my_katana)
 		return "ERROR!"
-	return "[my_katana.jaunt.current_charges]/[my_katana.jaunt.max_charges]"
+	return "[my_katana.jaunt?.current_charges]/[my_katana.jaunt.max_charges]"
 
 /datum/antagonist/ninja/proc/pick_antags()
 	if(ninja_type == NINJA_TYPE_GENERIC)
@@ -533,7 +533,7 @@
 		maroon_objective.update_explanation()
 		maroon_objective.alarm_changes()
 		var/list/messages = maroon_objective.owner.prepare_announce_objectives()
-		to_chat(maroon_objective.owner.current, chat_box_red(messages.Join("<br>")))
+		to_chat(maroon_objective.owner.current, custom_boxed_message("red_box center", messages.Join("<br>")))
 
 /datum/antagonist/ninja/proc/forge_hacker_ninja_objectives()
 

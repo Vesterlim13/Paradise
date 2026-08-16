@@ -33,7 +33,7 @@
 	blood_species = "Human"
 	tail = "chimptail"
 	bodyflags = HAS_TAIL
-	reagent_tag = PROCESS_ORG
+	reagent_tag = ORGANIC
 	//Has standard darksight of 2.
 
 	unarmed_type = /datum/unarmed_attack/bite
@@ -185,7 +185,7 @@
 	default_language = LANGUAGE_MONKEY_SKRELL
 	blood_species = "Skrell"
 	flesh_color = "#8CD7A3"
-	blood_color = "#1D2CBF"
+	blood_color = BLOOD_COLOR_SKRELL
 	skinned_type = /obj/item/stack/sheet/animalhide/neara
 	tail = null
 	inherent_traits = list(

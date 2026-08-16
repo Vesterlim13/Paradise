@@ -16,8 +16,8 @@
 	return TRUE
 
 /obj/item/trash/raisins
-	name = "4no raisins"
-	icon_state= "4no_raisins"
+	name = "raisins 1984"
+	icon_state = "1984_raisins"
 
 /obj/item/trash/candy
 	name = "Candy"
@@ -147,6 +147,21 @@
 /obj/item/trash/broken_ashtray/Initialize(mapload)
 	. = ..()
 	icon_state = "ashtray_bork_" + pick(list("bl","br","gl"))
+
+/obj/item/trash/beans_empty
+	name = "beans can"
+	desc = "Пустая банка. Надпись на банке — \"Бобы\"."
+	icon_state = "beans_empty"
+
+/obj/item/trash/beans_empty/get_ru_names()
+	return alist(
+		NOMINATIVE = "банка бобов",
+		GENITIVE = "банки бобов",
+		DATIVE = "банке бобов",
+		ACCUSATIVE = "банку бобов",
+		INSTRUMENTAL = "банкой бобов",
+		PREPOSITIONAL = "банке бобов",
+	)
 
 /obj/item/spentcasing
 	icon = 'icons/obj/weapons/ammo.dmi'

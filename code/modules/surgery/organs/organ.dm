@@ -5,6 +5,7 @@
 	pickup_sound = 'sound/items/handling/pickup/flesh_pickup.ogg'
 	drop_sound = 'sound/items/handling/drop/flesh_drop.ogg'
 	germ_level = 0
+	abstract_type = /obj/item/organ
 	var/dead_icon
 	/// Current organ holder
 	var/mob/living/carbon/human/owner
@@ -21,6 +22,8 @@
 	var/min_broken_damage = 30
 	/// Minimal threshold for internal bleeding to occure
 	var/min_internal_bleeding_damage = 30
+	/// Minimal threshold for arterial bleeding to occure
+	var/min_arterial_bleeding_damage = 30
 	/// Basically organ max health.
 	var/max_damage
 
@@ -131,6 +134,15 @@
 /obj/item/organ/proc/update_health()
 	return
 
+/obj/item/organ/proc/emp_shielded(severity)
+	if(!owner || !HAS_TRAIT(owner, TRAIT_COMBAT_EXOFRAME_EMP_SHIELD))
+		return FALSE
+	var/nutrition_cost = (severity == 1) ? 5 : 2
+	if(owner.nutrition < nutrition_cost)
+		return FALSE
+	owner.adjust_nutrition(-nutrition_cost)
+	return TRUE
+
 /obj/item/organ/proc/necrotize(silent = FALSE)
 	if(status & (ORGAN_ROBOT|ORGAN_DEAD))
 		return FALSE
@@ -225,7 +237,7 @@
 		if(is_found_within(typepath))
 			return TRUE
 
-	if(istype(loc,/obj/item/mmi))	// So a brain can slowly recover from being left out of an MMI
+	if(is_mmi(loc))	// So a brain can slowly recover from being left out of an MMI
 		germ_level = max(0, germ_level - 1)
 		return TRUE
 
@@ -284,6 +296,7 @@
 /obj/item/organ/proc/rejuvenate()
 	damage = 0
 	germ_level = 0
+	bleeding_amount = 0
 	surgeryize()
 	if(is_robotic())	//Robotic organs stay robotic.
 		status = ORGAN_ROBOT
@@ -292,7 +305,10 @@
 	if(!owner)
 		START_PROCESSING(SSobj, src)
 
-/obj/item/organ/proc/is_damaged()
+/obj/item/organ/proc/is_damaged(brute = TRUE, burn = TRUE)
+	if(isexternalorgan(src))
+		var/obj/item/organ/external/bodypart = src
+		return (brute && bodypart.brute_dam) || (burn && bodypart.burn_dam)
 	return damage > 0
 
 /obj/item/organ/proc/is_bruised()
@@ -405,6 +421,19 @@
 /obj/item/organ/proc/is_robotic()
 	return (status & ORGAN_ROBOT)
 
+///Organs don't die instantly, and neither should you when you get fucked up
+/obj/item/organ/proc/handle_failing_organs(seconds_per_tick)
+	return
+
+/** organ_failure
+ * generic proc for handling dying organs
+ *
+ * Arguments:
+ * seconds_per_tick - seconds since last tick
+ */
+/obj/item/organ/proc/organ_failure(seconds_per_tick)
+	return
+
 /obj/item/organ/serialize()
 	var/data = ..()
 
@@ -429,3 +458,15 @@
 		dna.deserialize(data["dna"])
 		..()
 
+/obj/item/organ/wash_tg(clean_types)
+	. = ..()
+	if(!.)
+		return
+	// always add the original dna to the organ after it's washed
+	if(!is_robotic() && (clean_types & CLEAN_TYPE_BLOOD))
+		var/list/blood_dna = list()
+		if(dna)
+			blood_dna[dna.unique_enzymes] = dna.blood_type
+		else
+			blood_dna["UNKNOWN DNA"] = "X*"
+		transfer_blood_dna(blood_dna)

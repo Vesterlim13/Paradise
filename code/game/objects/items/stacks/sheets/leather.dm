@@ -52,7 +52,7 @@ GLOBAL_LIST_INIT(human_recipes, list( \
 	name = "stok hide"
 	desc = "The by-product of stok farming."
 	singular_name = "stok hide piece"
-	icon_state = "sheet-lizzard"
+	icon_state = "sheet-lizard"
 
 /obj/item/stack/sheet/animalhide/neara
 	name = "neara hide"
@@ -123,7 +123,7 @@ GLOBAL_LIST_INIT(xeno_recipes, list (
 	origin_tech = ""
 
 /obj/item/stack/sheet/hairlesshide/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "очищенная шкура",
 		GENITIVE = "очищенной шкуры",
 		DATIVE = "очищенной шкуре",
@@ -138,11 +138,12 @@ GLOBAL_LIST_INIT(xeno_recipes, list (
 	singular_name = "wet leather piece"
 	icon_state = "sheet-wetleather"
 	origin_tech = ""
+	cares_about_temperature = TRUE
 	var/wetness = 30 //Reduced when exposed to high temperautres
 	var/drying_threshold_temperature = 500 //Kelvin to start drying
 
 /obj/item/stack/sheet/wetleather/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "мокрая шкура",
 		GENITIVE = "мокрой шкуры",
 		DATIVE = "мокрой шкуре",
@@ -159,7 +160,7 @@ GLOBAL_LIST_INIT(xeno_recipes, list (
 	origin_tech = "materials=2"
 
 /obj/item/stack/sheet/leather/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кожа",
 		GENITIVE = "кожи",
 		DATIVE = "коже",
@@ -180,7 +181,7 @@ GLOBAL_LIST_INIT(leather_recipes, list (
 	new/datum/stack_recipe("leather overcoat", /obj/item/clothing/suit/jacket/leather/overcoat, 10),
 	new/datum/stack_recipe("FireSuit", /obj/item/clothing/suit/fire/firefighter, 15),
 	new/datum/stack_recipe("hide mantle", /obj/item/clothing/neck/mantle/unathi, 4),
-	new/datum/stack_recipe("leather bed", /obj/structure/bed/leather, 10, one_per_turf = TRUE, on_floor = TRUE, time = 5 SECONDS),
+	new/datum/stack_recipe("leather bed", /obj/structure/bed/leather, 10, one_per_turf = TRUE, on_floor = TRUE, time = 5 SECONDS, modifier_name = CONSTRUCTING_SPEED_MOD),
 	new/datum/stack_recipe("gem satchel", /obj/item/storage/bag/gem, 1),
 	new/datum/stack_recipe("cloth", /obj/item/stack/sheet/cloth, 2),
 	))
@@ -198,7 +199,7 @@ GLOBAL_LIST_INIT(leather_recipes, list (
 	origin_tech = "biotech=4"
 
 /obj/item/stack/sheet/sinew/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сухожилия наблюдателя",
 		GENITIVE = "сухожилий наблюдателя",
 		DATIVE = "сухожилиям наблюдателя",
@@ -244,7 +245,7 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 	))
 
 /obj/item/stack/sheet/animalhide/goliath_hide/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "пластина шкуры голиафа",
 		GENITIVE = "пластины шкуры голиафа",
 		DATIVE = "пластине шкуры голиафа",
@@ -253,13 +254,15 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 		PREPOSITIONAL = "пластине шкуры голиафа",
 	)
 
-/obj/item/stack/sheet/animalhide/goliath_hide/afterattack(atom/target, mob/user, proximity_flag, params)
+/obj/item/stack/sheet/animalhide/goliath_hide/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
 	if(!proximity_flag)
 		return
+
 	var/uplatable_armor = is_type_in_typecache(target, override_unplatable_armor_typecache)
 	if(uplatable_armor)
 		balloon_alert(user, "нельзя улучшить!")
 		return
+
 	var/platable_armor_with_icon = is_type_in_typecache(target, goliath_platable_armor_with_icon_typecache)
 	if(is_type_in_typecache(target, goliath_platable_armor_typecache) || platable_armor_with_icon)
 		var/obj/item/clothing/C = target
@@ -310,9 +313,10 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 	item_flags = NOBLUDGEON
 	layer = MOB_LAYER
 
-/obj/item/stack/sheet/armour_plate/afterattack(atom/target, mob/user, proximity_flag, params)
+/obj/item/stack/sheet/armour_plate/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
 	if(!proximity_flag)
 		return
+
 	if(istype(target, /obj/mecha/working/ripley))
 		var/obj/mecha/working/ripley/D = target
 		if(D.plates < 3)
@@ -341,7 +345,7 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 	layer = MOB_LAYER
 
 /obj/item/stack/sheet/cartilage_plate/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "толстая хрящевая пластина",
 		GENITIVE = "толстой хрящевой пластины",
 		DATIVE = "толстой хрящевой пластине",
@@ -360,7 +364,7 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 	layer = MOB_LAYER
 
 /obj/item/stack/sheet/animalhide/ashdrake/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "шкура пепельного дрейка",
 		GENITIVE = "шкуры пепельного дрейка",
 		DATIVE = "шкуре пепельного дрейка",
@@ -372,7 +376,7 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 //Step one - dehairing.
 
 /obj/item/stack/sheet/animalhide/attackby(obj/item/I, mob/user, params)
-	if(is_sharp(I))
+	if(I.sharp)
 		add_fingerprint(user)
 		if(loc == user && !user.can_unEquip(src))
 			return ATTACK_CHAIN_PROCEED
@@ -391,6 +395,10 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 
 	return ..()
 
+/obj/item/stack/sheet/hairlesshide/wash_tg(clean_types)
+	. = ..()
+	. |= COMPONENT_CLEANED
+
 //Step two - washing (also handled by water reagent code and washing machine code)
 /obj/item/stack/sheet/hairlesshide/water_act(volume, temperature, source, method = REAGENT_TOUCH)
 	. = ..()
@@ -399,19 +407,19 @@ GLOBAL_LIST_INIT(sinew_recipes, list ( \
 		qdel(src)
 
 //Step three - drying
-/obj/item/stack/sheet/wetleather/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
+/obj/item/stack/sheet/wetleather/temperature_expose(exposed_temperature, exposed_volume)
 	..()
 	if(exposed_temperature >= drying_threshold_temperature)
 		wetness--
 		if(wetness == 0)
 			//Try locating an exisitng stack on the tile and add to there if possible
-			for(var/obj/item/stack/sheet/leather/HS in src.loc)
+			for(var/obj/item/stack/sheet/leather/HS in loc)
 				if(HS.amount < 50)
 					HS.amount++
-					src.use(1)
+					use(1)
 					wetness = initial(wetness)
 					return
 			//If it gets to here it means it did not find a suitable stack on the tile.
-			new /obj/item/stack/sheet/leather(src.loc, 1)
+			new /obj/item/stack/sheet/leather(loc, 1)
 			wetness = initial(wetness)
-			src.use(1)
+			use(1)

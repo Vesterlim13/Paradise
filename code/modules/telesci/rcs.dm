@@ -25,11 +25,9 @@
 	var/teleporting = FALSE
 	/// How much power does each teleport use?
 	var/chargecost = 1000
-	/// Is emagged?
-	var/emagged = FALSE
 
 /obj/item/rcs/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "система быстрой доставки (RCS)",
 		GENITIVE = "системы быстрой доставки (RCS)",
 		DATIVE = "системе быстрой доставки (RCS)",
@@ -41,8 +39,8 @@
 /obj/item/rcs/get_cell()
 	return rcell
 
-/obj/item/rcs/New()
-	..()
+/obj/item/rcs/Initialize(mapload)
+	. = ..()
 	rcell = new(src)
 
 /obj/item/rcs/examine(mob/user)

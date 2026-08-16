@@ -39,7 +39,7 @@
 	vend_reply = "Спас+ибо за исп+ользование автом+ата-пом+ощника в в+ыборе од+ежды отд+ела!"
 
 /obj/machinery/vending/department_clothesmate/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сломанный торговый автомат Departament ClothesMate",
 		GENITIVE = "сломанного торгового автомата Departament ClothesMate",
 		DATIVE = "сломанному торговому автомату Departament ClothesMate",
@@ -124,7 +124,7 @@
 				/obj/item/clothing/suit/tracksuit/red = 5,
 				/obj/item/clothing/suit/hooded/wintercoat/security = 5,
 				/obj/item/clothing/suit/jacket/pilot = 5,
-				/obj/item/clothing/suit/armor/vest/sec_rps = 5,
+				/obj/item/clothing/suit/storage/sec_rps = 5,
 				/obj/item/clothing/suit/armor/secjacket = 5,
 				/obj/item/clothing/suit/storage/suragi_jacket/medsec = 3,
 				/obj/item/clothing/suit/storage/brigdoc = 3,
@@ -152,7 +152,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/security/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Security ClothesMate",
 		GENITIVE = "торгового автомата Departament Security ClothesMate",
 		DATIVE = "торговому автомату Departament Security ClothesMate",
@@ -260,7 +260,7 @@
 			"name" = "Обувь",
 			"icon" = "socks",
 			"products" = list(
-				/obj/item/clothing/shoes/white = 10,
+				/obj/item/clothing/shoes/color/white = 10,
 				/obj/item/clothing/shoes/sandal/white = 10,
 			),
 		),
@@ -285,7 +285,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/medical/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Medical ClothesMate",
 		GENITIVE = "торгового автомата Departament Medical ClothesMate",
 		DATIVE = "торговому автомату Departament Medical ClothesMate",
@@ -381,7 +381,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/engineering/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Engineering ClothesMat",
 		GENITIVE = "торгового автомата Departament Engineering ClothesMat",
 		DATIVE = "торговому автомату Departament Engineering ClothesMat",
@@ -451,10 +451,10 @@
 			"name" = "Обувь",
 			"icon" = "socks",
 			"products" = list(
-				/obj/item/clothing/shoes/white = 10,
+				/obj/item/clothing/shoes/color/white = 10,
 				/obj/item/clothing/shoes/slippers = 10,
 				/obj/item/clothing/shoes/sandal/white = 10,
-				/obj/item/clothing/shoes/black = 10,
+				/obj/item/clothing/shoes/color/black = 10,
 			),
 		),
 		list(
@@ -469,7 +469,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/science/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Science ClothesMate",
 		GENITIVE = "торгового автомата Departament Science ClothesMate",
 		DATIVE = "торговому автомату Departament Science ClothesMate",
@@ -542,7 +542,7 @@
 			"name" = "Обувь",
 			"icon" = "socks",
 			"products" = list(
-				/obj/item/clothing/shoes/brown = 10,
+				/obj/item/clothing/shoes/color/brown = 10,
 				/obj/item/clothing/shoes/workboots/mining = 10,
 				/obj/item/clothing/shoes/jackboots = 10,
 				/obj/item/clothing/shoes/jackboots/jacksandals = 10,
@@ -561,7 +561,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/cargo/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Cargo ClothesMate",
 		GENITIVE = "торгового автомата Departament Cargo ClothesMate",
 		DATIVE = "торговому автомату Departament Cargo ClothesMate",
@@ -597,7 +597,7 @@
 			"name" = "Униформа",
 			"icon" = "shirt",
 			"products" = list(
-				/obj/item/clothing/under/rank/internalaffairs = 10,
+				/obj/item/clothing/under/rank/lawyer = 10,
 				/obj/item/clothing/under/lawyer/female = 10,
 				/obj/item/clothing/under/lawyer/black = 10,
 				/obj/item/clothing/under/lawyer/red = 10,
@@ -631,7 +631,7 @@
 			"products" = list(
 				/obj/item/clothing/shoes/laceup = 10,
 				/obj/item/clothing/shoes/centcom = 10,
-				/obj/item/clothing/shoes/brown = 10,
+				/obj/item/clothing/shoes/color/brown = 10,
 				/obj/item/clothing/shoes/sandal/fancy = 10,
 			),
 		),
@@ -646,7 +646,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/law/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Law ClothesMate",
 		GENITIVE = "торгового автомата Departament Law ClothesMate",
 		DATIVE = "торговому автомату Departament Law ClothesMate",
@@ -663,7 +663,7 @@
 	refill_canister = /obj/item/vending_refill/clothing/service
 
 /obj/machinery/vending/department_clothesmate/service/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Service ClothesMate",
 		GENITIVE = "торгового автомата Departament Service ClothesMate",
 		DATIVE = "торговому автомату Departament Service ClothesMate",
@@ -727,7 +727,7 @@
 			"name" = "Обувь",
 			"icon" = "socks",
 			"products" = list(
-				/obj/item/clothing/shoes/black = 5,
+				/obj/item/clothing/shoes/color/black = 5,
 				/obj/item/clothing/shoes/laceup = 2,
 			),
 		),
@@ -741,7 +741,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/service/chaplain/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Service ClothesMate Chaplain",
 		GENITIVE = "торгового автомата Departament Service ClothesMate Chaplain",
 		DATIVE = "торговому автомату Departament Service ClothesMate Chaplain",
@@ -804,7 +804,7 @@
 			"name" = "Обувь",
 			"icon" = "socks",
 			"products" = list(
-				/obj/item/clothing/shoes/brown = 4,
+				/obj/item/clothing/shoes/color/brown = 4,
 				/obj/item/clothing/shoes/sandal = 2,
 				/obj/item/clothing/shoes/leather = 2,
 			),
@@ -821,7 +821,7 @@
 	)
 
 /obj/machinery/vending/department_clothesmate/service/botanical/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат Departament Service ClothesMate Botanical",
 		GENITIVE = "торгового автомата Departament Service ClothesMate Botanical",
 		DATIVE = "торговому автомату Departament Service ClothesMate Botanical",

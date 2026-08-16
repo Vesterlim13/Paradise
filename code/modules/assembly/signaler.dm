@@ -12,14 +12,14 @@
 
 	bomb_name = "remote-control bomb"
 
-	var/code = 30
+	var/code = DEFAULT_SIGNALER_CODE
 	var/frequency = RSD_FREQ
 	var/delay = 0
 	var/datum/radio_frequency/radio_connection
 	var/airlock_wire = null
 
 /obj/item/assembly/signaler/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сигнальное устройство",
 		GENITIVE = "сигнального устройства",
 		DATIVE = "сигнальному устройству",
@@ -146,7 +146,7 @@
 		return FALSE
 	pulse(1, signal.user)
 
-	audible_message("[icon2html(src, hearers(1, loc))] *beep* *beep* *beep*")
+	audible_message("[get_examine_icon(hearers(1, loc))] *beep* *beep* *beep*")
 	playsound(src, 'sound/machines/triple_beep.ogg', 40, extrarange = SHORT_RANGE_SOUND_EXTRARANGE)
 	return TRUE
 

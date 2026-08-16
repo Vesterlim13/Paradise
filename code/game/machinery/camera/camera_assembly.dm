@@ -90,7 +90,7 @@
 	var/temptag = "[sanitize(camera_area.name)] ([rand(1, 999)])"
 	input = strip_html(tgui_input_text(user, "How would you like to name the camera?", "Set Camera Name", temptag))
 	state = ASSEMBLY_BUILT
-	var/obj/machinery/camera/camera = new(loc, uniquelist(tempnetwork), input, src)
+	var/obj/machinery/camera/camera = new(loc, unique_list(tempnetwork), input, src)
 	forceMove(camera)
 	camera.auto_turn()
 
@@ -141,13 +141,14 @@
 	if(!I.tool_use_check(user, 0))
 		return
 	WELDER_ATTEMPT_WELD_MESSAGE
+	CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
 	if(state == ASSEMBLY_WRENCHED)
-		if(!I.use_tool(src, user, 50, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 5 SECONDS * construction_mod, volume = I.tool_volume))
 			return
 		to_chat(user, span_notice("You weld [src] into place."))
 		state = ASSEMBLY_WELDED
 	else if(state == ASSEMBLY_WELDED)
-		if(!I.use_tool(src, user, 50, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 5 SECONDS * construction_mod, volume = I.tool_volume))
 			return
 		to_chat(user, span_notice("You unweld [src] from its place."))
 		state = ASSEMBLY_WRENCHED

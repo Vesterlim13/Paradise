@@ -48,7 +48,7 @@
 	ttone = "honk"
 
 /obj/item/pda/clown/ComponentInitialize()
-	AddComponent(/datum/component/slippery, 10 SECONDS, lube_flags = (NO_SLIP_WHEN_WALKING|SLIDE))
+	AddComponent(/datum/component/slippery, SLIPPERY_TIME_LUBE, lube_flags = (NO_SLIP_WHEN_WALKING|SLIDE))
 
 /obj/item/pda/mime
 	default_cartridge = /obj/item/cartridge/mime
@@ -147,8 +147,8 @@
 /obj/item/pda/syndicate/no_cartridge/rd
 	icon_state = "pda-syndie-rd"
 
-/obj/item/pda/syndicate/New()
-	..()
+/obj/item/pda/syndicate/Initialize(mapload)
+	. = ..()
 	var/datum/data/pda/app/messenger/M = find_program(/datum/data/pda/app/messenger)
 	if(M)
 		M.m_hidden = 1
@@ -180,7 +180,7 @@
 	silent = TRUE
 
 /obj/item/pda/clear
-	icon_state = "pda-transp"
+	icon_state = "pda-clear"
 	desc = "A portable microcomputer by Thinktronic Systems, LTD. This is model is a special edition with a transparent case."
 	model_name = "Thinktronic 5230 Personal Data Assistant Deluxe Special Max Turbo Limited Edition"
 
@@ -212,8 +212,8 @@
 	default_request_console_cartridge = /obj/item/cartridge/request_console/centcom
 	icon_state = "pda-h"
 
-/obj/item/pda/centcom/New()
-	..()
+/obj/item/pda/centcom/Initialize(mapload)
+	. = ..()
 	var/datum/data/pda/app/messenger/M = find_program(/datum/data/pda/app/messenger)
 	if(M)
 		M.m_hidden = 1
@@ -222,8 +222,7 @@
 /obj/item/storage/box/PDAs
 	name = "spare PDAs"
 	desc = "A box of spare PDA microcomputers."
-	icon = 'icons/obj/pda.dmi'
-	icon_state = "pdabox"
+	icon_state = "box_pda"
 
 /obj/item/storage/box/PDAs/populate_contents()
 	new /obj/item/pda(src)

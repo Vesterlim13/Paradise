@@ -40,7 +40,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 	var/destination
 
 /obj/machinery/photocopier/faxmachine/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "факс",
 		GENITIVE = "факса",
 		DATIVE = "факсу",
@@ -49,10 +49,14 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 		PREPOSITIONAL = "факсе",
 	)
 
-/obj/machinery/photocopier/faxmachine/New()
-	..()
+/obj/machinery/photocopier/faxmachine/Initialize(mapload)
+	. = ..()
 	GLOB.allfaxes += src
 	update_network()
+
+/obj/machinery/photocopier/faxmachine/Destroy(force)
+	GLOB.allfaxes -= src
+	return ..()
 
 /obj/machinery/photocopier/faxmachine/proc/update_network()
 	if(department != UNKNOWN_STATUS_RUS)
@@ -101,7 +105,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 	if(user.a_intent == INTENT_HARM)
 		return ..()
 
-	if(istype(I, /obj/item/card/id))
+	if(is_id_card(I))
 		add_fingerprint(user)
 		if(scan)
 			balloon_alert(user, "занято!")
@@ -219,7 +223,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 					to_chat(usr, span_notice("Вы вставляете [I.declent_ru(ACCUSATIVE)] в [declent_ru(ACCUSATIVE)]."))
 					flick(insert_anim, src)
 				else
-					to_chat(usr, span_warning("[capitalize(declent_ru(NOMINATIVE))] может принять только бумагу, фото и их стопки."))
+					to_chat(usr, span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] может принять только бумагу, фото и их стопки."))
 					. = FALSE
 		if("rename") // rename the item that is currently in the fax machine
 			if(copyitem)
@@ -283,7 +287,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 			var/cooldown_seconds = cooldown_seconds()
 			if(cooldown_seconds > 0)
 				playsound(loc, 'sound/machines/buzz-sigh.ogg', 50, FALSE)
-				to_chat(usr, span_warning("[capitalize(declent_ru(NOMINATIVE))] не сможет работать ещё [cooldown_seconds] секунд[numeric_ending(cooldown_seconds, "", "а", "ы")]."))
+				to_chat(usr, span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] не сможет работать ещё [cooldown_seconds] секунд[numeric_ending(cooldown_seconds, "", "а", "ы")]."))
 				return
 
 			if((destination in GLOB.admin_departments) || (destination in GLOB.hidden_admin_departments) || (destination in GLOB.hidden_ussp))
@@ -314,7 +318,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 		return FALSE
 	if(!card)
 		var/obj/item/I = usr.get_active_hand()
-		if(!istype(I, /obj/item/card/id))
+		if(!is_id_card(I))
 			return FALSE
 		if(!usr.drop_transfer_item_to_loc(I, src))
 			return FALSE
@@ -428,10 +432,10 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 
 /obj/machinery/photocopier/faxmachine/proc/message_admins(mob/sender, faxname, faxtype, obj/item/sent, font_colour="#9A04D1")
 	// (<a href='byond://?_src_=holder;EvilFax=[sender.UID()];originfax=[UID()]'>EVILFAX</a>) effects moved to smites.
-	var/msg = "[span_boldnotice("<span style='color: [font_colour];>[faxname]: </span> [key_name_admin(sender)] | REPLY: (<a href='byond://?_src_=holder;[faxname == "SYNDICATE FAX" ? "SyndicateReply" : ""]=\ref[sender][faxname == "USSP FAX" ? "USSPReply" : ""]=\ref[sender][faxname == "CENTCOM FAX" ? "CentcommReply" : ""]=\ref[sender]'>RADIO</a>) (<a href='byond://?_src_=holder;AdminFaxCreate=\ref[sender];originfax=\ref[src];faxtype=[faxtype];replyto=\ref[sent]'>FAX</a>) ([ADMIN_SM(sender,"SM")]) | REJECT: (<a href='byond://?_src_=holder;FaxReplyTemplate=[sender.UID()];originfax=\ref[src]'>TEMPLATE</a>) ([ADMIN_BSA(sender,"BSA")])")]: Receiving '[sent.name]' via secure connection... <a href='byond://?_src_=holder;AdminFaxView=\ref[sent]'>view message</a>"
+	var/msg = "[span_boldnotice("<span style='color: [font_colour];>[faxname]: </span> [key_name_admin(sender)] | REPLY: (<a href='byond://?_src_=holder;[faxname == "SYNDICATE FAX" ? "SyndicateReply" : ""]=[sender.UID()][faxname == "USSP FAX" ? "USSPReply" : ""]=[sender.UID()][faxname == "CENTCOM FAX" ? "CentcommReply" : ""]=[sender.UID()]'>RADIO</a>) (<a href='byond://?_src_=holder;AdminFaxCreate=[sender.UID()];originfax=[UID()];faxtype=[faxtype];replyto=[sent.UID()]'>FAX</a>) ([ADMIN_SM(sender,"SM")]) | REJECT: (<a href='byond://?_src_=holder;FaxReplyTemplate=[sender.UID()];originfax=[UID()]'>TEMPLATE</a>) ([ADMIN_BSA(sender,"BSA")])")]: Receiving '[sent.name]' via secure connection... <a href='byond://?_src_=holder;AdminFaxView=[sent.UID()]'>view message</a>"
 	var/fax_sound = sound('sound/effects/adminhelp.ogg')
 	for(var/client/C in GLOB.admins)
-		if(check_rights(R_EVENT, 0, C.mob))
+		if(check_rights(R_EVENT, FALSE, C.mob))
 			to_chat(C, msg)
 			if(C.prefs.sound & SOUND_ADMINHELP)
 				SEND_SOUND(C, fax_sound)
@@ -446,7 +450,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 		embed.embed_colour = replacetext(font_colour, "#", "")
 		payload.embeds += embed
 		payload.webhook_content = "**\[FAX\]** [sender.client.ckey]/([sender.name]) sent a Paper Fax at [get_area(src)]"
-		SSdiscord.send2discord_complex(DISCORD_WEBHOOK_REQUESTS, payload)
+		GLOB.discord_manager.send2discord_complex(DISCORD_WEBHOOK_REQUESTS, payload)
 	else if(istype(sent, /obj/item/paper_bundle))
 		var/obj/item/paper_bundle/bundle = sent
 		for(var/obj/item/paper/P in bundle)
@@ -462,7 +466,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 			embed.embed_content = P.log_text
 			payload.embeds += embed
 		payload.webhook_content = "**\[FAX\]** [sender.client.ckey]/([sender.name]) sent a Bundle Fax at [get_area(src)]"
-		SSdiscord.send2discord_complex(DISCORD_WEBHOOK_REQUESTS, payload)
+		GLOB.discord_manager.send2discord_complex(DISCORD_WEBHOOK_REQUESTS, payload)
 	else if(istype(sent, /obj/item/photo))
 		var/obj/item/photo/P = sent
 		var/datum/discord_embed/embed = new()
@@ -471,7 +475,7 @@ GLOBAL_LIST_EMPTY(fax_blacklist)
 		embed.embed_content = P.log_text
 		payload.embeds += embed
 		payload.webhook_content = "**\[FAX\]** [sender.client.ckey]/([sender.name]) sent a Photo at [get_area(src)]"
-		SSdiscord.send2discord_complex(DISCORD_WEBHOOK_REQUESTS, payload)
+		GLOB.discord_manager.send2discord_complex(DISCORD_WEBHOOK_REQUESTS, payload)
 
 /obj/machinery/photocopier/faxmachine/proc/sanitize_paper(obj/item/paper/paper) // html to discord markdown-101
 	var/text = "[paper.header][paper.info][paper.footer]"

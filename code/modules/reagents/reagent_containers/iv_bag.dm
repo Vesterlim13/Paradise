@@ -10,17 +10,19 @@
 	righthand_file = 'icons/goonstation/mob/inhands/items_righthand.dmi'
 	icon_state = "ivbag"
 	volume = 200
-	possible_transfer_amounts = list(1,5,10,15,20,25,30,50) // Everything above 10 is NOT usable on a person and is instead used for transfering to other containers
+	possible_transfer_amounts = list(1, 5, 10, 15, 20, 25, 30, 50) // Everything above 10 is NOT usable on a person and is instead used for transfering to other containers
 	amount_per_transfer_from_this = 1
 	container_type = OPENCONTAINER
 	resistance_flags = ACID_PROOF
+	custom_price = PAYCHECK_LOWER
+	w_class = WEIGHT_CLASS_NORMAL
 	var/label_text
 	var/mode = IV_INJECT
 	var/mob/living/carbon/human/injection_target
 	var/obj/item/organ/external/injection_limb
 
 /obj/item/reagent_containers/iv_bag/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капельница",
 		GENITIVE = "капельницы",
 		DATIVE = "капельнице",
@@ -63,7 +65,8 @@
 	START_PROCESSING(SSobj, src)
 
 /obj/item/reagent_containers/iv_bag/proc/end_processing()
-	add_attack_logs(injection_target, injection_target, "injection of [name](mode: [mode == IV_INJECT ? "Injecting" : "Drawing"])  stopped.")
+	if(datum_flags & DF_ISPROCESSING)
+		add_attack_logs(injection_target, injection_target, "injection of [name](mode: [mode == IV_INJECT ? "Injecting" : "Drawing"])  stopped.")
 	injection_target = null
 	injection_limb = null
 	STOP_PROCESSING(SSobj, src)
@@ -164,8 +167,8 @@
 	begin_processing(target, def_zone)
 	return .|ATTACK_CHAIN_SUCCESS
 
-/obj/item/reagent_containers/iv_bag/afterattack(atom/target, mob/user, proximity, params)
-	if(!proximity)
+/obj/item/reagent_containers/iv_bag/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
+	if(!proximity_flag)
 		return
 	if(target.is_refillable() && is_drainable()) // Transferring from IV bag to other containers
 		if(!reagents.total_volume)
@@ -180,7 +183,7 @@
 		after_transfer(target)
 		to_chat(user, span_notice("Вы перемещаете <b>[trans]</b> единиц[DECL_SEC_MIN(trans)] вещества в [target.declent_ru(ACCUSATIVE)]."))
 
-	else if(istype(target, /obj/item/reagent_containers/glass) && !target.is_open_container())
+	else if(isglassreagentcontainer(target) && !target.is_open_container())
 		balloon_alert(user, "закрыто!")
 		return
 
@@ -188,9 +191,9 @@
 	. = ..()
 	if(reagents.total_volume)
 		var/percent = round((reagents.total_volume / volume) * 10) // We round the 1's place off of our percent for easy image processing.
-		var/image/filling = image('icons/goonstation/objects/iv.dmi', src, "[icon_state][percent]")
+		var/mutable_appearance/filling = mutable_appearance('icons/goonstation/objects/iv.dmi', "[icon_state][percent]")
 
-		filling.icon += mix_color_from_reagents(reagents.reagent_list)
+		filling.color = get_color_matrix_from_reagents(reagents.reagent_list)
 		. += filling
 	if(ismob(loc) || istype(loc, /obj/item/gripper))
 		switch(mode)
@@ -211,7 +214,7 @@
 	list_reagents = list("salglu_solution" = 200)
 
 /obj/item/reagent_containers/iv_bag/salglu/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капельница (Физраствор)",
 		GENITIVE = "капельницы (Физраствор)",
 		DATIVE = "капельнице (Физраствор)",
@@ -246,7 +249,7 @@
 	)
 
 /obj/item/reagent_containers/iv_bag/blood/get_ru_names()
-	return list(
+	return alist(
 			NOMINATIVE = "капельница — [get_ru_names_for_blood_species()[blood_species]] ([blood_type])" ,
 			GENITIVE = "капельницы — [get_ru_names_for_blood_species()[blood_species]] ([blood_type])",
 			DATIVE = "капельнице — [get_ru_names_for_blood_species()[blood_species]] ([blood_type])",
@@ -256,11 +259,11 @@
 		)
 
 /obj/item/reagent_containers/iv_bag/blood/Initialize(mapload)
+	. = ..()
 	if(blood_type != null && blood_species != null)
 		name = "[initial(name)] - [blood_species] ([blood_type])"
 		reagents.add_reagent("blood", 200, list("donor"=null,"diseases"=null,"blood_DNA"=null,"blood_type"=blood_type,"blood_species"=blood_species,"resistances"=null,"trace_chem"=null))
 		update_icon(UPDATE_OVERLAYS)
-	. = ..()
 
 /obj/item/reagent_containers/iv_bag/blood/random/get_ru_names()
 	return null
@@ -334,7 +337,7 @@
 	var/blood_species = "Oxygen - synthetic"
 
 /obj/item/reagent_containers/iv_bag/bloodsynthetic/oxygenis/get_ru_names()
-	return list(
+	return alist(
 			NOMINATIVE = "капельница — Синтетическая кровь (Кислород)" ,
 			GENITIVE = "капельницы — Синтетическая кровь (Кислород)",
 			DATIVE = "капельнице — Синтетическая кровь (Кислород)",
@@ -344,17 +347,16 @@
 		)
 
 /obj/item/reagent_containers/iv_bag/bloodsynthetic/oxygenis/Initialize(mapload)
+	. = ..()
 	if(blood_type != null && blood_species != null)
 		name = "[initial(name)] - Oxygenis"
 		reagents.add_reagent("sbloodoxy", 200, list("donor"=null,"diseases"=null,"blood_DNA"=null,"blood_type"=blood_type,"blood_species"=blood_species,"resistances"=null,"trace_chem"=null))
 		update_icon(UPDATE_OVERLAYS)
-
-	. = ..()
 /obj/item/reagent_containers/iv_bag/bloodsynthetic/nitrogenis
 	var/blood_species = "Vox - synthetic"
 
 /obj/item/reagent_containers/iv_bag/bloodsynthetic/nitrogenis/get_ru_names()
-	return list(
+	return alist(
 			NOMINATIVE = "капельница — Синтетическая кровь (Азот)" ,
 			GENITIVE = "капельницы — Синтетическая кровь (Азот)",
 			DATIVE = "капельнице — Синтетическая кровь (Азот)",
@@ -364,17 +366,17 @@
 		)
 
 /obj/item/reagent_containers/iv_bag/bloodsynthetic/nitrogenis/Initialize(mapload)
+	. = ..()
 	if(blood_type != null && blood_species != null)
 		name = "[initial(name)] - Nitrogenis"
 		reagents.add_reagent("sbloodvox", 200, list("donor"=null,"diseases"=null,"blood_DNA"=null,"blood_type"=blood_type,"blood_species"=blood_species,"resistances"=null,"trace_chem"=null))
 		update_icon(UPDATE_OVERLAYS)
-	. = ..()
 
 /obj/item/reagent_containers/iv_bag/slime
 	list_reagents = list("slimejelly" = 200)
 
 /obj/item/reagent_containers/iv_bag/slime/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капельница — Слаймовое желе" ,
 		GENITIVE = "капельницы — Слаймовое желе",
 		DATIVE = "капельнице — Слаймовое желе",

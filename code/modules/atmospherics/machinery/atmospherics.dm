@@ -13,7 +13,10 @@ Pipelines + Other Objects -> Pipe network
 	resistance_flags = FIRE_PROOF
 	power_channel = ENVIRON
 	on_blueprints = TRUE
-	layer = GAS_PIPE_HIDDEN_LAYER  //under wires
+	armor = list(MELEE = 25, BULLET = 10, LASER = 10, ENERGY = 100, BOMB = 0, BIO = 100, FIRE = 100, ACID = 70)
+	layer = GAS_PIPE_HIDDEN_LAYER //under wires
+	interaction_flags_atom = parent_type::interaction_flags_atom | INTERACT_ATOM_IGNORE_MOBILITY
+
 	/// Generic over VISIBLE and HIDDEN, should be less than 0.01, or you'll reorder non-pipe things.
 	var/layer_offset = 0.0
 	/// Can this be unwrenched?
@@ -43,18 +46,6 @@ Pipelines + Other Objects -> Pipe network
 	/// The image of the pipe/device used for ventcrawling
 	var/image/pipe_vision_img
 
-/obj/machinery/atmospherics/New()
-	if(!armor)
-		armor = list(MELEE = 25, BULLET = 10, LASER = 10, ENERGY = 100, BOMB = 0, BIO = 100, RAD = 100, FIRE = 100, ACID = 70)
-	..()
-
-	if(!pipe_color)
-		pipe_color = color
-	color = null
-
-	if(!pipe_color_check(pipe_color))
-		pipe_color = null
-
 /obj/machinery/atmospherics/Initialize(mapload)
 	var/turf/turf_loc = null
 	if(isturf(loc))
@@ -64,13 +55,20 @@ Pipelines + Other Objects -> Pipe network
 	. = ..()
 	SSair.atmos_machinery += src
 
+	if(!pipe_color)
+		pipe_color = color
+	color = null
+
+	if(!pipe_color_check(pipe_color))
+		pipe_color = null
+
 /obj/machinery/atmospherics/proc/atmos_init()
 	// Updates all pipe overlays and underlays
 	update_underlays()
 
 /obj/machinery/atmospherics/Destroy()
 	SSair.atmos_machinery -= src
-	SSair.deferred_pipenet_rebuilds -= src
+	SSair.pipenets_to_build -= src
 	for(var/mob/living/mob in contents) //ventcrawling is serious business
 		mob.stop_ventcrawling()
 	QDEL_NULL(pipe_vision_img) //we have to qdel it, or it might keep a ref somewhere else
@@ -174,10 +172,10 @@ Pipelines + Other Objects -> Pipe network
 /obj/machinery/atmospherics/proc/build_network(remove_deferral = FALSE)
 	// Called to build a network from this node
 	if(remove_deferral)
-		SSair.deferred_pipenet_rebuilds -= src
+		SSair.pipenets_to_build -= src
 
 /obj/machinery/atmospherics/proc/defer_build_network()
-	SSair.deferred_pipenet_rebuilds += src
+	SSair.pipenets_to_build += src
 
 /obj/machinery/atmospherics/proc/disconnect(obj/machinery/atmospherics/reference)
 	return
@@ -191,10 +189,10 @@ Pipelines + Other Objects -> Pipe network
 	var/turf/our_turf = get_turf(src)
 	if(!our_turf)
 		return .
-	if(level == 1 && (our_turf.transparent_floor == TURF_TRANSPARENT) && istype(src, /obj/machinery/atmospherics/pipe))
+	if(level == 1 && HAS_TRAIT(src, TRAIT_UNDERFLOOR)) // if non-pipe somehow gets under floor - check non-pipe's code, not here
 		to_chat(user, span_danger("You cannot interact with something that's under the floor!"))
 		return .
-	if(level == 1 && our_turf.intact)
+	if(level == 1 && our_turf.underfloor_accessibility != UNDERFLOOR_INTERACTABLE)
 		to_chat(user, span_danger("You must remove the plating first."))
 		return .
 	if(!can_unwrench)
@@ -204,8 +202,8 @@ Pipelines + Other Objects -> Pipe network
 		to_chat(user, span_warning("You cannot unwrench [src], turn it off first."))
 		return .
 
-	var/datum/gas_mixture/int_air = return_air()
-	var/datum/gas_mixture/env_air = loc.return_air()
+	var/datum/gas_mixture/int_air = return_obj_air()
+	var/datum/gas_mixture/env_air = our_turf.get_readonly_air()
 
 	var/unsafe_wrenching = FALSE
 	var/internal_air = int_air ? int_air.return_pressure() : 0
@@ -242,7 +240,7 @@ Pipelines + Other Objects -> Pipe network
 	if(!our_turf)
 		return ATTACK_CHAIN_BLOCKED_ALL
 
-	if(our_turf.transparent_floor == TURF_TRANSPARENT)
+	if(HAS_TRAIT(src, TRAIT_UNDERFLOOR))
 		to_chat(user, span_warning("You cannot interact with something that's under the floor!"))
 		return ATTACK_CHAIN_BLOCKED_ALL
 
@@ -255,15 +253,18 @@ Pipelines + Other Objects -> Pipe network
 		return
 
 	if(!pressures)
-		var/datum/gas_mixture/int_air = return_air()
-		var/datum/gas_mixture/env_air = loc.return_air()
+		var/datum/gas_mixture/int_air = return_obj_air()
+		var/turf/T = get_turf(src)
+		var/datum/gas_mixture/env_air = T.get_readonly_air()
 		pressures = int_air.return_pressure() - env_air.return_pressure()
 
 	var/fuck_you_dir = get_dir(src, user)
+	CALCULATE_SKILL_MOD(user, UNSAFE_PRESSURE_MOD, skill_mod)
 	var/turf/general_direction = get_edge_target_turf(user, fuck_you_dir)
 	user.visible_message(span_danger("[user] is sent flying by pressure!"),span_userdanger("The pressure sends you flying!"))
+	var/final_pressures = pressures * skill_mod
 	//Values based on 2*ONE_ATMOS (the unsafe pressure), resulting in 20 range and 4 speed
-	user.throw_at(general_direction, pressures/10, pressures/50)
+	user.throw_at(general_direction, final_pressures / 10, final_pressures / 50)
 
 /obj/machinery/atmospherics/deconstruct(disassembled = TRUE)
 	if(can_unwrench && !(obj_flags & NODECONSTRUCT))
@@ -273,7 +274,7 @@ Pipelines + Other Objects -> Pipe network
 		transfer_fingerprints_to(stored)
 	..()
 
-/obj/machinery/atmospherics/on_construction(D, P, C)
+/obj/machinery/atmospherics/on_construction(D = dir, P = initialize_directions, C = null)
 	if(C)
 		color = C
 	dir = D
@@ -422,7 +423,7 @@ Pipelines + Other Objects -> Pipe network
 		else
 			underlays += SSair.icon_manager.get_atmos_icon("underlay", direction, color_cache_name(node), "retracted" + icon_connect_type)
 
-/obj/machinery/atmospherics/singularity_pull(S, current_size)
+/obj/machinery/atmospherics/singularity_pull(atom/singularity, current_size)
 	if(current_size >= STAGE_FIVE)
 		deconstruct(FALSE)
 	return ..()
@@ -447,6 +448,7 @@ Pipelines + Other Objects -> Pipe network
 	if(!powered())
 		return
 	on = !on
+	SEND_SIGNAL(src, COMSIG_ATMOS_MACHINE_SET_ON, on)
 	update_icon()
 	if(user)
 		to_chat(user, span_notice("You toggle [src] [on ? "on" : "off"]."))
@@ -460,3 +462,24 @@ Pipelines + Other Objects -> Pipe network
 	update_icon()
 	update_pipe_image()
 
+/obj/machinery/atmospherics/proc/update_params(list/params)
+	return
+
+/obj/machinery/atmospherics/proc/get_data()
+	return list()
+
+/**
+ * Turns the machine on/off
+ * Arguments
+ *
+ * * active - the state of the machine
+ */
+/obj/machinery/atmospherics/proc/set_on(active)
+	SHOULD_CALL_PARENT(TRUE)
+
+	if(active == on)
+		return
+
+	on = active
+	update_appearance(UPDATE_ICON)
+	SEND_SIGNAL(src, COMSIG_ATMOS_MACHINE_SET_ON, on)

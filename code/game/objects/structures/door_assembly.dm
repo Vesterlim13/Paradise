@@ -4,6 +4,8 @@
 	icon_state = "construction"
 	density = TRUE
 	max_integrity = 200
+	cares_about_temperature = TRUE
+	var/heat_resistance = 1000
 	var/overlays_file = 'icons/obj/doors/airlocks/station/overlays.dmi'
 	var/state = AIRLOCK_ASSEMBLY_NEEDS_WIRES
 	var/mineral
@@ -37,25 +39,25 @@
 	switch(state)
 		if(AIRLOCK_ASSEMBLY_NEEDS_WIRES)
 			if(anchored)
-				. += "<span class='notice'>The anchoring bolts are <b>wrenched</b> in place, but the maintenance panel lacks <i>wiring</i>.</span>"
+				. += span_notice("The anchoring bolts are <b>wrenched</b> in place, but the maintenance panel lacks <i>wiring</i>.")
 			else
-				. += "<span class='notice'>The assembly is <b>welded together</b>, but the anchoring bolts are <i>unwrenched</i>.</span>"
+				. += span_notice("The assembly is <b>welded together</b>, but the anchoring bolts are <i>unwrenched</i>.")
 		if(AIRLOCK_ASSEMBLY_NEEDS_ELECTRONICS)
-			. += "<span class='notice'>The maintenance panel is <b>wired</b>, but the circuit slot is <i>empty</i>.</span>"
+			. += span_notice("The maintenance panel is <b>wired</b>, but the circuit slot is <i>empty</i>.")
 		if(AIRLOCK_ASSEMBLY_NEEDS_SCREWDRIVER)
-			. += "<span class='notice'>The circuit is <b>connected loosely</b> to its slot, but the maintenance panel is <i>unscrewed and open</i>.</span>"
+			. += span_notice("The circuit is <b>connected loosely</b> to its slot, but the maintenance panel is <i>unscrewed and open</i>.")
 			if(access_electronics)
 				. += span_notice("The access control circuit is connected to its slot.")
 			else
 				. += span_notice("The access control slot is empty.")
 	if(!mineral && !glass && !noglass)
-		. += "<span class='notice'>There is a small <i>paper</i> placard on the assembly[doorname]. There are <i>empty</i> slots for glass windows and mineral covers.</span>"
+		. += span_notice("There is a small <i>paper</i> placard on the assembly[doorname]. There are <i>empty</i> slots for glass windows and mineral covers.")
 	else if(!mineral && glass && !noglass)
-		. += "<span class='notice'>There is a small <i>paper</i> placard on the assembly[doorname]. There are <i>empty</i> slots for mineral covers.</span>"
+		. += span_notice("There is a small <i>paper</i> placard on the assembly[doorname]. There are <i>empty</i> slots for mineral covers.")
 	else if(mineral && !glass && !noglass)
-		. += "<span class='notice'>There is a small <i>paper</i> placard on the assembly[doorname]. There are <i>empty</i> slots for glass windows.</span>"
+		. += span_notice("There is a small <i>paper</i> placard on the assembly[doorname]. There are <i>empty</i> slots for glass windows.")
 	else
-		. += "<span class='notice'>There is a small <i>paper</i> placard on the assembly[doorname].</span>"
+		. += span_notice("There is a small <i>paper</i> placard on the assembly[doorname].")
 
 /obj/structure/door_assembly/attack_hand(mob/living/carbon/human/user)
 	if(user.a_intent == INTENT_HARM && ishuman(user) && (user.dna.species.obj_damage + user.physiology.punch_obj_damage > 0))
@@ -98,7 +100,8 @@
 			span_notice("[user] adds [new_sheet.name] to the airlock assembly."),
 			span_notice("You start to install [new_sheet.name] into the airlock assembly..."),
 		)
-		if(!do_after(user, 4 SECONDS * new_sheet.toolspeed, src, category = DA_CAT_TOOL) || QDELETED(new_sheet) || glass || mineral)
+		CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+		if(!do_after(user, 4 SECONDS * new_sheet.toolspeed * building_mod, src, category = DA_CAT_TOOL) || QDELETED(new_sheet) || glass || mineral)
 			return ATTACK_CHAIN_PROCEED
 		var/cached_sheettype = new_sheet.sheettype
 		var/cached_name = new_sheet.name
@@ -137,7 +140,8 @@
 				span_notice("[user] wires the airlock assembly."),
 				span_notice("You start to wire the airlock assembly..."),
 			)
-			if(!do_after(user, 4 SECONDS * coil.toolspeed, src, category = DA_CAT_TOOL) || state != AIRLOCK_ASSEMBLY_NEEDS_WIRES || QDELETED(coil))
+			CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+			if(!do_after(user, 4 SECONDS * coil.toolspeed * building_mod, src, category = DA_CAT_TOOL) || state != AIRLOCK_ASSEMBLY_NEEDS_WIRES || QDELETED(coil))
 				return ATTACK_CHAIN_PROCEED
 			if(!coil.use(1))
 				to_chat(user, span_warning("At some point during construction you lost some cable. Make sure you have one lengths before trying again."))
@@ -167,7 +171,8 @@
 				span_notice("[user] starts to install the airlock electronics into the airlock assembly."),
 				span_notice("You start to install airlock electronics into the airlock assembly..."),
 			)
-			if(!do_after(user, 4 SECONDS * new_circuit.toolspeed, src, category = DA_CAT_TOOL) || state != AIRLOCK_ASSEMBLY_NEEDS_ELECTRONICS || I.icon_state == "door_electronics_smoked" || (new_circuit.access_electronics && (access_electronics || new_circuit.access_electronics.emagged)))
+			CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+			if(!do_after(user, 4 SECONDS * new_circuit.toolspeed * building_mod, src, category = DA_CAT_TOOL) || state != AIRLOCK_ASSEMBLY_NEEDS_ELECTRONICS || I.icon_state == "door_electronics_smoked" || (new_circuit.access_electronics && (access_electronics || new_circuit.access_electronics.emagged)))
 				return ATTACK_CHAIN_PROCEED
 			if(!user.drop_transfer_item_to_loc(new_circuit, src))
 				return ATTACK_CHAIN_PROCEED
@@ -200,7 +205,8 @@
 				span_notice("[user] installs the access control electronics into the airlock assembly."),
 				span_notice("You start to install the access control electronics into the airlock assembly..."),
 			)
-			if(!do_after(user, 4 SECONDS * control.toolspeed, src, category = DA_CAT_TOOL) || state != AIRLOCK_ASSEMBLY_NEEDS_SCREWDRIVER || access_electronics || control.emagged)
+			CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+			if(!do_after(user, 4 SECONDS * control.toolspeed * building_mod, src, category = DA_CAT_TOOL) || state != AIRLOCK_ASSEMBLY_NEEDS_SCREWDRIVER || access_electronics || control.emagged)
 				return ATTACK_CHAIN_PROCEED
 			if(!user.drop_transfer_item_to_loc(control, src))
 				return ATTACK_CHAIN_PROCEED
@@ -217,7 +223,8 @@
 	if(!I.tool_use_check(user, 0))
 		return
 	user.visible_message("[user] is removing the electronics from the airlock assembly...", "You start to remove electronics from the airlock assembly...")
-	if(!I.use_tool(src, user, 4 SECONDS, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_SCREWDRIVER)
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_SCREWDRIVER)
 		return
 	to_chat(user, span_notice("You remove the airlock electronics."))
 	state = AIRLOCK_ASSEMBLY_NEEDS_ELECTRONICS
@@ -244,7 +251,8 @@
 	user.visible_message("[user] is finishing the airlock...", \
 							span_notice("You start finishing the airlock..."))
 	. = TRUE
-	if(!I.use_tool(src, user, 4 SECONDS, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_SCREWDRIVER)
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_SCREWDRIVER)
 		return
 	to_chat(user, span_notice("You finish the airlock."))
 	var/obj/machinery/door/airlock/door
@@ -260,6 +268,14 @@
 	else
 		door.name = base_name
 	door.previous_airlock = previous_assembly
+
+	if(access_electronics?.shell)
+		door.AddComponent( \
+			/datum/component/shell, \
+			unremovable_circuit_components = list(new /obj/item/circuit_component/airlock, new /obj/item/circuit_component/airlock_access_event), \
+			capacity = SHELL_CAPACITY_LARGE, \
+			shell_flags = SHELL_FLAG_ALLOW_FAILURE_ACTION|SHELL_FLAG_REQUIRE_ANCHOR \
+		)
 
 	door.airlock_electronics = airlock_electronics
 	door.id_tag = airlock_electronics.id
@@ -287,7 +303,8 @@
 	if(!I.tool_use_check(user, 0))
 		return
 	user.visible_message("[user] is cutting the wires from the airlock assembly...", "You start to cut the wires from airlock assembly...")
-	if(!I.use_tool(src, user, 40, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_ELECTRONICS)
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_ELECTRONICS)
 		return
 	to_chat(user, span_notice("You cut the wires from the airlock assembly."))
 	new/obj/item/stack/cable_coil(get_turf(user), 1)
@@ -304,7 +321,8 @@
 		user.visible_message("[user] is unsecuring the airlock assembly from the floor...", "You start to unsecure the airlock assembly from the floor...")
 	else
 		user.visible_message("[user] is securing the airlock assembly to the floor...", "You start to secure the airlock assembly to the floor...")
-	if(!I.use_tool(src, user, 40, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_WIRES)
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
+	if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume) || state != AIRLOCK_ASSEMBLY_NEEDS_WIRES)
 		return
 	to_chat(user, span_notice("You [anchored ? "un" : ""]secure the airlock assembly."))
 	set_anchored(!anchored)
@@ -313,13 +331,14 @@
 	. = TRUE
 	if(!I.tool_use_check(user, 0))
 		return
+	CALCULATE_SKILL_MOD(user, BUILDING_SPEED_MOD, building_mod)
 	if(mineral)
 		// damn wood
 		var/mineral_path = (mineral == "wood") ? /obj/item/stack/sheet/wood : text2path("/obj/item/stack/sheet/mineral/[mineral]")
 		visible_message(span_notice("[user] welds the [mineral] plating off [src]."),\
 			span_notice("You start to weld the [mineral] plating off [src]..."),\
 			span_warning("You hear welding."))
-		if(!I.use_tool(src, user, 40, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume))
 			return
 		to_chat(user, span_notice("You weld the [mineral] plating off."))
 		new mineral_path(loc, 2)
@@ -329,7 +348,7 @@
 		visible_message(span_notice("[user] welds the glass panel out of [src]."),\
 			span_notice("You start to weld the glass panel out of the [src]..."),\
 			span_warning("You hear welding."))
-		if(!I.use_tool(src, user, 40, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume))
 			return
 		to_chat(user, span_notice("You weld the glass panel out."))
 		if(heat_proof_finished)
@@ -343,7 +362,7 @@
 		visible_message(span_warning("[user] disassembles [src]."), \
 			span_notice("You start to disassemble [src]..."),\
 			span_warning("You hear welding."))
-		if(!I.use_tool(src, user, 40, volume = I.tool_volume))
+		if(!I.use_tool(src, user, 4 SECONDS * building_mod, volume = I.tool_volume))
 			return
 		to_chat(user, span_notice("You disassemble the airlock assembly."))
 		deconstruct(TRUE)
@@ -408,3 +427,8 @@
 				mineral_path = text2path("/obj/item/stack/sheet/mineral/[mineral]")
 			new mineral_path(T, 2)
 	qdel(src)
+
+/obj/structure/door_assembly/temperature_expose(exposed_temperature, exposed_volume, base_structure_expose = FALSE)
+	..()
+	if(exposed_temperature > (T0C + heat_resistance))
+		take_damage(round(exposed_volume / 100), BURN, 0, 0)

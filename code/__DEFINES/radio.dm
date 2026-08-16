@@ -7,6 +7,8 @@
 #define BOT_BEACON_FREQ 1445 //bot navigation beacons
 #define AIRLOCK_FREQ 1449 //airlock controls, electropack, magnets
 
+#define DEFAULT_SIGNALER_CODE 30
+
 #define RSD_FREQ 1457 //radio signal device
 #define IMPL_FREQ 1451 //tracking implant
 
@@ -45,10 +47,12 @@
 #define T1_FREQ 1371 //team 1
 #define T2_FREQ 1381 //team 2
 #define T3_FREQ 1391 //team 3
+#define VOX_RAID_FREQ 1220
 
 // Internal department channels
 #define MED_I_FREQ 1485
 #define SEC_I_FREQ 1475
+
 
 // Transmission methods
 #define TRANSMISSION_WIRE 0
@@ -70,6 +74,7 @@
 #define RADIO_MEDBOT "12"
 #define RADIO_MAGNETS "radio_magnet"
 #define RADIO_LOGIC "radio_logic"
+#define RADIO_SIGNALER "signaler"
 
 // Signal types
 #define SIGNALTYPE_NORMAL 0
@@ -101,7 +106,8 @@
 #define NINJA_FREQ_NAME "Клан Паука"
 #define EVENT_ALPHA_FREQ_NAME "Альфа частота"
 #define EVENT_BETA_FREQ_NAME "Бета частота"
-#define EVENT_GAMMA_FRE_NAME "Гамма частота"
+#define EVENT_GAMMA_FREQ_NAME "Гамма частота"
+#define VOX_RAID_FREQ_NAME "Вокс Рейдер"
 
 #define RED_NAME "Красные"
 #define BLUE_NAME "Синие"
@@ -112,3 +118,7 @@
 
 ///give this to can_receive to specify that there is no restriction on what z level this signal is sent to
 #define RADIO_NO_Z_LEVEL_RESTRICTION 0
+
+// Used by radios to indicate that they have sent a message via something other than subspace
+#define RADIO_CONNECTION_FAIL 0
+#define RADIO_CONNECTION_NON_SUBSPACE 1

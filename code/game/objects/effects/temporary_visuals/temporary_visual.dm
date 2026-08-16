@@ -24,7 +24,7 @@
 /obj/effect/temp_visual/singularity_act()
 	return
 
-/obj/effect/temp_visual/singularity_pull()
+/obj/effect/temp_visual/singularity_pull(atom/singularity, current_size)
 	return
 
 /obj/effect/temp_visual/ex_act()
@@ -47,3 +47,9 @@
 		var/matrix/M = new
 		M.Turn(get_angle(src, target))
 		transform = M
+
+/obj/effect/temp_visual/jet_plume
+	name = "jet plume"
+	icon_state = "jet_plume"
+	layer = BELOW_MOB_LAYER
+	duration = 0.4 SECONDS

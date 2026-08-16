@@ -33,13 +33,13 @@
 	heatmod = 1.5
 
 	blood_species = "Skrell"
-	blood_color = "#1D2CBF"
+	blood_color = BLOOD_COLOR_SKRELL
 	base_color = "#38b661" //RGB: 56, 182, 97.
 	default_hair_colour = "#38b661"
 	eyes = "skrell_eyes_s"
 	//Default styles for created mobs.
 	default_hair = "Skrell Male Tentacles"
-	reagent_tag = PROCESS_ORG
+	reagent_tag = ORGANIC
 	butt_sprite = "skrell"
 
 	disliked_food = MEAT | RAW | EGG

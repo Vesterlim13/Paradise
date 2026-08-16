@@ -3,7 +3,7 @@
 #define MINERAL_TYPE_ANCIENT_OUTER "ancient_outer"
 /**********************Mineral deposits**************************/
 
-/turf/simulated/mineral //wall piece
+/turf/simulated/mineral
 	name = "rock"
 	icon = 'icons/turf/smoothrocks.dmi'
 	icon_state = "smoothrocks-0"
@@ -17,27 +17,30 @@
 	blocks_air = TRUE
 	init_air = FALSE
 	layer = EDGED_TURF_LAYER
+	plane = WALL_PLANE
 	// We're a BIG wall, larger then 32x32, so we need to be on the game plane
 	// Otherwise we'll draw under shit in weird ways
 	var/environment_type = "asteroid"
 	var/turf/simulated/floor/plating/turf_type = /turf/simulated/floor/plating/asteroid/airless
 	var/mineralType = null
 	var/mineralAmt = 1
-	var/spread = 0 //will the seam spread?
-	var/spreadChance = 0 //the percentual chance of an ore spreading to the neighbouring tiles
-	var/scan_state = "" //Holder for the image we display when we're pinged by a mining scanner
+	/// Will the seam spread?
+	var/spread = 0
+	/// The percentual chance of an ore spreading to the neighbouring tiles
+	var/spreadChance = 0
+	/// Holder for the image we display when we're pinged by a mining scanner
+	var/scan_state = ""
 	var/defer_change = 0
-	var/mine_time = 4 SECONDS //Changes how fast the turf is mined by pickaxes, multiplied by toolspeed
+	/// Changes how fast the turf is mined by pickaxes, multiplied by toolspeed
+	var/mine_time = 4 SECONDS
 	/// Should this be set to the normal rock colour on init?
 	var/should_reset_color = TRUE
-	var/hardness = 1 //how hard the material is, we'll have to have more powerful stuff if we want to blast harder materials.
-	/// Typecache of all the instruments allowed to dig us.
-	/// Populated in [/turf/simulated/mineral/proc/generate_picks()].
-	var/static/list/list/allowed_picks_typecache = list()
+	/// How hard the material is, we'll have to have more powerful stuff if we want to blast harder materials.
+	var/hardness = 1
 	COOLDOWN_DECLARE(last_act)
 
 /turf/simulated/mineral/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "камень",
 		GENITIVE = "камня",
 		DATIVE = "камню",
@@ -48,7 +51,6 @@
 
 /turf/simulated/mineral/Initialize(mapload)
 	. = ..()
-	generate_picks()
 	if(should_reset_color)
 		color = null
 	if(mineralType && mineralAmt && spread && spreadChance)
@@ -59,21 +61,10 @@
 					Spread(T)
 
 /turf/simulated/mineral/add_debris_element()
-	AddElement(/datum/element/debris, DEBRIS_ROCK, -40, 8, 1)
+	generate_debris_handler(DEBRIS_ROCK, -40, 8, 1)
 
-/turf/simulated/mineral/ComponentInitialize()
-	if(!is_station_level(z))
-		return
+/turf/simulated/mineral/add_blob_consume_component()
 	AddComponent(/datum/component/blob_turf_consuming, 2)
-
-/// Generates typecache of tools allowed to dig this mineral
-/turf/simulated/mineral/proc/generate_picks()
-	if(!allowed_picks_typecache[MINERAL_TYPE_BASE])
-		allowed_picks_typecache[MINERAL_TYPE_BASE] = typecacheof(list(
-		/obj/item/pickaxe,
-		/obj/item/pen/survival,
-	))
-	allowed_picks_typecache = allowed_picks_typecache[MINERAL_TYPE_BASE]
 
 /turf/simulated/mineral/proc/Spread(turf/T)
 	T.ChangeTurf(type)
@@ -92,7 +83,10 @@
 /turf/simulated/mineral/attackby(obj/item/I, mob/user, params)
 	. = ..()
 
-	if(ATTACK_CHAIN_CANCEL_CHECK(.) || !isturf(user.loc) || !COOLDOWN_FINISHED(src, last_act) || !is_type_in_typecache(I, allowed_picks_typecache))
+	if(I.tool_behaviour != TOOL_MINING)
+		return .
+
+	if(ATTACK_CHAIN_CANCEL_CHECK(.) || !isturf(user.loc) || !COOLDOWN_FINISHED(src, last_act))
 		return .
 
 	COOLDOWN_START(src, last_act, mine_time * I.toolspeed * user.get_actionspeed_by_category(DA_CAT_TOOL))	// Prevents message spam
@@ -104,7 +98,7 @@
 	I.play_tool_sound(src)
 	to_chat(user, span_notice("Вы начинаете долбить..."))
 	if(!do_after(user, mine_time * I.toolspeed, src, category = DA_CAT_TOOL))
-		if(istype(src, /turf/simulated/mineral))
+		if(ismineralturf(src))
 			COOLDOWN_RESET(src, last_act)
 		return .
 
@@ -174,23 +168,21 @@
 /turf/simulated/mineral/Bumped(atom/movable/moving_atom)
 	. = ..()
 
-	if(ishuman(moving_atom))
-		var/mob/living/carbon/human/human = moving_atom
-		var/active_hand = human.get_active_hand()
-		if(is_type_in_typecache(active_hand, allowed_picks_typecache))
-			INVOKE_ASYNC(src, TYPE_PROC_REF(/atom, attackby), active_hand, human)
-		return
-
-	if(isrobot(moving_atom))
-		var/mob/living/silicon/robot/robot = moving_atom
-		if(is_type_in_typecache(robot.module_active, allowed_picks_typecache))
-			INVOKE_ASYNC(src, TYPE_PROC_REF(/atom, attackby), robot.module_active, robot)
+	if(isliving(moving_atom))
+		var/mob/living/bumping = moving_atom
+		var/obj/item/held_item = bumping.get_active_hand()
+		if(held_item?.tool_behaviour == TOOL_MINING)
+			INVOKE_ASYNC(src, TYPE_PROC_REF(/atom, attackby), held_item, bumping)
 		return
 
 	if(ismecha(moving_atom))
 		var/obj/mecha/mecha = moving_atom
-		if(istype(mecha.selected, /obj/item/mecha_parts/mecha_equipment/drill))
-			mecha.selected.action(src)
+		for(var/key, item in mecha.selected_equipment_in_hands)
+			if(!istype(item, /obj/item/mecha_parts/mecha_equipment/drill))
+				continue
+			var/obj/item/mecha_parts/mecha_equipment/selected_item = item
+			selected_item.action(src)
+			return
 
 /turf/simulated/mineral/acid_melt()
 	ChangeTurf(baseturf)
@@ -213,86 +205,6 @@
 
 /turf/simulated/mineral/blob_consume()
 	gets_drilled()
-
-/turf/simulated/mineral/ancient
-	name = "ancient rock"
-	desc = "Редкий астероидный камень, устойчивый ко всем инструментам, кроме кирок!"
-	mine_time = 6 SECONDS
-	color = COLOR_ANCIENT_ROCK
-	layer = MAP_EDITOR_TURF_LAYER
-	should_reset_color = FALSE
-	mineralAmt = 2
-	mineralType = /obj/item/stack/ore/glass/basalt/ancient
-	baseturf = /turf/simulated/floor/plating/asteroid/ancient
-
-/turf/simulated/mineral/ancient/get_ru_names()
-	return list(
-		NOMINATIVE = "древний камень",
-		GENITIVE = "древнего камня",
-		DATIVE = "древнему камню",
-		ACCUSATIVE = "древний камень",
-		INSTRUMENTAL = "древним камнем",
-		PREPOSITIONAL = "древнем камне",
-	)
-
-/turf/simulated/mineral/ancient/generate_picks()
-	if(!allowed_picks_typecache[MINERAL_TYPE_ANCIENT])
-		allowed_picks_typecache[MINERAL_TYPE_ANCIENT] = typecacheof(list(
-		/obj/item/pickaxe,
-	))
-	allowed_picks_typecache = allowed_picks_typecache[MINERAL_TYPE_ANCIENT]
-
-/turf/simulated/mineral/ancient/burn_down()
-	return
-
-/turf/simulated/mineral/ancient/rpd_act()
-	return
-
-/turf/simulated/mineral/ancient/acid_act(acidpwr, acid_volume)
-	return
-
-/turf/simulated/mineral/ancient/ex_act(severity, target)
-	switch(severity)
-		if(EXPLODE_LIGHT)
-			return
-		if(EXPLODE_HEAVY)
-			if(prob(75))
-				gets_drilled(null, 1)
-		if(EXPLODE_DEVASTATE)
-			gets_drilled(null, 1)
-
-	return TRUE
-
-/turf/simulated/mineral/ancient/outer
-	name = "cold ancient rock"
-	desc = "Редкий плотный астероидный камень, неуязвимый для всего, кроме алмазных и звуковых инструментов! Не может быть использован для создания порталов в ад."
-	mine_time = 15 SECONDS
-	color = COLOR_COLD_ROCK
-	temperature = TCMB
-	baseturf = /turf/simulated/floor/plating/asteroid/ancient/airless
-
-/turf/simulated/mineral/ancient/outer/get_ru_names()
-	return list(
-		NOMINATIVE = "холодный древний камень",
-		GENITIVE = "холодного древнего камня",
-		DATIVE = "холодному древнему камню",
-		ACCUSATIVE = "холодный древний камень",
-		INSTRUMENTAL = "холодным древним камнем",
-		PREPOSITIONAL = "холодном древнем камне",
-	)
-
-/turf/simulated/mineral/ancient/outer/generate_picks()
-	if(!allowed_picks_typecache[MINERAL_TYPE_ANCIENT_OUTER])
-		allowed_picks_typecache[MINERAL_TYPE_ANCIENT_OUTER] = typecacheof(list(
-		/obj/item/pickaxe/drill/jackhammer,
-		/obj/item/pickaxe/diamond,
-		/obj/item/pickaxe/drill/cyborg/diamond,
-		/obj/item/pickaxe/drill/diamonddrill,
-	))
-	allowed_picks_typecache = allowed_picks_typecache[MINERAL_TYPE_ANCIENT_OUTER]
-
-/turf/simulated/mineral/ancient/outer/ex_act(severity, target)
-	return
 
 /turf/simulated/mineral/random
 	var/mineralSpawnChanceList = list(/turf/simulated/mineral/uranium = 5, /turf/simulated/mineral/diamond = 1, /turf/simulated/mineral/gold = 10,
@@ -339,9 +251,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/lava/mapping_lava
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 	mineralSpawnChanceList = list(
 		/turf/simulated/mineral/uranium/volcanic = 35, /turf/simulated/mineral/diamond/volcanic = 30, /turf/simulated/mineral/gold/volcanic = 45, /turf/simulated/mineral/titanium/volcanic = 45,
@@ -359,9 +270,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/lava/mapping_lava
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 	mineralChance = 14
@@ -381,9 +291,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/lava/mapping_lava
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 	mineralSpawnChanceList = list(
 		/turf/simulated/mineral/uranium/volcanic = 3, /turf/simulated/mineral/diamond/volcanic = 1, /turf/simulated/mineral/gold/volcanic = 8, /turf/simulated/mineral/titanium/volcanic = 8,
@@ -404,7 +313,7 @@
 		/turf/simulated/mineral/iron/volcanic/hard = 40, /turf/simulated/mineral/gem/volcanic/hard = 2)
 
 /turf/simulated/mineral/random/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -428,7 +337,7 @@
 		/turf/simulated/mineral/mime/volcanic/hard/double = 2)
 
 /turf/simulated/mineral/random/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -456,9 +365,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/iron/volcanic/hard
@@ -468,7 +376,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/iron/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -484,7 +392,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/iron/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -503,9 +411,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/uranium/volcanic/hard
@@ -515,7 +422,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/uranium/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -531,7 +438,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/uranium/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -549,9 +456,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/diamond/volcanic/hard
@@ -561,7 +467,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/diamond/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -577,7 +483,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/diamond/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -596,9 +502,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/gold/volcanic/hard
@@ -608,7 +513,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/gold/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -624,7 +529,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/gold/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -643,9 +548,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/silver/volcanic/hard
@@ -655,7 +559,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/silver/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -671,7 +575,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/silver/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -690,9 +594,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/titanium/volcanic/hard
@@ -702,7 +605,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/titanium/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -718,7 +621,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/titanium/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -737,9 +640,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/plasma/volcanic/hard
@@ -749,7 +651,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/plasma/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -765,7 +667,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/plasma/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -783,9 +685,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/clown/volcanic/hard
@@ -795,7 +696,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/clown/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -811,7 +712,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/clown/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -829,9 +730,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/mime/volcanic/hard
@@ -841,7 +741,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/mime/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -857,7 +757,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/mime/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -874,9 +774,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/bscrystal/volcanic/hard
@@ -886,7 +785,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/bscrystal/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -902,7 +801,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/bscrystal/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -919,9 +818,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/gem/volcanic/hard
@@ -931,7 +829,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/gem/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -947,7 +845,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/gem/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -960,9 +858,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 
 /turf/simulated/mineral/volcanic/lava_land_surface
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
@@ -975,7 +872,7 @@
 	base_icon_state = "smoothrocks_hard"
 
 /turf/simulated/mineral/volcanic/lava_land_surface/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -991,7 +888,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/volcanic/lava_land_surface/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -999,6 +896,39 @@
 		INSTRUMENTAL = "закалённым вулканическим базальтом",
 		PREPOSITIONAL = "закалённом вулканическом базальте",
 	)
+
+/turf/simulated/mineral/ancient
+	name = "ancient rock"
+	desc = "A rare asteroid rock that appears to be resistant to all mining tools except pickaxes!"
+	mine_time = 6 SECONDS
+	color = COLOR_ANCIENT_ROCK
+	layer = MAP_EDITOR_TURF_LAYER
+	should_reset_color = FALSE
+	baseturf = /turf/simulated/floor/plating/asteroid/ancient
+
+/turf/simulated/mineral/ancient/blob_act(obj/structure/blob/attacking_blob)
+	if(prob(50))
+		blob_destruction()
+
+/turf/simulated/mineral/ancient/proc/blob_destruction()
+	playsound(src, 'sound/effects/break_stone.ogg', 30, 1 )
+
+	for(var/obj/content_obj in contents) //Eject contents!
+		if(istype(content_obj, /obj/structure/sign/poster))
+			var/obj/structure/sign/poster/poster = content_obj
+			poster.roll_and_drop(src)
+		else
+			content_obj.forceMove(src)
+
+	ChangeTurf(/turf/simulated/floor/plating/asteroid/ancient)
+	return TRUE
+
+/turf/simulated/mineral/ancient/outer
+	name = "cold ancient rock"
+	desc = "A rare and dense asteroid rock that appears to be resistant to everything except diamond and sonic tools! Can not be used to create portals to hell."
+	mine_time = 15 SECONDS
+	color = COLOR_COLD_ANCIENT_ROCK
+	hardness = 3
 
 // Gibtonite
 /turf/simulated/mineral/gibtonite
@@ -1104,9 +1034,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt/lava_land_surface
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/gibtonite/volcanic/hard
@@ -1116,7 +1045,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/gibtonite/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -1132,7 +1061,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/gibtonite/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",
@@ -1160,9 +1089,8 @@
 	environment_type = "basalt"
 	turf_type = /turf/simulated/floor/plating/asteroid/basalt
 	baseturf = /turf/simulated/floor/plating/asteroid/basalt
-	oxygen = 14
-	nitrogen = 23
-	temperature = 300
+	atmos_mode = ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	atmos_environment = ENVIRONMENT_LAVALAND
 	defer_change = 1
 
 /turf/simulated/mineral/magmite/volcanic/hard
@@ -1172,7 +1100,7 @@
 	hardness = 2
 
 /turf/simulated/mineral/magmite/volcanic/hard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый базальт",
 		GENITIVE = "закалённого базальта",
 		DATIVE = "закалённому базальту",
@@ -1188,7 +1116,7 @@
 	hardness = 3
 
 /turf/simulated/mineral/magmite/volcanic/hard/double/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "закалённый вулканический базальт",
 		GENITIVE = "закалённого вулканического базальта",
 		DATIVE = "закалённому вулканическому базальту",

@@ -7,6 +7,7 @@
 	broken_overlay = "plasmavendor_broken"
 	vend_reply = "Не забыв+айте о безоп+асности при см+ене снаряж+ения!"
 	refill_canister = /obj/item/vending_refill/plasma
+	all_products_free = TRUE
 
 	products = list(
 		/obj/item/storage/lockbox/plasma/captain = 1,
@@ -46,7 +47,7 @@
 	)
 
 /obj/machinery/vending/plasmamate/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат PlasmaMate",
 		GENITIVE = "торгового автомата PlasmaMate",
 		DATIVE = "торговому автомату PlasmaMate",

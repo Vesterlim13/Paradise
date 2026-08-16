@@ -21,10 +21,11 @@
 SUBSYSTEM_DEF(addition_goals)
 	name = "Addition Goals"
 	wait = 1 SECONDS
-	init_order = INIT_ORDER_CARGO_QUESTS
-	flags = SS_KEEP_TIMING
-	offline_implications = "Addition goals will no longer function."
-	ss_id = "addition_goals"
+	dependencies = list(
+		/datum/controller/subsystem/shuttle,
+	)
+	ss_flags = SS_KEEP_TIMING
+
 	var/goal_state = AGS_STATE_NOT_STARTED
 	//goals stuff
 	var/list/goal_types = list()
@@ -154,7 +155,7 @@ SUBSYSTEM_DEF(addition_goals)
 		reward_number++
 	if(goal.reward_cargopoints > 0)
 		report += "<br>[reward_number]. [goal.reward_cargopoints] очков поставки в карго."
-	var/addition = "Данный запрос считается действительным только при наличии печати Центрального Командоваия Нанотрейзен"
+	var/addition = "Данный запрос считается действительным только при наличии печати Центрального Командоваия \"Нанотрейзен\""
 	var/report_message = create_paper_content(goal.name, report, addition)
 	print_report_on_console(goal.name, report_message, stamp = TRUE)
 
@@ -209,7 +210,7 @@ SUBSYSTEM_DEF(addition_goals)
 	for(var/turf/turf in shuttle_turfs)
 		//open all containers before check
 		for(var/atom/movable/content in turf.contents)
-			if(istype(content, /obj/structure/closet))
+			if(iscloset(content))
 				var/obj/structure/closet/closet = content
 				closet.open()
 		//check turfs contains

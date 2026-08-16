@@ -2,7 +2,7 @@
 	name = "dragon chest"
 
 /obj/structure/closet/crate/necropolis/dragon/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "драконий сундук",
 		GENITIVE = "драконьего сундука",
 		DATIVE = "драконьему сундуку",
@@ -31,7 +31,7 @@
 	name = "firey dragon chest"
 
 /obj/structure/closet/crate/necropolis/dragon/crusher/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "огненный драконий сундук",
 		GENITIVE = "огненного драконьего сундука",
 		DATIVE = "огненному драконьему сундуку",
@@ -64,7 +64,7 @@
 	var/list/mob/dead/observer/spirits
 
 /obj/item/melee/ghost_sword/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "спектральный клинок",
 		GENITIVE = "спектрального клинка",
 		DATIVE = "спектральному клинку",
@@ -73,8 +73,8 @@
 		PREPOSITIONAL = "спектральном клинке",
 	)
 
-/obj/item/melee/ghost_sword/New()
-	..()
+/obj/item/melee/ghost_sword/Initialize(mapload)
+	. = ..()
 	spirits = list()
 	START_PROCESSING(SSobj, src)
 	GLOB.poi_list |= src
@@ -116,7 +116,7 @@
 /obj/item/melee/ghost_sword/proc/ghost_check()
 	var/ghost_counter = 0
 	var/turf/T = get_turf(src)
-	var/list/contents = T.GetAllContents()
+	var/list/contents = T.get_all_contents()
 	var/mob/dead/observer/current_spirits = list()
 
 	for(var/mob/dead/observer/O in GLOB.player_list)
@@ -157,7 +157,7 @@
 	icon_state = "vial"
 
 /obj/item/dragons_blood/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "бутылка драконьей крови",
 		GENITIVE = "бутылки драконьей крови",
 		DATIVE = "бутылке драконьей крови",
@@ -196,7 +196,7 @@
 	desc = "Вы ведь точно собираетесь это выпить, не так ли?"
 
 /obj/item/dragons_blood/refined/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "бутылка очищенной драконьей крови",
 		GENITIVE = "бутылки очищенной драконьей крови",
 		DATIVE = "бутылке очищенной драконьей крови",
@@ -223,12 +223,12 @@
 	agent = "Кровь дракона"
 	desc = "Какое отношение драконы имеют к Космической Станции 13?"
 	stage_prob = 20
-	severity = BIOHAZARD
+	severity = DISEASE_SEVERITY_BIOHAZARD
 	stage1	= list("Ваши кости ноют.")
 	stage2	= list("Ваша кожа кажется чешуйчатой.")
-	stage3	= list(span_danger("Вы чувствуете непреодолимое желание напугать пару крестьян."), span_danger("Ваши зубы кажутся острее."))
-	stage4	= list(span_danger("Ваша кровь кипит!"))
-	stage5	= list(span_danger("Вы, блять, дракон! Однако любые прежние обязательства всё ещё действуют. Было бы крайне невежливо съесть своих всё ещё человеческих друзей без причины."))
+	stage3	= list(span_danger_alt("Вы чувствуете непреодолимое желание напугать пару крестьян."), span_danger_alt("Ваши зубы кажутся острее."))
+	stage4	= list(span_danger_alt("Ваша кровь кипит!"))
+	stage5	= list(span_danger_alt("Вы, блять, дракон! Однако любые прежние обязательства всё ещё действуют. Было бы крайне невежливо съесть своих всё ещё человеческих друзей без причины."))
 	new_form = /mob/living/simple_animal/hostile/megafauna/dragon/lesser
 
 //Lava Staff
@@ -259,7 +259,7 @@
 	var/banned_turfs
 
 /obj/item/lava_staff/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "лавовый посох",
 		GENITIVE = "лавового посоха",
 		DATIVE = "лавовому посоху",
@@ -268,11 +268,11 @@
 		PREPOSITIONAL = "лавовом посохе",
 	)
 
-/obj/item/lava_staff/New()
+/obj/item/lava_staff/Initialize(mapload)
 	. = ..()
 	banned_turfs = typecacheof(list(/turf/space/transit, /turf/simulated/wall, /turf/simulated/mineral))
 
-/obj/item/lava_staff/afterattack(atom/target, mob/user, proximity_flag, click_parameters)
+/obj/item/lava_staff/afterattack(atom/target, mob/user, proximity_flag, list/modifiers, status)
 	..()
 	if(timer > world.time)
 		return
@@ -282,7 +282,7 @@
 
 	if(!is_mining_level(user.z)) //Will only spawn a few sparks if not on mining z level
 		timer = world.time + create_delay + 1
-		user.visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] [user] даёт сбой!"))
+		user.visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] [user] даёт сбой!"))
 		do_sparks(5, FALSE, user)
 		return
 

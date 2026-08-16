@@ -9,7 +9,7 @@
 	)
 	skinned_type = /obj/item/stack/sheet/animalhide/human
 	clothing_flags = HAS_UNDERWEAR | HAS_UNDERSHIRT | HAS_SOCKS
-	bodyflags = HAS_SKIN_TONE | HAS_BODY_MARKINGS
+	bodyflags = HAS_SKIN_TONE | HAS_BODY_MARKINGS | HAS_HAIR
 	blood_species = "Human"
 	can_be_pale = TRUE
 	blurb = "Humanity originated in the Sol system, and over the last five centuries has spread \
@@ -20,7 +20,7 @@
 
 	meat_type = /obj/item/reagent_containers/food/snacks/meat/humanoid/human
 
-	reagent_tag = PROCESS_ORG
+	reagent_tag = ORGANIC
 	//Has standard darksight of 2.
 
 /datum/species/human/gain_muscles(mob/living/target, datum/strength_level/default, max_level, can_become_stronger)

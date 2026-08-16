@@ -24,6 +24,7 @@
 
 	dead_icon = "boris_blank"
 
+
 /obj/item/mmi/robotic_brain/syndicate
 	name = "suspicious robotic brain"
 	syndicate = 1
@@ -45,7 +46,8 @@
 
 /obj/item/mmi/robotic_brain/Destroy()
 	imprinted_master = null
-	return ..()
+	LAZYCLEARLIST(ghost_volunteers)
+	. = ..()
 
 /obj/item/mmi/robotic_brain/update_icon_state()
 	if(brainmob?.key)
@@ -94,7 +96,7 @@
 /obj/item/mmi/robotic_brain/proc/request_player()
 	for(var/mob/dead/observer/O in GLOB.player_list)
 		if(check_observer(O))
-			to_chat(O, span_boldnotice("[src] has been activated. (<a href='byond://?src=[O.UID()];jump=\ref[src]'>Teleport</a> | <a href='byond://?src=[UID()];signup=\ref[O]'>Sign Up</a>)"))
+			to_chat(O, span_boldnotice("[src] has been activated. (<a href='byond://?src=[O.UID()];jump=[src.UID()]'>Teleport</a> | <a href='byond://?src=[UID()];signup=[O.UID()]'>Sign Up</a>)"))
 
 /obj/item/mmi/robotic_brain/proc/check_observer(mob/dead/observer/O)
 	if(cannotPossess(O))
@@ -121,7 +123,7 @@
 
 // This should not ever happen, but let's be safe
 /obj/item/mmi/robotic_brain/dropbrain(turf/dropspot)
-	log_runtime(EXCEPTION("[src] at [loc] attempted to drop brain without a contained brain."), src)
+	CRASH("[src] at [loc] attempted to drop brain without a contained brain.")
 
 /obj/item/mmi/robotic_brain/transfer_identity(mob/living/carbon/H)
 	brainmob.dna = H.dna.Clone()
@@ -168,7 +170,7 @@
 
 /obj/item/mmi/robotic_brain/Topic(href, href_list)
 	if("signup" in href_list)
-		var/mob/dead/observer/O = locate(href_list["signup"])
+		var/mob/dead/observer/O = locateUID(href_list["signup"])
 		if(!O)
 			return
 		volunteer(O)
@@ -242,20 +244,20 @@
 			brainmob.emp_damage += rand(0, 10)
 	..()
 
-/obj/item/mmi/robotic_brain/New()
+/obj/item/mmi/robotic_brain/Initialize(mapload)
+	. = ..()
 	brainmob = new(src)
 	brainmob.name = "[pick(list("PBU", "HIU", "SINA", "ARMA", "OSI"))]-[rand(100, 999)]"
 	brainmob.real_name = brainmob.name
 	brainmob.container = src
 	brainmob.forceMove(src)
-	brainmob.stat = CONSCIOUS
+	brainmob.set_stat(CONSCIOUS)
 	brainmob.SetSilence(0)
 	brainmob.dna = new(brainmob)
 	brainmob.dna.species = new /datum/species/machine() // Else it will default to human. And we don't want to clone IRC humans now do we?
 	brainmob.dna.ResetSE()
 	brainmob.dna.ResetUI()
 	brainmob.remove_from_dead_mob_list()
-	..()
 
 /obj/item/mmi/robotic_brain/attack_ghost(mob/dead/observer/O)
 	if(searching)

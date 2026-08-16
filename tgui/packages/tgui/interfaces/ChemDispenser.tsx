@@ -10,7 +10,6 @@ import {
 import { BeakerContents } from '../interfaces/common/BeakerContents';
 import { Window } from '../layouts';
 
-const dispenseAmounts = [1, 5, 10, 20, 30, 50, 100];
 const removeAmounts = [1, 5, 10];
 
 type DispenserChemical = {
@@ -25,6 +24,7 @@ type ChemDispenserData = {
   energy: number;
   maxEnergy: number;
   glass: boolean;
+  dispenseAmounts: number[];
 };
 
 export const ChemDispenser = (props: unknown) => {
@@ -66,7 +66,7 @@ const ChemDispenserSettings = (properties) => {
           </LabeledList.Item>
           <LabeledList.Item label="Объём синтеза" verticalAlign="middle">
             <Stack>
-              {dispenseAmounts.map((a, i) => (
+              {data.dispenseAmounts.map((a, i) => (
                 <Stack.Item key={i} grow width="15%">
                   <Button
                     fluid
@@ -104,24 +104,28 @@ const ChemDispenserChemicals = (properties) => {
         scrollable
         title={data.glass ? 'Синтез напитков' : 'Синтез реагентов'}
       >
-        {chemicals.map((chemical, i) => (
-          <Button
-            m={0.1}
-            key={i}
-            width="32.5%"
-            icon="tint"
-            iconColor={chemical.reagentColor}
-            overflow="hidden"
-            style={{ marginLeft: '2px', textOverflow: 'ellipsis' }}
-            onClick={() =>
-              act('dispense', {
-                reagent: chemical.id,
-              })
-            }
-          >
-            {chemical.title}
-          </Button>
-        ))}
+        {chemicals
+          .sort((first, second) =>
+            first.title.localeCompare(second.title, 'ru')
+          )
+          .map((chemical, i) => (
+            <Button
+              m={0.1}
+              key={i}
+              width="32.5%"
+              icon="tint"
+              iconColor={chemical.reagentColor}
+              overflow="hidden"
+              style={{ marginLeft: '2px', textOverflow: 'ellipsis' }}
+              onClick={() =>
+                act('dispense', {
+                  reagent: chemical.id,
+                })
+              }
+            >
+              {chemical.title}
+            </Button>
+          ))}
         {flexFillers.map((_, i) => (
           <Stack.Item key={i} grow basis="25%" />
         ))}

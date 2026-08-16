@@ -1,4 +1,4 @@
-#define HI_MINPLAYERS_TRIGGER 59
+#define HI_MINPLAYERS_TRIGGER 30
 #define GAMEMODE_IS_SHADOWLING (SSticker && istype(SSticker.mode, /datum/game_mode/shadowling))
 #define GAMEMODE_IS_CULTS (SSticker && (istype(SSticker.mode, /datum/game_mode/cult) || istype(SSticker.mode, /datum/game_mode/clockwork)))
 
@@ -16,7 +16,7 @@
 		GLOB.major_announcement.announce(
 			message = "Обнаружены неопознанные формы жизни на борту [station_name()]. Обезопасьте все наружные входы и выходы, включая вентиляцию и вытяжки.",
 			new_title = ANNOUNCE_UNID_LIFEFORMS_RU,
-			new_sound = 'sound/AI/aliens.ogg'
+			new_sound = ANNOUNCER_ALIENS,
 		)
 	else
 		log_and_message_admins("Warning: Could not spawn any mobs for event Headslug Infestation")
@@ -37,7 +37,7 @@
 		var/obj/vent = pick_n_take(vents)
 		var/mob/C = pick_n_take(candidates)
 		if(C)
-			GLOB.respawnable_list -= C
+			C.remove_from_respawnable_list()
 			var/mob/living/simple_animal/hostile/headslug/evented/new_slug = new(vent.loc)
 			new_slug.possess_by_player(C.key)
 			new_slug.make_slug_antag() //give objective and plays coolsound
@@ -47,7 +47,7 @@
 			log_game("[new_slug.key] has become Changeling Headslug.")
 
 /datum/event/headslug_infestation/proc/eventcheck()
-	if((num_station_players() <= HI_MINPLAYERS_TRIGGER) ||GAMEMODE_IS_CULTS || GAMEMODE_IS_NUCLEAR || GAMEMODE_IS_SHADOWLING)
+	if((num_station_players() <= HI_MINPLAYERS_TRIGGER) || GAMEMODE_IS_CULTS || GAMEMODE_IS_NUCLEAR || GAMEMODE_IS_SHADOWLING)
 		return TRUE
 
 #undef GAMEMODE_IS_CULTS

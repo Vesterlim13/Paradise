@@ -20,7 +20,7 @@
 	MARTIAL_ARTS_ACT_CHECK
 	A.do_attack_animation(D, ATTACK_EFFECT_PUNCH)
 	var/atk_verb = pick("бь[PLUR_YOT_YUT(A)]", "пина[PLUR_ET_YUT(A)]", "руб[PLUR_IT_YAT(A)]", "забива[PLUR_ET_YUT(A)]")
-	D.visible_message(span_danger("[capitalize(A.declent_ru(NOMINATIVE))] [atk_verb] [D.declent_ru(ACCUSATIVE)]!"),
+	D.visible_message(span_danger("[DECLENT_RU_CAP(A, NOMINATIVE)] [atk_verb] [D.declent_ru(ACCUSATIVE)]!"),
 					span_userdanger("[A.declent_ru(NOMINATIVE)] [atk_verb] тебя!"))
 	D.apply_damage(rand(10, 15), BRUTE, A.zone_selected)
 	playsound(get_turf(D), 'sound/weapons/punch1.ogg', 25, TRUE, -1)
@@ -46,6 +46,9 @@
 	H.faction -= "carp"// :C
 
 /datum/martial_art/the_sleeping_carp/try_deflect(mob/living/carbon/human/user)
+	if(HAS_TRAIT(user, TRAIT_MARTIAL_ARTS_SUPPRESSED))
+		return FALSE
+
 	if(user.is_hands_free())
 		deflection_chance = initial(deflection_chance)
 	else if(!user.l_hand || !user.r_hand)

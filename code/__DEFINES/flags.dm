@@ -33,13 +33,12 @@
 #define DECAL_INIT_UPDATE_EXPERIENCED (1<<10)
 /// Whether or not this atom shows screentips when hovered over
 #define NO_SCREENTIPS (1<<11)
-
-// Bypass all adjacency checks for mouse drop
-#define INTERACT_ATOM_MOUSEDROP_IGNORE_ADJACENT (1<<12)
-/// Bypass all can_perform_action checks for mouse drop
-#define INTERACT_ATOM_MOUSEDROP_IGNORE_USABILITY (1<<13)
-/// Bypass all adjacency and other checks for mouse drop
-#define INTERACT_ATOM_MOUSEDROP_IGNORE_CHECKS (INTERACT_ATOM_MOUSEDROP_IGNORE_ADJACENT | INTERACT_ATOM_MOUSEDROP_IGNORE_USABILITY)
+/// This atom does not need to generate its own preview icon for GAGS
+#define NO_NEW_GAGS_PREVIEW (1<<12)
+/// Whether or not this atom has contextual screentips when hovered OVER
+#define HAS_CONTEXTUAL_SCREENTIPS (1<<13)
+/// Should this object be unpaintable?
+#define UNPAINTABLE (1<<14)
 
 // Update flags for [/atom/proc/update_appearance]
 /// Update the atom's name
@@ -50,6 +49,8 @@
 #define UPDATE_ICON_STATE (1<<2)
 /// Update the atom's overlays
 #define UPDATE_OVERLAYS (1<<3)
+/// Update the atom's greyscaling
+#define UPDATE_GREYSCALE (1<<4)
 /// Update the atom's icon
 #define UPDATE_ICON (UPDATE_ICON_STATE|UPDATE_OVERLAYS)
 
@@ -85,6 +86,7 @@
 #define HAS_BODYACC_COLOR (1<<13)
 #define BALD (1<<14)
 #define ALL_RPARTS (1<<15)
+#define HAS_HAIR (1<<16)
 
 //Pre-baked combinations of the above body flags
 #define HAS_BODY_ACCESSORY (HAS_TAIL|HAS_WING)
@@ -102,25 +104,43 @@
 #define SHOCK (1<<3)
 #define SAFE (1<<4)
 
-//flags for passing things
+/**
+ * These defines are used specifically with the atom/pass_flags bitmask
+ * the atom/checkpass() proc uses them (tables will call movable atom checkpass(PASSTABLE) for example)
+ */
+// flags for pass_flags
+/// Allows you to pass over tables.
 #define PASSTABLE (1<<0)
+/// Allows you to pass over glass(this generally includes anything see-through that's glass-adjacent, ie. windows, windoors, airlocks with glass, etc.)
 #define PASSGLASS (1<<1)
+/// Allows you to pass over grilles.
 #define PASSGRILLE (1<<2)
+/// Allows you to pass over blob tiles.
 #define PASSBLOB (1<<3)
+/// Allows you to pass over mobs.
 #define PASSMOB (1<<4)
 /// Let thrown things past us. **ONLY MEANINGFUL ON pass_flags_self!**
 #define LETPASSTHROW (1<<5)
+/// Allows you to pass over machinery, ie. vending machines, computers, protolathes, etc.
 #define PASSMACHINE (1<<6)
+/// Allows you to pass over structures, ie. racks, tables(if you don't already have PASSTABLE), etc.
 #define PASSSTRUCTURE (1<<7)
+/// Allows you to pass over plastic flaps, often found at cargo or MULE dropoffs.
 #define PASSFLAPS (1<<8)
+/// Allows you to pass over fences.
 #define PASSFENCE (1<<9)
+/// Allows you to pass over airlocks and mineral doors.
 #define PASSDOOR (1<<10)
+/// Allows you to pass over vehicles, ie. mecha, secways, the pimpin' ride, etc.
 #define PASSVEHICLE (1<<11)
+/// Allows you to pass over dense items.
 #define PASSITEM (1<<12)
 /// Do not intercept click attempts during Adjacent() checks. See [turf/proc/ClickCross]. **ONLY MEANINGFUL ON pass_flags_self!**
 #define LETPASSCLICKS (1<<13)
+/// Allows projectiles to pass through.
+#define PASSPROJECTILE (1<<14)
 
-#define PASSEVERYTHING (PASSTABLE|PASSGLASS|PASSGRILLE|PASSBLOB|PASSMOB|LETPASSTHROW|PASSMACHINE|PASSSTRUCTURE|PASSFLAPS|PASSFENCE|PASSDOOR|PASSVEHICLE|PASSITEM|LETPASSCLICKS)
+#define PASSEVERYTHING (PASSTABLE|PASSGLASS|PASSGRILLE|PASSBLOB|PASSMOB|LETPASSTHROW|PASSMACHINE|PASSSTRUCTURE|PASSFLAPS|PASSFENCE|PASSDOOR|PASSVEHICLE|PASSITEM|LETPASSCLICKS|PASSPROJECTILE)
 
 //Movement Types
 #define GROUND (1<<0)
@@ -134,11 +154,14 @@
 
 /// Combination flag for movetypes which, for all intents and purposes, mean the mob is not touching the ground
 #define MOVETYPES_NOT_TOUCHING_GROUND (FLYING|FLOATING|UPSIDE_DOWN)
+/// Trait source for stuff movetypes applies
+#define SOURCE_MOVETYPES "movetypes"
 
 // for /datum/var/datum_flags
 #define DF_USE_TAG (1<<0)
 #define DF_VAR_EDITED (1<<1)
 #define DF_ISPROCESSING (1<<2)
+#define DF_UID_INVALID (1<<3)
 
 //TURF FLAGS
 /// If a turf cant be jaunted through.
@@ -169,21 +192,44 @@
 #define MORTAR_ALLOWED (1<<6)
 
 //ORGAN TYPE FLAGS
-#define AFFECT_ROBOTIC_ORGAN 1
-#define AFFECT_ORGANIC_ORGAN 2
-#define AFFECT_ALL_ORGANS 3
+#define AFFECT_ROBOTIC_ORGAN (1<<0)
+#define AFFECT_ORGANIC_ORGAN (1<<1)
+#define AFFECT_ALL_ORGANS (AFFECT_ROBOTIC_ORGAN | AFFECT_ORGANIC_ORGAN)
+#define AFFECT_EXTERNAL_ORGANS (1<<2)
+#define AFFECT_INTERNAL_ORGANS (1<<3)
+#define AFFECT_BOTH_ORGANS (AFFECT_EXTERNAL_ORGANS | AFFECT_INTERNAL_ORGANS)
+
+//Combinations of flags for proc get_damaged_organs()
+#define AFFECT_ROBOTIC_EXTERNAL_PARTS (AFFECT_ROBOTIC_ORGAN | AFFECT_EXTERNAL_ORGANS)
+#define AFFECT_ORGANIC_EXTERNAL_PARTS (AFFECT_ORGANIC_ORGAN | AFFECT_EXTERNAL_ORGANS)
+#define AFFECT_ROBOTIC_INTERNAL_PARTS (AFFECT_ROBOTIC_ORGAN | AFFECT_INTERNAL_ORGANS)
+#define AFFECT_ORGANIC_INTERNAL_PARTS (AFFECT_ORGANIC_ORGAN | AFFECT_INTERNAL_ORGANS)
+#define AFFECT_ALL_EXTERNAL_PARTS (AFFECT_ALL_ORGANS | AFFECT_EXTERNAL_ORGANS)
+#define AFFECT_ALL_INTERNAL_PARTS (AFFECT_ALL_ORGANS | AFFECT_INTERNAL_ORGANS)
+#define AFFECT_ALL_PARTS (AFFECT_ALL_ORGANS | AFFECT_BOTH_ORGANS)
+#define AFFECT_ALL_ROBOTIC_PARTS (AFFECT_ROBOTIC_ORGAN | AFFECT_BOTH_ORGANS)
+#define AFFECT_ALL_ORGANIC_PARTS (AFFECT_ORGANIC_ORGAN | AFFECT_BOTH_ORGANS)
 
 //Fire and Acid stuff, for resistance_flags
 #define LAVA_PROOF (1<<0)
-#define FIRE_PROOF (1<<1) //100% immune to fire damage (but not necessarily to lava or heat)
+/// 100% immune to fire damage (but not necessarily to lava or heat)
+#define FIRE_PROOF (1<<1)
+/// atom is flammable and can have the burning component
 #define FLAMMABLE (1<<2)
+/// currently burning
 #define ON_FIRE (1<<3)
-#define UNACIDABLE (1<<4) //acid can't even appear on it, let alone melt it.
-#define ACID_PROOF (1<<5) //acid stuck on it doesn't melt it.
-#define INDESTRUCTIBLE (1<<6) //doesn't take damage
-#define FREEZE_PROOF (1<<7) //can't be frozen
-#define NO_MALF_EFFECT (1<<8) //So malf cannot blow certain things
-#define NO_MOUSTACHING (1<<9) //Saves from super hairgrowium shenanigans
+/// acid can't even appear on it, let alone melt it.
+#define UNACIDABLE (1<<4)
+/// acid stuck on it doesn't melt it.
+#define ACID_PROOF (1<<5)
+/// doesn't take damage
+#define INDESTRUCTIBLE (1<<6)
+/// can't be frozen
+#define FREEZE_PROOF (1<<7)
+/// malf cannot blow certain things
+#define NO_MALF_EFFECT (1<<8)
+/// saves from super hairgrowium shenanigans
+#define NO_MOUSTACHING (1<<9)
 
 #define MEAT (1<<0)
 #define VEGETABLES (1<<1)
@@ -200,6 +246,7 @@
 #define TOXIC (1<<12)
 
 GLOBAL_LIST_INIT(bitflags, list(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768))
+GLOBAL_LIST_INIT(more_bitflags, list(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288))
 
 //Mob mobility var flags
 /// can move
@@ -246,7 +293,29 @@ GLOBAL_LIST_INIT(bitflags, list(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 204
 #define DA_IGNORE_EMPTY_GRIPPER (1<<8)
 /// Used to prevent important slowdowns to be modified by mob's actions slowdown
 #define DA_IGNORE_SLOWDOWNS (1<<9)
+/// Cancel the action if the user does another action (mainly via clicking)
+#define DA_DO_AFTER_CHECK_NEXT_MOVE (1<<10)
 
 /// All ignore flags considered as default old do_after behavior.
 #define DEFAULT_DOAFTER_IGNORE (DA_IGNORE_LYING|DA_IGNORE_RESTRAINED)
 
+#define MAX_BITFIELD_SIZE 24
+
+//alternate appearance flags
+#define AA_TARGET_SEE_APPEARANCE (1<<0)
+#define AA_MATCH_TARGET_OVERLAYS (1<<1)
+
+#define KEEP_TOGETHER_ORIGINAL "keep_together_original"
+
+/// Setter for KEEP_TOGETHER to allow for multiple sources to set and unset it
+#define ADD_KEEP_TOGETHER(x, source) \
+	if((x.appearance_flags & KEEP_TOGETHER) && !HAS_TRAIT(x, TRAIT_KEEP_TOGETHER)) ADD_TRAIT(x, TRAIT_KEEP_TOGETHER, KEEP_TOGETHER_ORIGINAL); \
+	ADD_TRAIT(x, TRAIT_KEEP_TOGETHER, source); \
+	x.appearance_flags |= KEEP_TOGETHER
+
+#define REMOVE_KEEP_TOGETHER(x, source)\
+	REMOVE_TRAIT(x, TRAIT_KEEP_TOGETHER, source);\
+	if(HAS_TRAIT_FROM_ONLY(x, TRAIT_KEEP_TOGETHER, KEEP_TOGETHER_ORIGINAL))\
+		REMOVE_TRAIT(x, TRAIT_KEEP_TOGETHER, KEEP_TOGETHER_ORIGINAL);\
+	else if(!HAS_TRAIT(x, TRAIT_KEEP_TOGETHER))\
+		x.appearance_flags &= ~KEEP_TOGETHER

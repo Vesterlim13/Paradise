@@ -98,7 +98,7 @@
 	gold_core_spawnable = FRIENDLY_SPAWN
 
 /mob/living/simple_animal/parrot/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "попугай",
 		GENITIVE = "попугая",
 		DATIVE = "попугаю",
@@ -388,7 +388,7 @@
 				if(!parrot_perch || parrot_interest.loc != parrot_perch.loc)
 					try_grab_item(parrot_interest)
 					visible_message(
-						span_notice("[capitalize(declent_ru(NOMINATIVE))] хватает [held_item.declent_ru(ACCUSATIVE)]!"),
+						span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] хватает [held_item.declent_ru(ACCUSATIVE)]!"),
 						span_notice("Вы хватаете [held_item.declent_ru(ACCUSATIVE)]!"),
 						span_italics("Слышно яростное хлопанье крыльев.")
 					)
@@ -533,7 +533,7 @@
  */
 /mob/living/simple_animal/parrot/proc/steal_from_ground()
 	set name = "Схватить предмет"
-	set category = STATPANEL_PARROT
+	set category = VERB_CATEGORY_PARROT
 	set desc = "Grabs a nearby item."
 
 	if(stat)
@@ -542,7 +542,7 @@
 	if(held_item)
 		balloon_alert(src, "вы уже что-то держите!")
 		return 1
-	if(istype(loc, /obj/machinery/disposal) || istype(loc, /obj/structure/disposalholder))
+	if(isdisposalunit(loc) || istype(loc, /obj/structure/disposalholder))
 		balloon_alert(src, "невозможно!")
 		return 1
 	for(var/obj/item/I in view(1, src))
@@ -554,7 +554,7 @@
 
 			try_grab_item(I)
 			visible_message(
-				span_notice("[capitalize(declent_ru(NOMINATIVE))] хватает [held_item.declent_ru(ACCUSATIVE)]!"),
+				span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] хватает [held_item.declent_ru(ACCUSATIVE)]!"),
 				span_notice("Вы хватаете [held_item.declent_ru(ACCUSATIVE)]!"),
 				span_italics("Слышно яростное хлопанье крыльев.")
 			)
@@ -565,7 +565,7 @@
 
 /mob/living/simple_animal/parrot/proc/steal_from_mob()
 	set name = "Украсть из рук"
-	set category = STATPANEL_PARROT
+	set category = VERB_CATEGORY_PARROT
 	set desc = "Steals an item right out of a person's hand!"
 
 	if(stat)
@@ -587,7 +587,7 @@
 		if(stolen_item && C.drop_item_ground(stolen_item))
 			try_grab_item(stolen_item)
 			visible_message(
-				span_notice("[capitalize(declent_ru(NOMINATIVE))] выхватывает [held_item.declent_ru(ACCUSATIVE)] из рук [C.declent_ru(GENITIVE)]!"),
+				span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] выхватывает [held_item.declent_ru(ACCUSATIVE)] из рук [C.declent_ru(GENITIVE)]!"),
 				span_notice("Вы вырываете [held_item.declent_ru(ACCUSATIVE)] из рук [C.declent_ru(GENITIVE)]!"),
 				span_italics("Слышно яростное хлопанье крыльев.")
 			)
@@ -598,7 +598,7 @@
 
 /mob/living/simple_animal/parrot/verb/drop_held_item_player()
 	set name = "Выбросить предмет"
-	set category = STATPANEL_PARROT
+	set category = VERB_CATEGORY_PARROT
 	set desc = "Drop the item you're holding."
 
 	if(stat)
@@ -608,7 +608,7 @@
 
 /mob/living/simple_animal/parrot/proc/drop_held_item(drop_gently = TRUE)
 	set name = "Выбросить предмет"
-	set category = STATPANEL_PARROT
+	set category = VERB_CATEGORY_PARROT
 	set desc = "Drop the item you're holding."
 
 	if(stat)
@@ -619,7 +619,7 @@
 		return 0
 
 	if(!drop_gently)
-		if(istype(held_item, /obj/item/grenade))
+		if(isgrenade(held_item))
 			var/obj/item/grenade/G = held_item
 			G.forceMove(loc)
 			G.do_drop_animation(src)
@@ -639,7 +639,7 @@
 
 /mob/living/simple_animal/parrot/proc/perch_player()
 	set name = "Присесть"
-	set category = STATPANEL_PARROT
+	set category = VERB_CATEGORY_PARROT
 	set desc = "Sit on a nice comfy perch."
 
 	if(stat || !client)
@@ -859,7 +859,26 @@
 		"Вы меня огорчили!",
 		"Не могу догнать свои мысли.",
 		"У меня больше ответов, чем вопросов!",
-		"Меня расстреляли, но я не сдался!")
+		"Меня расстреляли, но я не сдался!",
+		"Открытие вентиля реактора — это как он получает газ, верно?",
+		"Давайте заполним реактор стержнями суперматерии!",
+		"Как думаете, можно вооружиться выброшенными охлаждающими стержнями?",
+		"КТО ВСЁ ВРЕМЯ ОСТАВЛЯЕТ ТВЭЛЫ СНАРУЖИ",
+		"Зачем нам охлаждающие стержни, если мы используем газ?",
+		"Погодите, почему целостность реактора не повышается?",
+		"Когда это в инженерии появился бассейн!?",
+		"Кто-нибудь ещё чувствует привкус меди?",
+		"10 зиверт — это же не опасная доза радиации, правда?",
+		"Замените отработанные стержни, лентяи!",
+		"На реакторе гнездится ксеноморф!",
+		"Почему это Рипли вытаскивает охлаждающие стержни?",
+		"Атмосферные техники — любимые модераторы NGCR",
+		"Кто позволил клоуну трогать регулирующие стержни?",
+		"Кто из вас, придурков, притащил топливный стержень в медбей?",
+		"Охлаждающий стержень только что влетел в капитана!",
+		"Реактор переходит в сверхкритическое состояние!",
+		"Опасность! Разрушение активной зоны реактора в процессе! Целостность: 79.47%"
+	)
 
 /mob/living/simple_animal/parrot/handle_message_mode(message_mode, list/message_pieces, verb, used_radios)
 	if(message_mode && istype(ears))
@@ -890,7 +909,7 @@
 	var/matrix/m180 = matrix(held_item.transform)
 	m180.Turn(180)
 
-	var/held_item_icon = image(held_item, pixel_y = -8)
+	var/held_item_icon = image(held_item, pixel_z = -8)
 	animate(held_item_icon, transform = m180)
 	underlays += held_item_icon
 

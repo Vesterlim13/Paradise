@@ -1,4 +1,4 @@
-
+GLOBAL_LIST_INIT_TYPED(viruses_severity, /datum/virus_severity, generate_viruses_severity())
 GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
 
 /datum/disease
@@ -21,8 +21,8 @@ GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
 
 	//Visibility
 	var/visibility_flags = VISIBLE
-	/// If NONTHREAT, not marked on HUD
-	var/severity = NONTHREAT
+	/// If nonthreat, not marked on HUD
+	var/severity = DISEASE_SEVERITY_NONTHREAT
 
 	/// The fraction of stages the disease must at least be at to show up on medical HUDs. Rounded up.
 	var/discovery_threshold = 0.5
@@ -86,6 +86,9 @@ GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
 		cure_text = russian_list(reagents, "Неизлечимо", needs_all_cures ? " и " : " или ")
 
 /datum/disease/Destroy()
+	unregister_disease_signals()
+	if(affected_mob)
+		LAZYREMOVE(affected_mob.diseases, src)
 	affected_mob = null
 	GLOB.active_diseases.Remove(src)
 	return ..()
@@ -99,9 +102,6 @@ GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
  */
 /datum/disease/proc/stage_act()
 	if(!affected_mob)
-		return FALSE
-
-	if(affected_mob?.stat == DEAD && !can_progress_in_dead)
 		return FALSE
 
 	var/cure = has_cure()
@@ -125,7 +125,7 @@ GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
 	if(prob(stage_prob))
 		stage = min(stage + 1, max_stages)
 		// Once we reach a late enough stage, medical HUDs can pick us up even if we regress
-		if(!discovered && stage >= CEILING(max_stages * discovery_threshold, 1))
+		if(!discovered && stage >= ceil(max_stages * discovery_threshold))
 			discovered = TRUE
 			affected_mob.med_hud_set_status()
 
@@ -152,6 +152,7 @@ GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
 		affected_mob.med_hud_set_status()
 		if(cured_message)
 			to_chat(affected_mob, span_notice(cured_message))
+	unregister_disease_signals()
 	qdel(src)
 
 /**
@@ -201,7 +202,29 @@ GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
 	GLOB.active_diseases += D
 	D.carrier = is_carrier
 	D.affected_mob.med_hud_set_status()
+	D.register_disease_signals()
 	return D
+
+/// Register any relevant signals for the disease
+/datum/disease/proc/register_disease_signals()
+	if(isnull(affected_mob))
+		return
+	RegisterSignal(affected_mob, COMSIG_LIVING_LIFE, PROC_REF(on_life))
+
+/// Unregister any relevant signals for the disease
+/datum/disease/proc/unregister_disease_signals()
+	if(isnull(affected_mob))
+		return
+	UnregisterSignal(affected_mob, list(COMSIG_LIVING_LIFE))
+
+/datum/disease/proc/on_life(datum/source, seconds_per_tick)
+	SIGNAL_HANDLER
+	PRIVATE_PROC(TRUE)
+
+	if(HAS_TRAIT(affected_mob, TRAIT_STASIS) || QDELETED(src) || (affected_mob.stat == DEAD && !can_progress_in_dead))
+		return
+
+	stage_act(seconds_per_tick)
 
 /datum/disease/proc/IsSame(datum/disease/D)
 	if(src.type == D.type)
@@ -239,4 +262,69 @@ GLOBAL_LIST_INIT(diseases, subtypesof(/datum/disease))
 		new_disease.Contract(affected_mob)
 		qdel(src)
 		return TRUE
+
+/datum/disease/proc/set_severity(new_severity)
+	// subtract 2 because indexing is zero based and we want to exclude /datum/virus_severity/uncurable
+	new_severity = clamp(new_severity, 0, length(GLOB.viruses_severity) - 2)
+
+	for(var/severity_string in GLOB.viruses_severity)
+		var/datum/virus_severity/virus_severity = GLOB.viruses_severity[severity_string]
+		var/current_severity = virus_severity.severity
+		if(current_severity != new_severity)
+			continue
+
+		severity = severity_string
+		return
+
+/proc/generate_viruses_severity()
+	var/list/desease_by_key = list()
+	for(var/datum/virus_severity/type as anything in subtypesof(/datum/virus_severity))
+		desease_by_key[initial(type.name)] = new type()
+
+	return desease_by_key
+
+/datum/virus_severity
+	var/name
+	var/hud_state
+	var/severity
+
+/datum/virus_severity/positive
+	name = DISEASE_SEVERITY_POSITIVE
+	hud_state = "hudbuff"
+	severity = 0
+
+/datum/virus_severity/nonthreat
+	name = DISEASE_SEVERITY_NONTHREAT
+	hud_state = "hudill0"
+	severity = 1
+
+/datum/virus_severity/minor
+	name = DISEASE_SEVERITY_MINOR
+	hud_state = "hudill1"
+	severity = 2
+
+/datum/virus_severity/medium
+	name = DISEASE_SEVERITY_MEDIUM
+	hud_state = "hudill2"
+	severity = 3
+
+/datum/virus_severity/harmful
+	name = DISEASE_SEVERITY_HARMFUL
+	hud_state = "hudill3"
+	severity = 4
+
+/datum/virus_severity/dangerous
+	name = DISEASE_SEVERITY_DANGEROUS
+	hud_state = "hudill4"
+	severity = 5
+
+/datum/virus_severity/biohazard
+	name = DISEASE_SEVERITY_BIOHAZARD
+	hud_state = "hudill5"
+	severity = 6
+
+/datum/virus_severity/uncurable
+	name = DISEASE_SEVERITY_UNCURABLE
+	hud_state = "hudill6"
+	severity = -1
 

@@ -58,6 +58,7 @@
 		// Ghosts wants to see a do_afters too!
 		for(var/mob/dead/observer/observe in user.inventory_observers)
 			if(!observe.client)
+				observe.handle_when_autoobserve_move()
 				LAZYREMOVE(user.inventory_observers, observe)
 				continue
 			user_client = observe.client
@@ -78,9 +79,9 @@
 				continue
 			progress_bar.listindex--
 
-			progress_bar.bar.pixel_y = ICON_SIZE_Y + offset_y + (PROGRESSBAR_HEIGHT * (progress_bar.listindex - 1))
+			progress_bar.bar.pixel_z = ICON_SIZE_Y + offset_y + (PROGRESSBAR_HEIGHT * (progress_bar.listindex - 1))
 			var/dist_to_travel = ICON_SIZE_Y + offset_y + (PROGRESSBAR_HEIGHT * (progress_bar.listindex - 1)) - PROGRESSBAR_HEIGHT
-			animate(progress_bar.bar, pixel_y = dist_to_travel, time = PROGRESSBAR_ANIMATION_TIME, easing = SINE_EASING)
+			animate(progress_bar.bar, pixel_z = dist_to_travel, time = PROGRESSBAR_ANIMATION_TIME, easing = SINE_EASING)
 
 		LAZYREMOVEASSOC(user.progressbars, bar_loc, src)
 		user = null
@@ -124,10 +125,10 @@
 
 ///Adds a smoothly-appearing progress bar image to the player's screen.
 /datum/progressbar/proc/add_prog_bar_image_to_client()
-	bar.pixel_y = 0
+	bar.pixel_z = 0
 	bar.alpha = 0
 	user_client.add_progressbar(src)
-	animate(bar, pixel_y = ICON_SIZE_Y + offset_y + (PROGRESSBAR_HEIGHT * (listindex - 1)), alpha = 255, time = PROGRESSBAR_ANIMATION_TIME, easing = SINE_EASING)
+	animate(bar, pixel_z = ICON_SIZE_Y + offset_y + (PROGRESSBAR_HEIGHT * (listindex - 1)), alpha = 255, time = PROGRESSBAR_ANIMATION_TIME, easing = SINE_EASING)
 
 /client/proc/add_progressbar(datum/progressbar/bar)
 	images += bar.bar
@@ -154,6 +155,14 @@
 	animate(bar, alpha = 0, time = PROGRESSBAR_ANIMATION_TIME)
 
 	QDEL_IN(src, PROGRESSBAR_ANIMATION_TIME)
+
+///Progress bars are very generic, and what hangs a ref to them depends heavily on the context in which they're used
+///So let's make hunting harddels easier yeah?
+/datum/progressbar/dump_harddel_info()
+	if(harddel_deets_dumped)
+		return
+	harddel_deets_dumped = TRUE
+	return "Owner's type: [location_type]"
 
 #undef PROGRESSBAR_ANIMATION_TIME
 #undef PROGRESSBAR_HEIGHT

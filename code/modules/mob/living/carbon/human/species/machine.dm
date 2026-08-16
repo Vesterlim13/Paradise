@@ -1,5 +1,5 @@
 /datum/species/machine
-	name = SPECIES_MACNINEPERSON
+	name = SPECIES_MACHINEPERSON
 	name_plural = "Machines"
 
 	blurb = "Positronic intelligence really took off in the 26th century, and it is not uncommon to see independant, free-willed \
@@ -44,7 +44,7 @@
 	dies_at_threshold = TRUE
 	can_revive_by_healing = 1
 	has_gender = FALSE
-	reagent_tag = PROCESS_SYN
+	reagent_tag = SYNTHETIC
 	male_scream_sound = list('sound/goonstation/voice/robot_scream.ogg')
 	female_scream_sound = list('sound/goonstation/voice/robot_scream.ogg')
 	male_cough_sounds = list('sound/effects/mob_effects/m_machine_cougha.ogg','sound/effects/mob_effects/m_machine_coughb.ogg', 'sound/effects/mob_effects/m_machine_coughc.ogg')
@@ -97,6 +97,22 @@
 		SPECIES_AGE_MAX = 58,
 		JOB_MIN_AGE_HIGH_ED = 15,
 		JOB_MIN_AGE_COMMAND = 15,
+	)
+
+	max_select_skills = list(
+		/datum/skill/general/mech_drive = 3,
+		/datum/skill/general/cooking = 1,
+		/datum/skill/service/drink_mixing = 1,
+		/datum/skill/service/botany = 0,
+		/datum/skill/service/cleaning = 1,
+		/datum/skill/engineering/construction = 3,
+		/datum/skill/engineering/electrician = 4,
+		/datum/skill/medical/genetic = 0,
+		/datum/skill/medical/virusology = 0,
+		/datum/skill/research/research = 3,
+		/datum/skill/research/protolathe = 3,
+		/datum/skill/research/robotics = 3,
+		/datum/skill/research/xenobiology = 1,
 	)
 
 /datum/species/machine/on_species_gain(mob/living/carbon/human/human)
@@ -168,7 +184,7 @@
 		return
 	if(!robohead.is_monitor) //If they've got a prosthetic head and it isn't a monitor, they've no screen to adjust. Instead, let them change the colour of their optics!
 		var/optic_colour = tgui_input_color(H, "Выберите цвет оптики", H.m_colours["head"])
-		if(H.incapacitated(INC_IGNORE_RESTRAINED|INC_IGNORE_GRABBED))
+		if(H.incapacitated(IGNORE_RESTRAINTS|IGNORE_GRAB))
 			to_chat(H, span_warning("Ваша попытка сменить отображаемый цвет была прервана."))
 			return
 		if(!isnull(optic_colour))
@@ -198,7 +214,7 @@
 			return
 		var/new_color = tgui_input_color(usr, "Выберите цвет", "Цвет монитора", head_organ.hair_colour)
 
-		if(H.incapacitated(INC_IGNORE_RESTRAINED|INC_IGNORE_GRABBED))
+		if(H.incapacitated(IGNORE_RESTRAINTS|IGNORE_GRAB))
 			to_chat(H, span_warning("Ваша попытка сменить изображения на дисплее была прервана."))
 			return
 
@@ -217,3 +233,6 @@
 		exoframe.insert(human)
 
 	return ..()
+
+/datum/species/machine/compressor_grind(location)
+	new /obj/item/stack/sheet/mineral/titanium(location)

@@ -8,10 +8,9 @@
 	flags = CONDUCT
 
 	var/spamcheck = 0
-	var/emagged = 0
 	var/insults = 0
 	var/span = ""
-	var/list/insultmsg = list("ИДИТЕ НАХУЙ!", "Я АГЕНТ СИНДИКАТА!", "СБ, ЗАСТРЕЛИТЕ МЕНЯ НЕМЕДЛЕННО!", "У МЕНЯ БОМБА!", "КАПИТАН ГАНДОН!", "ЗА СИНДИКАТ!")
+	var/list/insultmsg = list("ИДИТЕ НАХУЙ!", "Я АГЕНТ \"Синдиката\"!", "СБ, ЗАСТРЕЛИТЕ МЕНЯ НЕМЕДЛЕННО!", "У МЕНЯ БОМБА!", "КАПИТАН ГАНДОН!", "ЗА Синдикат!")
 
 /obj/item/megaphone/attack_self(mob/living/user)
 	if(check_mute(user.ckey, MUTE_IC))
@@ -74,7 +73,7 @@
 		O.hear_talk(user, message_to_multilingual(span_reallybig("[message]")))
 
 	for(var/mob/M in get_hearers_in_view(7, src))
-		if((M.client?.prefs.toggles2 & PREFTOGGLE_2_RUNECHAT) && M.can_hear() && M.stat != UNCONSCIOUS)
+		if((M.client?.prefs.toggles2 & PREFTOGGLE_2_RUNECHAT) && !HAS_TRAIT(M, TRAIT_DEAF) && M.stat != UNCONSCIOUS)
 			M.create_chat_message(user, message, list("yell"))
 		var/effect = SOUND_EFFECT_MEGAPHONE
 		if(isrobot(user))

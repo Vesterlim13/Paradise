@@ -37,7 +37,7 @@
 	else
 		mobs_running[arrived] = arrived.last_movement
 
-/obj/machinery/power/treadmill/proc/on_exited(datum/source, mob/living/departed, atom/newLoc)
+/obj/machinery/power/treadmill/proc/on_exited(datum/source, mob/living/departed, direction)
 	SIGNAL_HANDLER
 
 	if(anchored && isliving(departed))
@@ -174,7 +174,7 @@
 
 /obj/machinery/treadmill_monitor/examine(mob/user)
 	. = ..()
-	. += "<span class='notice'>The display reads:<div style='text-align: center'>[line1]<br>[line2]</div></span>"
+	. += span_notice("The display reads:<div style='text-align: center'>[line1]<br>[line2]</div>")
 
 /obj/machinery/treadmill_monitor/update_overlays()
 	. = ..()

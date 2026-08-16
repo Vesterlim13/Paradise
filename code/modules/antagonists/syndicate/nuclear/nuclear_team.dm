@@ -133,7 +133,7 @@
 
 	if(!disk_rescued && station_was_nuked && !syndies_didnt_escape)
 		SSticker.mode_result = "nuclear win - syndicate nuke"
-		text += span_fontsize3("<br><br><b>Полная победа Синдиката!</b>")
+		text += span_fontsize3("<br><br><b>Полная победа \"Синдиката\"!</b>")
 		text += "<br><b>Отряд оперативников [syndicate_name] уничтожил [station_name()]!</b>"
 
 	else if(!disk_rescued && station_was_nuked && syndies_didnt_escape)
@@ -163,12 +163,12 @@
 
 	else if(!disk_rescued && is_operatives_are_dead())
 		SSticker.mode_result = "nuclear loss - evacuation - disk not secured"
-		text += span_fontsize3("<br><br><b>Частичная победа Синдиката!</b>")
+		text += span_fontsize3("<br><br><b>Частичная победа \"Синдиката\"!</b>")
 		text += "<br><b>Персонал станции не смог сохранить диск ядерной аутентификации, но уничтожил весь отряд оперативников [syndicate_name]!</b>"
 
 	else if(!disk_rescued && crew_evacuated)
 		SSticker.mode_result = "nuclear halfwin - detonation averted"
-		text += span_fontsize3("<br><br><b>Частичная победа Синдиката!</b>")
+		text += span_fontsize3("<br><br><b>Частичная победа \"Синдиката\"!</b>")
 		text += "<br><b>Отряд оперативников [syndicate_name] заполучил диск ядерной аутентификации, но взрыва [station_name()] не произошло.</b> В следующий раз не теряйте диск!"
 
 	else if(!disk_rescued && !crew_evacuated)
@@ -176,13 +176,13 @@
 		text += span_fontsize3("<br><br><b>Ничья</b>")
 		text += "<br><b>Раунд был прерван по неизвестной причине!</b>"
 
-	text += span_fontsize3("<br><b>Ядерными Оперативниками Синдиката были:</b>")
+	text += span_fontsize3("<br><b>Ядерными Оперативниками \"Синдиката\" были:</b>")
 
 	var/TC_uses = 0
 
 	for(var/datum/mind/syndicate in members)
 
-		text += "<br><b>[syndicate.get_display_key()]</b> был <b>[syndicate.name]</b> ("
+		text += "<br><b>[syndicate.get_mind_key()]</b> был <b>[syndicate.name]</b> ("
 		if(syndicate.current)
 			if(syndicate.current.stat == DEAD)
 				text += "мёртв"
@@ -280,8 +280,8 @@
 	if(GLOB.nuke_codes[/obj/machinery/nuclearbomb/syndicate] != "Nope")
 		var/area/A = get_area(nuke)
 
-		var/list/thousand_penalty = list(/area/wizard_station, /area/solar)
-		var/list/fiftythousand_penalty = list(/area/security/main, /area/security/brig, /area/security/armory, /area/security/checkpoint/south)
+		var/list/thousand_penalty = list(/area/centcom/wizard_station, /area/station/solars)
+		var/list/fiftythousand_penalty = list(/area/station/security/main, /area/station/security/brig, /area/station/security/hallway/armory, /area/station/security/checkpoint/south)
 
 		if(is_type_in_list(A, thousand_penalty))
 			scoreboard.nuked_penalty = 1000
@@ -289,7 +289,7 @@
 		else if(is_type_in_list(A, fiftythousand_penalty))
 			scoreboard.nuked_penalty = 50000
 
-		else if(istype(A, /area/engineering))
+		else if(istype(A, /area/station/engineering))
 			scoreboard.nuked_penalty = 100000
 
 		else

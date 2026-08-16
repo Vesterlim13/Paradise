@@ -103,7 +103,7 @@ GLOBAL_LIST_INIT(department_radio_keys, list(
 	":," = SYND_TAIPAN_FREQ_NAME,		"#," = SYND_TAIPAN_FREQ_NAME,	"№," = SYND_TAIPAN_FREQ_NAME,	".," = SYND_TAIPAN_FREQ_NAME,
 	":1" = EVENT_ALPHA_FREQ_NAME,		"#1" = EVENT_ALPHA_FREQ_NAME,	"№1" = EVENT_ALPHA_FREQ_NAME,	".1" = EVENT_ALPHA_FREQ_NAME,
 	":2" = EVENT_BETA_FREQ_NAME,		"#2" = EVENT_BETA_FREQ_NAME,	"№2" = EVENT_BETA_FREQ_NAME,	".2" = EVENT_BETA_FREQ_NAME,
-	":3" = EVENT_GAMMA_FRE_NAME,		"#3" = EVENT_GAMMA_FRE_NAME,	"№3" = EVENT_GAMMA_FRE_NAME,	".3" = EVENT_GAMMA_FRE_NAME,
+	":3" = EVENT_GAMMA_FREQ_NAME,		"#3" = EVENT_GAMMA_FREQ_NAME,	"№3" = EVENT_GAMMA_FREQ_NAME,	".3" = EVENT_GAMMA_FREQ_NAME,
 	// Russian symbols no case
 		// None yet.
 
@@ -112,6 +112,8 @@ GLOBAL_LIST_INIT(department_radio_keys, list(
 	":$" = ERT_FREQ_NAME,				"#$" = ERT_FREQ_NAME,			"№$" = ERT_FREQ_NAME,			".$" = ERT_FREQ_NAME,
 	":_" = SYNDTEAM_FREQ_NAME,		"#_" = SYNDTEAM_FREQ_NAME,		"№_" = SYNDTEAM_FREQ_NAME,		"._" = SYNDTEAM_FREQ_NAME,
 	":-" = DTH_FREQ_NAME,				"#-" = DTH_FREQ_NAME,			"№-" = DTH_FREQ_NAME,			".-" = DTH_FREQ_NAME,
+	":vr" = VOX_RAID_FREQ_NAME,		"#vr" = VOX_RAID_FREQ_NAME,		".vr" = VOX_RAID_FREQ_NAME,		":мк" = VOX_RAID_FREQ_NAME,
+	"#мк" = VOX_RAID_FREQ_NAME,		".мк" = VOX_RAID_FREQ_NAME,
 	":+" = SPEC_FREQ_NAME,			"#+" = SPEC_FREQ_NAME,			"№+" = SPEC_FREQ_NAME,			".+" = SPEC_FREQ_NAME //activate radio-specific special functions
 ))
 
@@ -190,7 +192,7 @@ GLOBAL_LIST_EMPTY(channel_to_radio_key)
 	returns[3] = null
 	return returns
 
-/mob/living/say(message, verb = "говор[PLUR_IT_YAT(src)]", sanitize = TRUE, ignore_speech_problems = FALSE, ignore_atmospherics = FALSE, ignore_languages = FALSE)
+/mob/living/say(message, verb = "говор[PLUR_IT_YAT(src)]", sanitize = TRUE, ignore_speech_problems = FALSE, ignore_atmospherics = FALSE, ignore_languages = FALSE, ignore_emotes = FALSE)
 	if(client)
 		client.check_say_flood(5)
 		if(check_mute(client.ckey, MUTE_IC))
@@ -210,11 +212,20 @@ GLOBAL_LIST_EMPTY(channel_to_radio_key)
 		return FALSE
 
 	if(copytext(message, 1, 2) == "*")
+		if(ignore_emotes)
+			return FALSE
 		return emote(copytext(message, 2), intentional = TRUE)
 
 	var/ending = copytext(message, length(message))
 	if(!(ending in list("!", "?", ",", ".")) && length(message) != 0)
 		message += "."
+
+	sigreturn = SEND_SIGNAL(src, COMSIG_MOB_SAY, args)
+	if(sigreturn & COMPONENT_UPPERCASE_SPEECH)
+		message = uppertext(message)
+
+	if(sigreturn & COMPONENT_SMALL_SPEECH)
+		message = span_small(message)
 
 	//parse the language code and consume it
 	var/list/message_pieces = list()
@@ -236,14 +247,11 @@ GLOBAL_LIST_EMPTY(channel_to_radio_key)
 		first_piece.speaking.broadcast(src, first_piece.message)
 		return TRUE
 
-	var/message_mode = parse_message_mode(first_piece.message, HEADSET_MODE)
-
-	//parse the radio code and consume it
-	if(message_mode)
-		if(message_mode == HEADSET_MODE)
-			first_piece.message = copytext_char(first_piece.message, 2)	//it would be really nice if the parse procs could do this for us.
-		else
-			first_piece.message = copytext_char(first_piece.message, 3)
+	var/list/parsed_mesage = parse_message_mode(first_piece.message, HEADSET_MODE)
+	var/message_mode = null
+	if(parsed_mesage)
+		first_piece.message = parsed_mesage[2]
+		message_mode = parsed_mesage[1]
 
 	//And only after everything is done, we hissin'
 	for(var/datum/multilingual_say_piece/piece as anything in message_pieces)
@@ -341,7 +349,7 @@ GLOBAL_LIST_EMPTY(channel_to_radio_key)
 
 	if(T)
 		//make sure the air can transmit speech - speaker's side
-		var/datum/gas_mixture/environment = T.return_air()
+		var/datum/gas_mixture/environment = T.get_readonly_air()
 		var/pressure = environment ? environment.return_pressure() : 0
 		if(!ignore_atmospherics)
 			if(pressure < SOUND_MINIMUM_PRESSURE)
@@ -416,7 +424,7 @@ GLOBAL_LIST_EMPTY(channel_to_radio_key)
 				else
 					O.hear_talk(M, message_pieces, verbage)
 
-/mob/living/whisper(message as text)
+/mob/living/whisper(message)
 	message = trim_strip_html_properly(message, 512)
 
 	if(!message)
@@ -434,13 +442,13 @@ GLOBAL_LIST_EMPTY(channel_to_radio_key)
 		return TRUE
 	// Log it here since it skips the default way say handles it
 	create_log(SAY_LOG, "(whisper) '[message]'")
-	SSspeech_controller.queue_say_for_mob(src, message_pieces, SPEECH_CONTROLLER_QUEUE_WHISPER_VERB)
+	whisper_say(message_pieces)
 
 // for weird circumstances where you're inside an atom that is also you, like pai's
 /mob/living/proc/get_whisper_loc()
 	return src
 
-/mob/living/whisper_say(list/message_pieces, verb = "шепч%(ет,ут)%")
+/mob/living/proc/whisper_say(list/message_pieces, verb = "шепч%(ет,ут)%")
 	if(client && check_mute(client.ckey, MUTE_IC))
 		to_chat(src, span_boldwarning("Вы не можете отправлять IC сообщения (мут)."))
 		return

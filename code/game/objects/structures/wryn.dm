@@ -35,20 +35,20 @@
 /obj/structure/wryn/wax/Initialize(mapload)
 	if(usr)
 		add_fingerprint(usr)
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 	. = ..()
 
 /obj/structure/wryn/wax/Destroy()
 	var/turf/T = get_turf(src)
 	. = ..()
-	T.air_update_turf(TRUE)
+	T.recalculate_atmos_connectivity()
 
 /obj/structure/wryn/wax/Move(atom/newloc, direct = NONE, glide_size_override = 0, update_dir = TRUE)
 	var/turf/T = loc
 	. = ..()
 	move_update_air(T)
 
-/obj/structure/wryn/wax/CanAtmosPass(turf/T, vertical)
+/obj/structure/wryn/wax/CanAtmosPass(direction)
 	return !density
 
 // Structure themself
@@ -60,7 +60,7 @@
 	obj_flags = BLOCK_Z_IN_DOWN | BLOCK_Z_IN_UP
 
 /obj/structure/wryn/wax/wall/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "соты",
 		GENITIVE = "сот",
 		DATIVE = "сотам",
@@ -80,7 +80,7 @@
 	max_integrity = 20
 
 /obj/structure/wryn/wax/window/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "прозрачныые соты",
 		GENITIVE = "прозрачных сот",
 		DATIVE = "прозрачным сотам сотам",
@@ -97,6 +97,7 @@
 	anchored = TRUE
 	layer = TURF_LAYER
 	plane = FLOOR_PLANE
+	cares_about_temperature = TRUE
 	var/list/icons = list("wax_floor1", "wax_floor2", "wax_floor3")
 	icon_state = "wax_floor1"
 	max_integrity = 10
@@ -105,7 +106,7 @@
 	obj_flags = BLOCK_Z_OUT_DOWN | BLOCK_Z_IN_UP
 
 /obj/structure/wryn/floor/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "пол из воска",
 		GENITIVE = "пола из воска",
 		DATIVE = "полу из воска",
@@ -126,16 +127,17 @@
 /obj/structure/wryn/floor/proc/fullUpdateWeedOverlays()
 	if(!length(floorImageCache))
 		floorImageCache = list(4)
-		floorImageCache["[NORTH]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_n", layer=2.11, pixel_y = -32)
-		floorImageCache["[SOUTH]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_s", layer=2.11, pixel_y = 32)
-		floorImageCache["[EAST]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_e", layer=2.11, pixel_x = -32)
-		floorImageCache["[WEST]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_w", layer=2.11, pixel_x = 32)
+		floorImageCache["[NORTH]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_n", layer=2.11, pixel_z = -32)
+		floorImageCache["[SOUTH]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_s", layer=2.11, pixel_z = 32)
+		floorImageCache["[EAST]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_e", layer=2.11, pixel_w = -32)
+		floorImageCache["[WEST]"] = image('icons/obj/smooth_structures/wryn/floor.dmi', "wax_floor_side_w", layer=2.11, pixel_w = 32)
 
 	for(var/obj/structure/wryn/floor/floor in range(1,src))
 		floor.update_icon(UPDATE_OVERLAYS)
 
-/obj/structure/wryn/floor/New(pos)
-	..()
+/obj/structure/wryn/floor/Initialize(mapload)
+	. = ..()
+
 	var/picked = pick(icons)
 	icon_state = picked
 	fullUpdateWeedOverlays()
@@ -151,7 +153,7 @@
 	if(checkpass(mover, PASSGLASS))
 		return !opacity
 
-/obj/structure/wryn/floor/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
+/obj/structure/wryn/floor/temperature_expose(exposed_temperature, exposed_volume)
 	..()
 	if(exposed_temperature > 300)
 		take_damage(5, BURN, 0, 0)
@@ -173,7 +175,7 @@
 	max_integrity = 50
 
 /obj/structure/alien/resin/door/wax/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "дверь из сот",
 		GENITIVE = "двери из сот",
 		DATIVE = "двери из сот",

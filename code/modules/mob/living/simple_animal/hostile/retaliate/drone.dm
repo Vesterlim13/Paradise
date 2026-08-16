@@ -21,7 +21,7 @@
 	health = 200
 	maxHealth = 200
 	speed = 8
-	projectiletype = /obj/projectile/beam/immolator/weak
+	projectiletype = /obj/projectile/beam/immolator/weak/hitscan
 	projectilesound = 'sound/weapons/laser3.ogg'
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 	faction = list("malf_drone")
@@ -29,6 +29,7 @@
 	del_on_death = 1
 	var/passive_mode = TRUE // if true, don't target anything.
 	var/datum/effect_system/trail_follow/ion/ion_trail
+	var/static/list/drone_list = valid_subtypesof(/obj/item/circuitboard/drone)
 
 /mob/living/simple_animal/hostile/malf_drone/Initialize(mapload)
 	. = ..()
@@ -129,67 +130,12 @@
 	K = new /obj/item/stack/sheet/plasteel(T, pick(1, 2, 3, 4))
 	step_to(K, get_turf(pick(view(7, src))))
 
-	//also drop dummy circuit boards deconstructable for research (loot)
-	var/obj/item/circuitboard/C
-
 	//spawn 1-4 boards of a random type
-	var/spawnees = 0
 	var/num_boards = rand(1, 4)
-	var/list/options = list(1, 2, 4, 8, 16, 32, 64, 128, 256, 512)
-	for(var/i=0, i<num_boards, i++)
-		var/chosen = pick(options)
-		options.Remove(options.Find(chosen))
-		spawnees |= chosen
-
-	if(spawnees & 1)
-		C = new(T)
-		C.name = "Drone CPU motherboard"
-		C.origin_tech = "programming=[rand(3, 6)]"
-
-	if(spawnees & 2)
-		C = new(T)
-		C.name = "Drone neural interface"
-		C.origin_tech = "biotech=[rand(3, 6)]"
-
-	if(spawnees & 4)
-		C = new(T)
-		C.name = "Drone suspension processor"
-		C.origin_tech = "magnets=[rand(3, 6)]"
-
-	if(spawnees & 8)
-		C = new(T)
-		C.name = "Drone shielding controller"
-		C.origin_tech = "bluespace=[rand(3, 6)]"
-
-	if(spawnees & 16)
-		C = new(T)
-		C.name = "Drone power capacitor"
-		C.origin_tech = "powerstorage=[rand(3, 6)]"
-
-	if(spawnees & 32)
-		C = new(T)
-		C.name = "Drone hull reinforcer"
-		C.origin_tech = "materials=[rand(3, 6)]"
-
-	if(spawnees & 64)
-		C = new(T)
-		C.name = "Drone auto-repair system"
-		C.origin_tech = "engineering=[rand(3, 6)]"
-
-	if(spawnees & 128)
-		C = new(T)
-		C.name = "Drone plasma overcharge counter"
-		C.origin_tech = "plasmatech=[rand(3, 6)]"
-
-	if(spawnees & 256)
-		C = new(T)
-		C.name = "Drone targetting circuitboard"
-		C.origin_tech = "combat=[rand(3, 6)]"
-
-	if(spawnees & 512)
-		C = new(T)
-		C.name = "Corrupted drone morality core"
-		C.origin_tech = "syndicate=[rand(3, 6)]"
+	var/list/options = drone_list.Copy()
+	for(var/i in 1 to num_boards)
+		var/chosen = pick_n_take(options)
+		new chosen(T)
 
 /mob/living/simple_animal/hostile/malf_drone/syndicate
 	stop_automated_movement_when_pulled = TRUE
@@ -212,7 +158,7 @@
 	declare_arrests = FALSE
 	idcheck = TRUE
 	arrest_type = TRUE
-	projectile = /obj/projectile/beam/immolator/weak
+	projectile = /obj/projectile/beam/immolator/weak/hitscan
 
 /mob/living/simple_animal/bot/ed209/combat_drone/Initialize(mapload)
 	. = ..()
@@ -226,7 +172,7 @@
 	return
 
 /mob/living/simple_animal/bot/ed209/combat_drone/set_weapon()
-	projectile = /obj/projectile/beam/immolator/weak
+	projectile = /obj/projectile/beam/immolator/weak/hitscan
 
 /mob/living/simple_animal/bot/ed209/combat_drone/turn_on()
 	. = ..()
@@ -278,7 +224,7 @@
 			S.possess_by_player(M.key)
 			S.master_commander = user
 			S.sentience_act()
-			to_chat(S, "Модуль активирован. Основная задача: подчинение [user.name]. Дополнительная задача: уничтожение враждебных единиц не относящихся к Синдикату в подконтрольном секторе.")
+			to_chat(S, "Модуль активирован. Основная задача: подчинение [user.name]. Дополнительная задача: уничтожение враждебных единиц не относящихся к \"Синдикату\" в подконтрольном секторе.")
 			S.mind.store_memory("<b>Подчиняться [user.name].</b>")
 			qdel(src)
 			qdel(I)
@@ -298,7 +244,7 @@
 	item_state = "book7"
 
 /obj/item/drone_manual/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "странное руководство",
 		GENITIVE = "странного руководства",
 		DATIVE = "странному руководству",
@@ -338,7 +284,7 @@
 	name = "Drone IFFM"
 	desc = "Неплохо сделанная плата."
 	icon_state = "drone_IFF"
-	explanation = "Это плата модуля Свой-Чужой для боевых дронов. Сделанная по схеме из книги, она не допускает изменений — а значит, дроны с подобным модулем всегда будут участвовать в бою на стороне Синдиката."
+	explanation = "Это плата модуля Свой-Чужой для боевых дронов. Сделанная по схеме из книги, она не допускает изменений — а значит, дроны с подобным модулем всегда будут участвовать в бою на стороне \"Синдиката\"."
 
 /obj/item/drone_modules/drone_AI
 	name = "Drone AICM"

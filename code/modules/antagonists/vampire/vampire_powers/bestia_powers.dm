@@ -89,8 +89,8 @@
 			new_trophies = clamp(new_amount, 0, MAX_TROPHIES_PER_TYPE_CRITICAL)
 			bestia.trophies[INTERNAL_ORGAN_HEART] = new_trophies
 
-			damage_modifiers[BRUTE] = (100 - CEILING((new_trophies * (TROPHIES_CAP_PROT_BRUTE / MAX_TROPHIES_PER_TYPE_CRITICAL)), 1)) / 100
-			damage_modifiers[BURN] = (100 - CEILING((new_trophies * (TROPHIES_CAP_PROT_BURN / MAX_TROPHIES_PER_TYPE_CRITICAL)), 1)) / 100
+			damage_modifiers[BRUTE] = (100 - ceil((new_trophies * (TROPHIES_CAP_PROT_BRUTE / MAX_TROPHIES_PER_TYPE_CRITICAL)))) / 100
+			damage_modifiers[BURN] = (100 - ceil((new_trophies * (TROPHIES_CAP_PROT_BURN / MAX_TROPHIES_PER_TYPE_CRITICAL)))) / 100
 
 			if((prev_trophies == 0 && new_amount < 0) || (prev_trophies == MAX_TROPHIES_PER_TYPE_CRITICAL && new_amount > MAX_TROPHIES_PER_TYPE_CRITICAL))
 				update_spells = FALSE
@@ -101,8 +101,8 @@
 			new_trophies = clamp(new_amount, 0, MAX_TROPHIES_PER_TYPE_CRITICAL)
 			bestia.trophies[INTERNAL_ORGAN_LUNGS] = new_trophies
 
-			damage_modifiers[OXY] = (100 - CEILING((new_trophies * (TROPHIES_CAP_PROT_OXY / MAX_TROPHIES_PER_TYPE_CRITICAL)), 1)) / 100
-			damage_modifiers[STAMINA] = (100 - CEILING((new_trophies * (TROPHIES_CAP_PROT_STAMINA / MAX_TROPHIES_PER_TYPE_CRITICAL)), 1)) / 100
+			damage_modifiers[OXY] = (100 - ceil((new_trophies * (TROPHIES_CAP_PROT_OXY / MAX_TROPHIES_PER_TYPE_CRITICAL)))) / 100
+			damage_modifiers[STAMINA] = (100 - ceil((new_trophies * (TROPHIES_CAP_PROT_STAMINA / MAX_TROPHIES_PER_TYPE_CRITICAL)))) / 100
 
 			if((prev_trophies == 0 && new_amount < 0) || (prev_trophies == MAX_TROPHIES_PER_TYPE_CRITICAL && new_amount > MAX_TROPHIES_PER_TYPE_CRITICAL))
 				update_spells = FALSE
@@ -529,7 +529,7 @@
 	deduct_blood_on_cast = FALSE
 
 /obj/effect/proc_holder/spell/vampire/self/infected_trophy/can_cast(mob/living/carbon/user = usr, charge_check = TRUE, show_message = FALSE)
-	if(user.incapacitated(INC_IGNORE_GRABBED))
+	if(user.incapacitated(IGNORE_GRAB))
 		if(show_message)
 			balloon_alert(user, "нельзя использовать сейчас!")
 		return FALSE
@@ -570,7 +570,7 @@
 	var/obj/effect/proc_holder/spell/vampire/self/infected_trophy/parent_spell
 
 /obj/item/gun/magic/skull_gun/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "заражённый череп",
 		GENITIVE = "заражённого черепа",
 		DATIVE = "заражённому черепу",
@@ -594,98 +594,6 @@
 /obj/item/gun/magic/skull_gun/run_drop_held_item(mob/user)
 	parent_spell?.revert_cast()
 	qdel(src)
-
-/obj/item/ammo_casing/magic/skull_gun_casing
-	name = "skull gun casing"
-	desc = "Что это за..."
-	icon_state = "skulls"
-	projectile_type = /obj/projectile/skull_projectile
-	muzzle_flash_effect = null
-	caliber = "skulls"
-
-/obj/item/ammo_casing/magic/skull_gun_casing/get_ru_names()
-	return list(
-		NOMINATIVE = "гильза для черепного пистолета",
-		GENITIVE = "гильзы для черепного пистолета",
-		DATIVE = "гильзе для черепного пистолета",
-		ACCUSATIVE = "гильзу для черепного пистолета",
-		INSTRUMENTAL = "гильзой для черепного пистолета",
-		PREPOSITIONAL = "гильзе для черепного пистолета",
-	)
-
-/obj/projectile/skull_projectile
-	name = "infected skull"
-	icon = 'icons/obj/lavaland/artefacts.dmi'
-	icon_state = "ashen_skull"
-	pass_flags = PASSTABLE | PASSGRILLE | PASSFENCE
-	speed = 1
-	range = 5
-	damage = 5
-	armour_penetration = 100
-	hitsound = null
-
-/obj/projectile/skull_projectile/get_ru_names()
-	return list(
-		NOMINATIVE = "заражённый череп",
-		GENITIVE = "заражённого черепа",
-		DATIVE = "заражённому черепу",
-		ACCUSATIVE = "заражённый череп",
-		INSTRUMENTAL = "заражённым черепом",
-		PREPOSITIONAL = "заражённом черепе",
-	)
-
-/obj/projectile/skull_projectile/Destroy()
-	var/obj/item/gun/magic/skull_gun/skull_gun = locate() in firer
-	if(skull_gun)
-		qdel(skull_gun)
-	QDEL_NULL(chain)
-	return ..()
-
-/obj/projectile/skull_projectile/fire(setAngle)
-	if(firer)
-		chain = firer.Beam(src, icon_state = "sendbeam", time = INFINITY, maxdistance = INFINITY)
-
-		var/datum/antagonist/vampire/vampire = firer.mind?.has_antag_datum(/datum/antagonist/vampire)
-		var/obj/effect/proc_holder/spell/vampire/self/infected_trophy/infected_trophy = locate() in firer.mind?.spell_list
-		if(vampire && infected_trophy)
-			range += vampire.get_trophies(INTERNAL_ORGAN_EYES)	// 15 MAX
-			var/datum/spell_handler/vampire/handler = infected_trophy.custom_handler
-			var/blood_cost = handler.calculate_blood_cost(vampire)
-			vampire.bloodusable -= blood_cost
-
-	return ..()
-
-/obj/projectile/skull_projectile/on_hit(atom/target, blocked = 0, hit_zone)
-	. = ..()
-	var/datum/antagonist/vampire/vampire = firer?.mind?.has_antag_datum(/datum/antagonist/vampire)
-	if(!vampire || QDELETED(vampire.subclass))
-		return
-
-	var/t_hearts = vampire.get_trophies(INTERNAL_ORGAN_HEART)
-	var/applied_damage = t_hearts * 5	// 30 MAX
-	var/stun_amt = (t_hearts / 2) SECONDS	// 3s. MAX
-	var/effect_aoe = round(vampire.get_trophies(INTERNAL_ORGAN_EARS) / 4)	// 2 MAX
-
-	for(var/mob/living/victim in view(effect_aoe, get_turf(target)))
-		if(victim.loc == firer)	// yeah apparently mobs can see what is inside them
-			continue
-		if(!victim.affects_vampire(firer))
-			continue
-		if(!is_vampire_compatible(victim, include_IPC = TRUE))
-			continue
-
-		victim.apply_damage(applied_damage, BRUTE, BODY_ZONE_CHEST)
-		victim.Stun(stun_amt)
-		to_chat(victim, span_userdanger("Вы почувствовали боль в груди!"))
-
-		if(iscarbon(victim))
-			var/mob/living/carbon/c_victim = victim
-			c_victim.vomit(50, VOMIT_BLOOD, 0 SECONDS)
-
-		if(prob(10 + vampire.get_trophies(INTERNAL_ORGAN_LIVER) * 3))
-			new /obj/effect/temp_visual/cult/sparks(get_turf(victim))
-			var/datum/disease/vampire/D = new
-			D.Contract(victim)	// grave fever
 
 /*======================================================================================================================================*\
  * //////////////////////////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ *
@@ -712,7 +620,7 @@
 	return T
 
 /obj/effect/proc_holder/spell/vampire/lunge/can_cast(mob/living/carbon/user = usr, charge_check = TRUE, show_message = FALSE)
-	if(user.incapacitated(INC_IGNORE_RESTRAINED|INC_IGNORE_GRABBED) || user.buckled || (iscarbon(user) && user.legcuffed))
+	if(user.incapacitated(IGNORE_RESTRAINTS|IGNORE_GRAB) || user.buckled || (iscarbon(user) && user.legcuffed))
 		if(show_message)
 			balloon_alert(user, "нельзя использовать сейчас!")
 		return FALSE
@@ -930,7 +838,7 @@
 				balloon_alert(user, "метаморфоза уже используется!")
 			return FALSE
 
-	if(user.incapacitated(INC_IGNORE_RESTRAINED|INC_IGNORE_GRABBED))
+	if(user.incapacitated(IGNORE_RESTRAINTS|IGNORE_GRAB))
 		if(show_message)
 			balloon_alert(user, "нельзя использовать сейчас!")
 		return FALSE
@@ -1145,7 +1053,7 @@
 			lamp.on = TRUE
 			lamp.break_light_tube()
 
-		if(istype(object, /obj/structure/window))
+		if(is_window(object))
 			var/obj/structure/window/window = object
 			window.take_damage(rand(80, 100))
 
@@ -1412,7 +1320,7 @@
 	var/fullpower_heal_done = FALSE
 
 /obj/structure/closet/coffin/vampire/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "таинственный гроб",
 		GENITIVE = "таинственного гроба",
 		DATIVE = "таинственному гробу",
@@ -1434,9 +1342,9 @@
 	START_PROCESSING(SSobj, src)
 
 /obj/structure/closet/coffin/vampire/Destroy()
-	visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] исчезает, оставляя после себя лишь кучку пепла..."))
+	visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] исчезает, оставляя после себя лишь кучку пепла..."))
 	new /obj/effect/decal/cleanable/ash(loc)
-	if(isprocessing)
+	if(datum_flags & DF_ISPROCESSING)
 		STOP_PROCESSING(SSobj, src)
 	if(human_vampire)
 		playsound(loc, 'sound/objects/coffin_break.ogg', 50, TRUE)
@@ -1450,10 +1358,10 @@
 /obj/structure/closet/coffin/vampire/proc/create_interior()
 	interior_tank = new(null)	// we need to place it to the nullspace since its a closet
 	interior_air = new
-	interior_air.temperature = T20C
+	interior_air.set_temperature(T20C)
 	interior_air.volume = 200
-	interior_air.oxygen = O2STANDARD*interior_air.volume/(R_IDEAL_GAS_EQUATION*interior_air.temperature)
-	interior_air.nitrogen = N2STANDARD*interior_air.volume/(R_IDEAL_GAS_EQUATION*interior_air.temperature)
+	interior_air.set_oxygen(O2STANDARD * interior_air.volume / (R_IDEAL_GAS_EQUATION * interior_air.temperature()))
+	interior_air.set_nitrogen(N2STANDARD * interior_air.volume / (R_IDEAL_GAS_EQUATION * interior_air.temperature()))
 
 /obj/structure/closet/coffin/vampire/proc/update_trophies(datum/antagonist/vampire/vampire)
 	heal_brute += vampire.get_trophies(INTERNAL_ORGAN_HEART)						// 150 MAX
@@ -1496,7 +1404,7 @@
 		if(victim.stat)
 			continue
 
-		victim.Weaken(4 SECONDS)
+		victim.Knockdown(4 SECONDS)
 		to_chat(victim, span_userdanger("Громкий визг ослабляет вас и заставляет упасть на землю!"))
 
 /obj/structure/closet/coffin/vampire/process()
@@ -1557,15 +1465,17 @@
 				body_part.mend_fracture()
 				break
 
-	// internal bleedings
+	// bleedings
 	if(chance_stop_internal_bleeding)
 		for(var/obj/item/organ/external/body_part as anything in human_vampire.bodyparts)
 			if(QDELETED(body_part))
 				continue
-			if(!body_part.has_internal_bleeding())
+			if(!body_part.has_internal_bleeding() && !body_part.has_arterial_bleeding())
 				continue
 			if(prob(chance_stop_internal_bleeding))
 				body_part.stop_internal_bleeding()
+				body_part.stop_arterial_bleeding()
+				body_part.stop_bleeding()
 				break
 
 	// regrowing limbs
@@ -1589,7 +1499,8 @@
 	if(!fullpower_heal_done && fullpower_unlocked)
 		fullpower_heal_done = TRUE
 
-		human_vampire.radiation = 0
+		human_vampire.cure_radiation()
+
 		human_vampire.set_bodytemperature(human_vampire.dna ? human_vampire.dna.species.body_temperature : BODYTEMP_NORMAL)
 		human_vampire.surgeries.Cut()
 		human_vampire.SetDisgust(0)
@@ -1630,7 +1541,7 @@
 					organ.status = NONE
 
 		for(var/datum/disease/virus as anything in human_vampire.diseases)
-			if(virus.severity == NONTHREAT)
+			if(virus.severity == DISEASE_SEVERITY_POSITIVE)
 				continue
 			virus.cure(need_immunity = FALSE)
 
@@ -1651,41 +1562,35 @@
 	if(!interior_tank)
 		return
 
-	var/datum/gas_mixture/tank_air = interior_tank.return_air()
+	var/datum/gas_mixture/tank_air = interior_tank.return_obj_air()
 	var/release_pressure = ONE_ATMOSPHERE
 	var/interior_pressure = interior_air.return_pressure()
 	var/pressure_delta = min(release_pressure - interior_pressure, (tank_air.return_pressure() - interior_pressure)/2)
 	var/transfer_moles = 0
 
 	if(pressure_delta > 0)
-		if(tank_air.return_temperature() > 0)
-			transfer_moles = pressure_delta*interior_air.return_volume()/(interior_air.return_temperature() * R_IDEAL_GAS_EQUATION)
+		if(tank_air.temperature() > 0)
+			transfer_moles = pressure_delta * interior_air.return_volume() / (interior_air.temperature() * R_IDEAL_GAS_EQUATION)
 			var/datum/gas_mixture/removed = tank_air.remove(transfer_moles)
 			interior_air.merge(removed)
 
 	else if(pressure_delta < 0)
-		var/datum/gas_mixture/t_air = return_air()
+		var/datum/gas_mixture/t_air = return_obj_air()
 		pressure_delta = interior_pressure - release_pressure
 
 		if(t_air)
 			pressure_delta = min(interior_pressure - t_air.return_pressure(), pressure_delta)
 
 		if(pressure_delta > 0)
-			transfer_moles = pressure_delta*interior_air.return_volume()/(interior_air.return_temperature() * R_IDEAL_GAS_EQUATION)
+			transfer_moles = pressure_delta * interior_air.return_volume() / (interior_air.temperature() * R_IDEAL_GAS_EQUATION)
 			var/datum/gas_mixture/removed = interior_air.remove(transfer_moles)
 			if(t_air)
 				t_air.merge(removed)
 			else
 				qdel(removed)
 
-/obj/structure/closet/coffin/vampire/remove_air(amount)
-	return interior_air.remove(amount)
-
-/obj/structure/closet/coffin/vampire/return_air()
+/obj/structure/closet/coffin/vampire/return_obj_air()
 	return interior_air
-
-/obj/structure/closet/coffin/vampire/proc/return_temperature()
-	return interior_air.return_temperature()
 
 /obj/structure/closet/coffin/vampire/proc/return_pressure()
 	return interior_air.return_pressure()
@@ -1934,6 +1839,8 @@
 
 	SEND_SIGNAL(src, COMSIG_MOB_UPDATE_SIGHT)
 	sync_lighting_plane_alpha()
+
+	return ..()
 
 /mob/living/simple_animal/hostile/vampire/do_attack_animation(atom/A, visual_effect_icon, obj/item/used_item, no_effect)
 	if(!no_effect && !visual_effect_icon)

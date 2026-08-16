@@ -218,7 +218,7 @@
 				if(prob(30))
 					do_sparks(2, TRUE, T)
 				T.ex_act(EXPLODE_LIGHT)
-				T.hotspot_expose(1000,500,1)
+				T.hotspot_expose(1000, 500)
 
 /obj/machinery/computer/HolodeckControl/proc/derez(obj/obj , silent = 1)
 	holographic_items.Remove(obj)
@@ -338,6 +338,14 @@
 	SET_PLANE(underlay_appearance, PLANE_SPACE, src)
 	return TRUE
 
+/turf/simulated/floor/holofloor/burn_mix_floor
+	name = "Burn-Mix Floor"
+	icon_state = "engine"
+	nitrogen = 0
+	oxygen = 2500
+	temperature = 370
+	toxins = 5000
+
 /obj/structure/table/holotable/has_prints()
 	return FALSE
 
@@ -393,7 +401,9 @@
 	throwforce = 10
 	w_class = WEIGHT_CLASS_BULKY
 	attack_verb = list("атаковал", "полоснул", "уколол", "поранил", "порезал")
-	block_chance = 50
+
+/obj/item/holo/claymore/add_parry_component()
+	AddComponent(/datum/component/parry, _stamina_constant = 2, _stamina_coefficient = 0.5, _parryable_attack_types = NON_PROJECTILE_ATTACKS)
 
 /obj/item/holo/claymore/blue
 	icon_state = "claymoreblue"
@@ -407,51 +417,52 @@
 	name = "Holographic Energy Sword"
 	desc = "This looks like a real energy sword!"
 	icon_state = "sword0"
-	hitsound = "swing_hit"
+	hitsound = SFX_SWING_HIT
 	force = 3.0
 	throw_speed = 1
 	throw_range = 5
 	w_class = WEIGHT_CLASS_SMALL
 	armour_penetration = 50
-	block_chance = 50
-	var/active = 0
 
-/obj/item/holo/esword/green/New()
+/obj/item/holo/esword/add_parry_component()
+	AddComponent(/datum/component/parry, _stamina_constant = 2, _stamina_coefficient = 0.5, _parryable_attack_types = NON_PROJECTILE_ATTACKS, _requires_activation = TRUE)
+
+/obj/item/holo/esword/green/Initialize(mapload)
 	. = ..()
 	item_color = "green"
 
-/obj/item/holo/esword/red/New()
+/obj/item/holo/esword/red/Initialize(mapload)
 	. = ..()
 	item_color = "red"
 
-/obj/item/holo/esword/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = ITEM_ATTACK)
-	if(active)
-		return ..()
-	return 0
-
-/obj/item/holo/esword/New()
+/obj/item/holo/esword/Initialize(mapload)
 	. = ..()
 	item_color = pick("red","blue","green","purple")
 
-/obj/item/holo/esword/update_icon_state()
-	icon_state = active ? "sword[item_color]" : "sword0"
+/obj/item/holo/esword/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = ITEM_ATTACK)
+	if(HAS_TRAIT(src, TRAIT_ITEM_ACTIVE))
+		return ..()
+	return HIT_RESULT_FAILED
 
-/obj/item/holo/esword/attack_self(mob/living/user as mob)
-	active = !active
-	update_icon(UPDATE_ICON_STATE)
-	if(active)
+/obj/item/holo/esword/update_icon_state()
+	icon_state = HAS_TRAIT(src, TRAIT_ITEM_ACTIVE) ? "sword[item_color]" : "sword0"
+
+/obj/item/holo/esword/attack_self(mob/living/user)
+	if(!HAS_TRAIT(src, TRAIT_ITEM_ACTIVE))
+		ADD_TRAIT(src, TRAIT_ITEM_ACTIVE, GENERIC_TRAIT)
 		force = 30
 		hitsound = 'sound/weapons/blade1.ogg'
 		w_class = WEIGHT_CLASS_BULKY
 		playsound(user, 'sound/weapons/saberon.ogg', 20, TRUE)
 		to_chat(user, span_notice("[src] is now active."))
 	else
+		REMOVE_TRAIT(src, TRAIT_ITEM_ACTIVE, GENERIC_TRAIT)
 		force = 3
-		hitsound = "swing_hit"
+		hitsound = SFX_SWING_HIT
 		w_class = WEIGHT_CLASS_SMALL
 		playsound(user, 'sound/weapons/saberoff.ogg', 20, TRUE)
 		to_chat(user, span_notice("[src] can now be concealed."))
-
+	update_icon(UPDATE_ICON_STATE)
 	user.update_held_items()
 	add_fingerprint(user)
 	return
@@ -528,7 +539,7 @@
 		return
 
 	if(prob(50))
-		visible_message(span_alert("[mover.declent_ru(NOMINATIVE)] отскакивает от края [src.declent_ru(GENITIVE)]!"))
+		visible_message(span_alert("[mover.declent_ru(NOMINATIVE)] отскакивает от края [declent_ru(GENITIVE)]!"))
 		return FALSE
 
 	mover.forceMove(loc)
@@ -540,7 +551,7 @@
 		return ..()
 
 	if(prob(50) && (!throwingdatum || !throwingdatum.thrower || !HAS_TRAIT(throwingdatum.thrower, TRAIT_BADASS)))
-		visible_message(span_danger("[AM.declent_ru(NOMINATIVE)] отскакивает от края [src.declent_ru(GENITIVE)]!"))
+		visible_message(span_danger("[AM.declent_ru(NOMINATIVE)] отскакивает от края [declent_ru(GENITIVE)]!"))
 		return ..()
 
 	AM.forceMove(get_turf(src))

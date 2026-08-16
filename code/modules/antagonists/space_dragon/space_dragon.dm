@@ -1,5 +1,5 @@
 /// The darkness threshold for space dragon when choosing a color
-#define DARKNESS_THRESHOLD 50
+#define REJECT_DARK_COLOUR_THRESHOLD 50
 
 /**
  * # Space Dragon
@@ -230,8 +230,8 @@
 		to_chat(src, span_warning("Этот цвет некорректен, попробуйте ещё раз."))
 		color_selection()
 		return
-	var/temp_hsv = RGBtoHSV(chosen_color)
-	if(ReadHSV(temp_hsv)[3] < DARKNESS_THRESHOLD)
+	var/list/skin_hsv = rgb2hsv(chosen_color)
+	if(skin_hsv[3] < REJECT_DARK_COLOUR_THRESHOLD)
 		to_chat(src, span_danger("Этот цвет некорректен — он недостаточно светлый."))
 		color_selection()
 		return
@@ -322,8 +322,10 @@
 /mob/living/simple_animal/hostile/space_dragon/proc/dragon_fire_line(turf/T)
 	var/list/hit_list = list()
 	hit_list += src
-	new /obj/effect/hotspot(T)
-	T.hotspot_expose(2000,50,1)
+	var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(T)
+	hotspot.temperature = 1000
+	hotspot.recolor()
+	T.hotspot_expose(2000, 50)
 	for(var/mob/living/L in T.contents)
 		if(L in hit_list)
 			continue
@@ -406,5 +408,5 @@
 	addtimer(CALLBACK(src, PROC_REF(reset_status)), 4 + ((tiredness * tiredness_mult) / 10))
 	tiredness = tiredness + (gust_tiredness * tiredness_mult)
 
-#undef DARKNESS_THRESHOLD
+#undef REJECT_DARK_COLOUR_THRESHOLD
 

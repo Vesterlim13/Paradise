@@ -8,10 +8,10 @@
 	QDEL_LIST(link_lines)
 
 /datum/buildmode_mode/link/proc/form_connection(atom/source, atom/dest, valid)
-	var/obj/effect/buildmode_line/L = new(BM.holder, source, dest, "[source.name] to [dest.name]")
+	var/obj/effect/buildmode_line/L = new(get_turf(source), BM.holder, source, dest, "[source.name] to [dest.name]")
 	L.color = valid ? "#339933" : "#993333"
 	link_lines += L
-	var/obj/effect/buildmode_line/L2 = new(BM.holder, dest, source, "[dest.name] to [source.name]") // Yes, reversed one so that you can see it source both sides.
+	var/obj/effect/buildmode_line/L2 = new(get_turf(dest), BM.holder, dest, source, "[dest.name] to [source.name]") // Yes, reversed one so that you can see it source both sides.
 	L2.color = L.color
 	link_lines += L2
 
@@ -26,7 +26,7 @@
 	..()
 
 /datum/buildmode_mode/link/show_help(mob/user)
-	to_chat(user, span_purple(chat_box_examine(
+	to_chat(user, span_purple(boxed_message(
 		"[span_bold("Select button to link")] -> Left Mouse Button on obj\n\
 		[span_bold("Link/unlink to selected button")] -> Right Mouse Button on obj"))
 	)
@@ -41,7 +41,7 @@
 	if(left_click && ismachinery(object))
 		link_obj = object
 	if(right_click && ismachinery(object))
-		if(istype(link_obj, /obj/machinery/door_control) && istype(object, /obj/machinery/door/airlock))
+		if(istype(link_obj, /obj/machinery/door_control) && is_airlock(object))
 			var/obj/machinery/door_control/M = link_obj
 			var/obj/machinery/door/airlock/P = object
 			if(!M.id || M.id == "")

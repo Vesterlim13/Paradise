@@ -190,6 +190,12 @@
 	icon_state = "bigafro"
 	unsuitable_gender = FEMALE
 
+/datum/sprite_accessory/hair/lil_cut
+	name = "Lil Cut"
+	icon_state = "lilcut"
+	species_allowed = list(SPECIES_HUMAN)
+	unsuitable_gender = FEMALE
+
 /datum/sprite_accessory/hair/sergeant
 	name = "Flat Top"
 	icon_state = "sergeant"
@@ -799,6 +805,11 @@
 	name = "Long Braided"
 	icon_state = "long_braided"
 
+/datum/sprite_accessory/hair/long_two_braided
+	name = "Two long braids"
+	icon_state = "long_two_braids"
+	unsuitable_gender = MALE
+
 /datum/sprite_accessory/hair/long_emo
 	name = "Long Emo alt"
 	icon_state = "longemo_alt"
@@ -1005,3 +1016,15 @@
 	unsuitable_gender = FEMALE
 	species_allowed = list(SPECIES_HUMAN)
 	glasses_over = 1
+
+/datum/sprite_accessory/hair/braided_twintails
+	name = "Braided twintails"
+	icon_state = "braided_twintails"
+
+/datum/sprite_accessory/hair/whalekiller
+	name = "Whale killer"
+	icon_state = "whalekiller"
+
+/datum/sprite_accessory/hair/lord
+	name = "The Lord of Hongyuan"
+	icon_state = "lord_of_hongyuan"

@@ -5,6 +5,7 @@
 	icon_state = "implantchair"
 	density = TRUE
 	anchored = TRUE
+	interaction_flags_mouse_drop = NEED_DEXTERITY
 	var/max_implants = 5
 	var/injection_cooldown = 30 SECONDS
 	var/replenish_cooldown = 10 MINUTES
@@ -110,7 +111,7 @@
 			return TRUE
 	return FALSE
 
-/obj/machinery/implantchair/MouseDrop_T(mob/living/carbon/human/dropping, mob/living/user, params)
+/obj/machinery/implantchair/mouse_drop_receive(mob/living/carbon/human/dropping, mob/living/user, params)
 	return put_mob(dropping, user)
 
 /obj/machinery/implantchair/proc/put_mob(mob/living/carbon/human/target, mob/living/user)
@@ -165,13 +166,13 @@
 
 /obj/machinery/implantchair/verb/get_out()
 	set name = "Извлечь сидящего"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in oview(1)
 	go_out(usr)
 
 /obj/machinery/implantchair/verb/move_inside()
 	set name = "Залезть внутрь"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in oview(1)
 	put_mob(usr, usr)
 

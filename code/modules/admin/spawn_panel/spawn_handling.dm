@@ -1,18 +1,6 @@
-#define WHERE_FLOOR_BELOW_MOB "Current location"
-#define WHERE_SUPPLY_BELOW_MOB "Current location (droppod)"
-#define WHERE_MOB_HAND "In own mob's hand"
-#define WHERE_MARKED_OBJECT "At a marked object"
-#define WHERE_IN_MARKED_OBJECT "In the marked object"
-#define WHERE_TARGETED_LOCATION "Targeted location"
-#define WHERE_TARGETED_LOCATION_POD "Targeted location (droppod)"
-#define WHERE_TARGETED_MOB_HAND "In targeted mob's hand"
-
-#define OFFSET_ABSOLUTE "Absolute offset"
-#define OFFSET_RELATIVE "Relative offset"
-
-/*
-	Handles spawning an atom. See the call examples for the proper spawn parameters fetching.
-*/
+/**
+ * Handles spawning an atom. See the call examples for the proper spawn parameters fetching.
+ */
 /datum/spawnpanel/proc/spawn_atom(list/spawn_params, mob/user)
 	if(!check_rights(R_SPAWN) || !spawn_params)
 		return
@@ -24,21 +12,9 @@
 
 	var/amount = clamp(text2num(spawn_params["atom_amount"]), 1, ADMIN_SPAWN_CAP)
 
-	var/list/offset_data
-	if(islist(spawn_params["offset"]))
-		offset_data = spawn_params["offset"]
-	else if(istext(spawn_params["offset"]))
-		var/list/parsed = splittext(spawn_params["offset"], ",")
-		if(length(parsed) >= 3)
-			offset_data = list("X" = text2num(parsed[1]), "Y" = text2num(parsed[2]), "Z" = text2num(parsed[3]))
-		else
-			offset_data = list("X" = 0, "Y" = 0, "Z" = 0)
-	else
-		offset_data = list("X" = 0, "Y" = 0, "Z" = 0)
-
-	var/X = offset_data["X"] || 0
-	var/Y = offset_data["Y"] || 0
-	var/Z = offset_data["Z"] || 0
+	var/X = offset["X"] || 0
+	var/Y = offset["Y"] || 0
+	var/Z = offset["Z"] || 0
 
 	var/atom_dir = text2num(spawn_params["atom_dir"]) || 1
 	var/atom_name = sanitize(spawn_params["atom_name"])
@@ -50,23 +26,23 @@
 		target = (where_target_type == WHERE_TARGETED_MOB_HAND ? spawn_params["target"] : user)
 
 		if(!target)
-			to_chat(user, span_warning("No target specified."))
+			to_chat(user, span_warning("Цель не выбрана."))
 			return
 
 		if(!ismob(target))
-			to_chat(user, span_warning("The targeted atom is not a mob."))
+			to_chat(user, span_warning("Выбранный объект не является мобом."))
 			return
 
 		if(!iscarbon(target) && !isrobot(target))
-			to_chat(user, span_warning("Can only spawn in hand when the target is a carbon mob or a cyborg."))
+			to_chat(user, span_warning("Создавать объекты в руках возможно только для карбонов (гуманоидных мобов) и роботов."))
 			where_target_type = WHERE_FLOOR_BELOW_MOB
 
 	else if(where_target_type == WHERE_MARKED_OBJECT || where_target_type == WHERE_IN_MARKED_OBJECT)
 		if(!user.client.holder.marked_datum)
-			to_chat(user, span_warning("You don't have any object marked."))
+			to_chat(user, span_warning("Вы не отмечали какой-либо объект."))
 			return
 		else if(!istype(user.client.holder.marked_datum, /atom))
-			to_chat(user, span_warning("The object you have marked cannot be used as a target. Target must be of type /atom."))
+			to_chat(user, span_warning("Отмеченный объект не подходит в качестве цели. Цель должна быть типа /atom."))
 			return
 		else
 			target = (where_target_type == WHERE_MARKED_OBJECT ? get_turf(user.client.holder.marked_datum) : user.client.holder.marked_datum)
@@ -93,7 +69,7 @@
 						relative_turf = locate(1, 1, 1)
 
 				if(!relative_turf)
-					to_chat(user, span_warning("Could not determine a valid relative location."))
+					to_chat(user, span_warning("Не удалось вычислить корректную относительную локацию."))
 					return
 
 				target = locate(relative_turf.x + X, relative_turf.y + Y, relative_turf.z + Z)
@@ -108,7 +84,7 @@
 		pod = new()
 
 	for(var/i in 1 to amount)
-		if(istype(atom_to_spawn, /turf))
+		if(isturf(atom_to_spawn))
 			var/turf/original_turf = target
 			var/turf/created_turf = original_turf.ChangeTurf(atom_to_spawn.type)
 			if(created_turf && atom_name)
@@ -158,16 +134,4 @@
 		new /obj/effect/pod_landingzone(target, pod)
 
 	log_admin("[key_name(user)] created [amount == 1 ? "an instance" : "[amount] instances"] of [atom_to_spawn.type]")
-	if(istype(atom_to_spawn, /mob))
-		message_admins("[key_name_admin(user)] created [amount == 1 ? "an instance" : "[amount] instances"] of [atom_to_spawn.type]")
-
-#undef WHERE_FLOOR_BELOW_MOB
-#undef WHERE_SUPPLY_BELOW_MOB
-#undef WHERE_MOB_HAND
-#undef WHERE_MARKED_OBJECT
-#undef WHERE_IN_MARKED_OBJECT
-#undef WHERE_TARGETED_LOCATION
-#undef WHERE_TARGETED_LOCATION_POD
-#undef WHERE_TARGETED_MOB_HAND
-#undef OFFSET_ABSOLUTE
-#undef OFFSET_RELATIVE
+	message_admins("[key_name_admin(user)] created [amount == 1 ? "an instance" : "[amount] instances"] of [atom_to_spawn.type]")

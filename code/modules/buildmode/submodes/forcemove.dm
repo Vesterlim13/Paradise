@@ -6,7 +6,7 @@
 	var/image/selected_overlay			// Overlay for the selected atom only visible for the build mode user
 
 /datum/buildmode_mode/forcemove/show_help(mob/user)
-	to_chat(user, span_purple(chat_box_examine(
+	to_chat(user, span_purple(boxed_message(
 		"[span_bold("Выбрать точку назначения")] -> ЛКМ на obj/mob\n\
 		[span_bold("Выбрать атом для перемещения")] -> ПКМ на obj/mob\n\
 		\n\
@@ -41,7 +41,7 @@
 		selected_overlay.color = "#15d12d"
 		user.client.images += selected_overlay
 
-		to_chat(user, span_notice("\"[capitalize(selected_atom.declent_ru(NOMINATIVE))]\" выбран[GEND_A_O_Y(selected_atom)] для перемещения."))
+		to_chat(user, span_notice("\"[DECLENT_RU_CAP(selected_atom, NOMINATIVE)]\" выбран[GEND_A_O_Y(selected_atom)] для перемещения."))
 		return
 
 	// Selecting the destination to move to
@@ -61,7 +61,7 @@
 
 	selected_atom.forceMove(destination)
 
-	to_chat(user, span_notice("\"[capitalize(selected_atom.declent_ru(NOMINATIVE))]\" перемещен[GEND_A_O_Y(selected_atom)] \"[destination.declent_ru(ACCUSATIVE)]\"."))
+	to_chat(user, span_notice("\"[DECLENT_RU_CAP(selected_atom, NOMINATIVE)]\" перемещен[GEND_A_O_Y(selected_atom)] \"[destination.declent_ru(ACCUSATIVE)]\"."))
 	log_admin("Build Mode: [key_name(user)] forcemoved [selected_atom] to [destination] at ([destination.x],[destination.y],[destination.z]).")
 
 	UnregisterSignal(selected_atom, COMSIG_QDELETING)

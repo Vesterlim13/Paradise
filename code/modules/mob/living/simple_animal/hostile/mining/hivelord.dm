@@ -30,7 +30,7 @@
 	var/brood_type = /mob/living/simple_animal/hostile/asteroid/hivelordbrood
 
 /mob/living/simple_animal/hostile/asteroid/hivelord/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "рой",
 		GENITIVE = "роя",
 		DATIVE = "рою",
@@ -38,6 +38,12 @@
 		INSTRUMENTAL = "роем",
 		PREPOSITIONAL = "рое",
 	)
+
+/mob/living/simple_animal/hostile/asteroid/hivelord/drop_loot(drop_loc)
+	if(is_station_level(z))
+		return
+
+	return ..()
 
 /mob/living/simple_animal/hostile/asteroid/hivelord/OpenFire(the_target)
 	if(world.time >= ranged_cooldown)
@@ -96,7 +102,7 @@
 	var/life_time = 10 SECONDS
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "фрагмент роя",
 		GENITIVE = "фрагмента роя",
 		DATIVE = "фрагменту роя",
@@ -121,7 +127,7 @@
 	color = BLOOD_COLOR_RED
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/blood/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кровавый рой",
 		GENITIVE = "кровавого роя",
 		DATIVE = "кровавому рою",
@@ -146,21 +152,21 @@
 		transfer_reagents(target, 1)
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/blood/attack_hand(mob/living/carbon/human/M)
-	if("\ref[M]" in faction)
+	if(PERSONAL_FACTION(M) in faction)
 		reabsorb_host(M)
 	else
 		return ..()
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/blood/attack_alien(mob/living/carbon/alien/humanoid/M)
-	if("\ref[M]" in faction)
+	if(PERSONAL_FACTION(M) in faction)
 		reabsorb_host(M)
 	else
 		return ..()
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/blood/proc/reabsorb_host(mob/living/carbon/C)
 	C.visible_message(
-		span_notice("[capitalize(declent_ru(NOMINATIVE))] поглощается телом [C.declent_ru(GENITIVE)]."), \
-		span_notice("[capitalize(declent_ru(NOMINATIVE))] поглощается вашим телом.")
+		span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] поглощается телом [C.declent_ru(GENITIVE)]."), \
+		span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] поглощается вашим телом.")
 	)
 	transfer_reagents(C)
 	death()
@@ -176,7 +182,7 @@
 	reagents.trans_to(C, volume)
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/blood/proc/link_host(mob/living/carbon/C)
-	faction = list("\ref[src]", "\ref[C]") // Hostile to everyone except the host.
+	faction = list(PERSONAL_FACTION(src), PERSONAL_FACTION(C)) // Hostile to everyone except the host.
 	C.transfer_blood_to(src, 30)
 	color = mix_color_from_reagents(reagents.reagent_list)
 
@@ -206,7 +212,7 @@
 	var/mob/living/carbon/human/stored_mob
 
 /mob/living/simple_animal/hostile/asteroid/hivelord/legion/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "легион",
 		GENITIVE = "легиона",
 		DATIVE = "легиону",
@@ -235,7 +241,7 @@
 	dwarf_mob = TRUE
 
 /mob/living/simple_animal/hostile/asteroid/hivelord/legion/dwarf/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "легион-карлик",
 		GENITIVE = "легиона-карлика",
 		DATIVE = "легиону-карлику",
@@ -289,7 +295,7 @@
 	var/can_infest_dead = FALSE
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/legion/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "легион",
 		GENITIVE = "легиона",
 		DATIVE = "легиону",
@@ -311,7 +317,7 @@
 		var/mob/living/carbon/human/victim = target
 		if(victim.can_inject(null, FALSE, BODY_ZONE_CHEST, FALSE, TRUE) && !victim.get_int_organ(/obj/item/organ/internal/legion_tumour) && prob(1))
 			new /obj/item/organ/internal/legion_tumour(victim)
-			visible_message(span_userdanger("[capitalize(declent_ru(NOMINATIVE))] вгрызается в шею [target], впрыскивая странную черную жидкость!")) //made it on russian to attract more attention from attacklogs
+			visible_message(span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] вгрызается в шею [target], впрыскивая странную черную жидкость!")) //made it on russian to attract more attention from attacklogs
 
 /mob/living/simple_animal/hostile/asteroid/hivelordbrood/legion/proc/infest(mob/living/carbon/human/H)
 	visible_message(span_warning("[declent_ru(NOMINATIVE)] зарывается в плоть [H]!"))
@@ -320,7 +326,7 @@
 		L = new /mob/living/simple_animal/hostile/asteroid/hivelord/legion/dwarf(H.loc)
 	else
 		L = new(H.loc)
-	visible_message(span_warning("[capitalize(L.declent_ru(NOMINATIVE))] с трудом поднимается на ноги!"))
+	visible_message(span_warning("[DECLENT_RU_CAP(L, NOMINATIVE)] с трудом поднимается на ноги!"))
 	H.death()
 	H.adjustBruteLoss(1000)
 	L.stored_mob = H
@@ -382,9 +388,10 @@
 	nightvision = 8
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_INVISIBLE
 	tts_seed = "Mannoroth"
+	mob_size = MOB_SIZE_LARGE
 
 /mob/living/simple_animal/hostile/big_legion/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "легион",
 		GENITIVE = "легиона",
 		DATIVE = "легиону",
@@ -409,12 +416,11 @@
 	burn_damage = 1000
 	mob_name = "ashen skeleton"
 	mob_gender = NEUTER
-	husk = FALSE
 	mob_species = /datum/species/skeleton
 	mob_color = "#454545"
 
 /obj/effect/mob_spawn/human/corpse/charredskeleton/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "обугленные останки",
 		GENITIVE = "обугленных останков",
 		DATIVE = "обугленным останкам",
@@ -476,7 +482,7 @@
 			if(prob(70))
 				backpack_contents += list(/obj/item/stamp/clown = 1, /obj/item/reagent_containers/spray/waterflower = 1, /obj/item/reagent_containers/food/snacks/grown/banana = 1, /obj/item/megaphone = 1)
 			if(prob(30))
-				backpack_contents += list(/obj/item/stack/sheet/mineral/bananium = pickweight(list(1 = 3, 2 = 2, 3 = 1)))
+				backpack_contents += list(/obj/item/stack/sheet/mineral/bananium = pickweight(alist(1 = 3, 2 = 2, 3 = 1)))
 			if(prob(10))
 				l_pocket = pickweight(list(/obj/item/bikehorn/golden = 3, /obj/item/bikehorn/airhorn= 1 ))
 			if(prob(10))
@@ -508,7 +514,7 @@
 		if("Shadow")
 			mob_species = /datum/species/shadow
 			uniform = /obj/item/clothing/under/color/black
-			shoes = /obj/item/clothing/shoes/black
+			shoes = /obj/item/clothing/shoes/color/black
 			suit = /obj/item/clothing/suit/storage/labcoat
 			glasses = /obj/item/clothing/glasses/sunglasses/blindfold/black
 			back = /obj/item/tank/internals/oxygen

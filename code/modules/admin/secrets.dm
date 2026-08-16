@@ -1,6 +1,7 @@
 /datum/admins/proc/Secrets()
+	if(!check_rights(R_NONE))
+		return
 
-	if(!check_rights(0))	return
 	var/dat = {"<center>"}
 
 	dat += "<a href='byond://?src=[UID()];secretsmenu=tab;tab=0' [current_tab == 0 ? "class='linkOn'" : ""]>Debug</a>"
@@ -80,6 +81,7 @@
 					<br>
 					<b>Reinforce Station</b><br>
 					<a href='byond://?src=[UID()];secretsfun=gammashuttle'>Move the Gamma Armory</a>&nbsp;&nbsp;
+					<a href='byond://?src=[UID()];secretsfun=nuclear_overload'>Disable Fission Reactor Safeties</a>&nbsp;&nbsp;
 					<br>
 					<b>Renames</b><br>
 					<a href='byond://?src=[UID()];secretsfun=set_station_name'>Rename Station Name</a><br>
@@ -89,7 +91,6 @@
 					<br>
 					<b>Другое</b><br>
 					<a href='byond://?src=[UID()];secretsfun=spawn_cargo_crate'>Spawn Cargo Crate</a><br>
-					<a href='byond://?src=[UID()];secretsfun=shuttle_start'>Переключить старт с шаттла</a><br>
 					</center>"}
 		if(2)
 			if(check_rights((R_SERVER|R_EVENT), FALSE))

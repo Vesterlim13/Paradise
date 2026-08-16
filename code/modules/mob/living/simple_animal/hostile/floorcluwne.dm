@@ -215,7 +215,7 @@
 		if(STAGE_SPOOK)
 
 			if(prob(4))
-				H.slip(10 SECONDS)
+				H.slip(SLIPPERY_TIME_LUBE)
 				to_chat(H, span_warning("The floor shifts underneath you!"))
 
 			if(prob(3))
@@ -243,7 +243,7 @@
 		if(STAGE_TORMENT)
 
 			if(prob(5))
-				H.slip(10 SECONDS)
+				H.slip(SLIPPERY_TIME_LUBE)
 				to_chat(H, span_warning("The floor shifts underneath you!"))
 
 			if(prob(5))
@@ -295,10 +295,10 @@
 			if(!eating)
 				for(var/turf/T as anything in get_line(src, get_turf(H)))
 					for(var/obj/structure/O in T)
-						if(istype(O, /obj/structure/closet))
+						if(iscloset(O))
 							var/obj/structure/closet/locker = O
 							locker.bust_open()
-						if(O.density || istype(O, /obj/machinery/door/airlock))
+						if(O.density || is_airlock(O))
 							forceMove(H.loc)
 					if(T.density)
 						forceMove(H.loc)
@@ -313,7 +313,7 @@
 				if(!eating)
 					addtimer(CALLBACK(src, TYPE_PROC_REF(/mob/living/simple_animal/hostile/floor_cluwne, Grab), H), 70)
 					for(var/turf/simulated/floor/O in range(src, 6))
-						O.MakeSlippery(TURF_WET_LUBE, 20 SECONDS)
+						O.MakeSlippery(TURF_WET_LUBE, SLIPPERY_TIME_LUBE)
 						playsound(src, 'sound/effects/meteorimpact.ogg', 30, TRUE)
 
 				eating = TRUE
@@ -410,7 +410,7 @@
 	duration = 150
 	randomdir = FALSE
 
-/obj/effect/temp_visual/fcluwne_manifest/New()
+/obj/effect/temp_visual/fcluwne_manifest/Initialize(mapload)
 	. = ..()
 	playsound(src, 'sound/spookoween/scary_clown_appear.ogg', 100, TRUE)
 

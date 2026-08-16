@@ -1,6 +1,6 @@
 /datum/event/wormholes
-	announceWhen			= 10
-	endWhen				= 60
+	announceWhen = 10
+	endWhen = 60
 
 	var/list/pick_turfs = list()
 	var/list/wormholes = list()
@@ -30,7 +30,7 @@
 	GLOB.minor_announcement.announce(
 		message = "Зафиксированы пространственно-временные аномалии на борту станции. Дополнительная информация отсутствует.",
 		new_title = ANNOUNCE_ANOMALY_RU,
-		new_sound = 'sound/AI/spanomalies.ogg'
+		new_sound = ANNOUNCER_SPANOMALIES,
 	)
 
 /datum/event/wormholes/tick()
@@ -51,6 +51,7 @@
 	icon_state = "anom"
 	failchance = 0
 	var/list/linked_portals
+	light_on = FALSE
 
 /obj/effect/portal/wormhole/Initialize(mapload, turf/target, obj/creation_object = null, lifespan = 30 SECONDS, mob/creation_mob = null, create_sparks = TRUE, list/link_portals)
 	. = ..()
@@ -62,7 +63,7 @@
 /obj/effect/portal/wormhole/can_teleport(atom/movable/M, silent = FALSE)
 	. = ..()
 
-	if(istype(M, /obj/singularity))
+	if(issingularity(M))
 		. = FALSE
 
 /obj/effect/portal/wormhole/teleport(atom/movable/M)
@@ -96,7 +97,7 @@
 
 /datum/event/wormholes/anomaly/announce()
 	GLOB.minor_announcement.announce(
-		message = "Дистабилизация крупной блюспейс аномалии вызвала пространственно-временные аномалии на борту станции. Дополнительная информация отсутствует.",
+		message = "Дестабилизация крупной блюспейс аномалии вызвала пространственно-временные аномалии на борту станции. Дополнительная информация отсутствует.",
 		new_title = ANNOUNCE_ANOMALY_RU,
-		new_sound = 'sound/AI/spanomalies.ogg'
+		new_sound = ANNOUNCER_SPANOMALIES,
 	)

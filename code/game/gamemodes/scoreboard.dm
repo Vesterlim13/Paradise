@@ -242,14 +242,14 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 		richest_cash = cash_score
 		richest_name = human.real_name
 		richest_job = human.job
-		richest_key = human.key
+		richest_key = get_display_key(human?.client)
 
 	var/damage_score = human.getBruteLoss() + human.getFireLoss() + human.getToxLoss() + human.getOxyLoss()
 	if(damage_score > damaged_health)
 		damaged_health = damage_score
 		damaged_name = human.real_name
 		damaged_job = human.job
-		damaged_key = human.key
+		damaged_key = get_display_key(human?.client)
 
 /datum/scoreboard/proc/check_apc_power()
 	for(var/A in GLOB.apcs)
@@ -384,10 +384,10 @@ GLOBAL_VAR(scoreboard) // Variable to save the scoreboard string once it's been 
 		if(SERVANTS_OF_SCIENCE to GOOD_BUNCH-1) score_rating =						"Умелые научные ассистенты"
 		if(GOOD_BUNCH to MACHINE_THIRTEEN-1) score_rating =						"Лучшие из довольно компетентных"
 		if(MACHINE_THIRTEEN to PROMOTIONS_FOR_EVERYONE-1) score_rating =			"Образцовый экипаж"
-		if(PROMOTIONS_FOR_EVERYONE to AMBASSADORS_OF_DISCOVERY-1) score_rating =	"Всем — премия!"
+		if(PROMOTIONS_FOR_EVERYONE to AMBASSADORS_OF_DISCOVERY-1) score_rating =	"Всем — премия!"
 		if(AMBASSADORS_OF_DISCOVERY to PRIDE_OF_SCIENCE-1) score_rating =			"Пионеры новых открытий"
 		if(PRIDE_OF_SCIENCE to NANOTRASEN_FINEST-1) score_rating =					"Гордость науки во плоти"
-		if(NANOTRASEN_FINEST to INFINITY) score_rating =							"Лучшие кадры Нанотрейзен"
+		if(NANOTRASEN_FINEST to INFINITY) score_rating =							"Лучшие кадры \"Нанотрейзен\""
 
 	dat += "<b><u>РЕЙТИНГ:</u></b> [score_rating]"
 	GLOB.scoreboard = jointext(dat, "")

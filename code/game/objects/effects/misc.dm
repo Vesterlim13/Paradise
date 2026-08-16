@@ -25,6 +25,22 @@
 	density = TRUE
 	anchored = FALSE
 
+/obj/effect/spresent/relaymove(mob/user)
+	if(user.stat)
+		return
+	to_chat(user, span_notice("Вы не можете двигаться."))
+
+/obj/effect/spresent/wirecutter_act(mob/living/user, obj/item/item)
+	. = TRUE
+	if(!item.use_tool(src, user, volume = item.tool_volume))
+		return
+
+	user.balloon_alert(user, "подарок открыт!")
+	for(var/atom/movable/thing as anything in contents) //Should only be one but whatever.
+		thing.forceMove(loc)
+
+	qdel(src)
+
 /obj/effect/mark
 		var/mark = ""
 		icon = 'icons/misc/mark.dmi'
@@ -41,14 +57,9 @@
 /obj/effect/laser
 	name = "laser"
 	desc = "IT BURNS!!!"
-	icon = 'icons/obj/weapons/projectiles.dmi'
-	var/damage = 0.0
-	var/range = 10.0
-
-/obj/effect/begin
-	name = "begin"
-	icon = 'icons/obj/stationobjs.dmi'
-	icon_state = "begin"
+	icon = 'icons/obj/weapons/guns/projectiles.dmi'
+	var/damage = 0
+	var/range = 10
 
 /obj/effect/projection
 	name = "Projection"
@@ -76,7 +87,6 @@
 /obj/effect/list_container/mobl
 	name = "mobl"
 	var/master = null
-
 	var/list/container = list()
 
 /obj/structure/showcase/horrific_experiment
@@ -85,45 +95,13 @@
 	icon = 'icons/obj/machines/cloning.dmi'
 	icon_state = "pod_mess"
 
-/obj/effect/supplypod_selector
-	icon_state = "supplypod_selector"
-	layer = FLY_LAYER
-
 //Makes a tile fully lit no matter what
 /obj/effect/fullbright
 	icon = 'icons/effects/alphacolors.dmi'
 	icon_state = "white"
 	plane = LIGHTING_PLANE
-	layer = LIGHTING_LAYER
+	layer = LIGHTING_ABOVE_ALL
 	blend_mode = BLEND_ADD
-
-/obj/effect/dummy/lighting_obj
-	name = "lighting fx obj"
-	desc = "Tell a coder if you're seeing this."
-	icon_state = "nothing"
-	light_color = "#FFFFFF"
-	light_system = MOVABLE_LIGHT
-	light_range = MINIMUM_USEFUL_LIGHT_RANGE
-	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
-
-/obj/effect/dummy/lighting_obj/Initialize(mapload, _range, _power, _color, _duration)
-	. = ..()
-	if(!isnull(_range))
-		set_light_range(_range)
-	if(!isnull(_power))
-		set_light_power(_power)
-	if(!isnull(_color))
-		set_light_color(_color)
-	if(_duration)
-		QDEL_IN(src, _duration)
-
-/obj/effect/dummy/lighting_obj/moblight
-	name = "mob lighting fx"
-
-/obj/effect/dummy/lighting_obj/moblight/Initialize(mapload, _color, _range, _power, _duration)
-	. = ..()
-	if(!ismob(loc))
-		return INITIALIZE_HINT_QDEL
 
 /obj/effect/frosty_breath //used only for unathi firebreath, so... yeah..
 	mouse_opacity = MOUSE_OPACITY_TRANSPARENT

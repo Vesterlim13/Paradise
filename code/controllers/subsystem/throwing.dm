@@ -7,17 +7,20 @@ SUBSYSTEM_DEF(throwing)
 	name = "Throwing"
 	priority = FIRE_PRIORITY_THROWING
 	wait = 1
-	flags = SS_NO_INIT|SS_KEEP_TIMING|SS_TICKER
+	ss_flags = SS_NO_INIT|SS_TICKER
 	runlevels = RUNLEVEL_GAME | RUNLEVEL_POSTGAME
-	offline_implications = "Thrown objects may not react properly. Shuttle call recommended."
-	cpu_display = SS_CPUDISPLAY_LOW
-	ss_id = "throwing"
 
 	var/list/currentrun
 	var/list/processing = list()
 
 /datum/controller/subsystem/throwing/get_stat_details()
 	return "P:[length(processing)]"
+
+/datum/controller/subsystem/throwing/get_metrics()
+	. = ..()
+	var/list/custom_data = list()
+	custom_data["processing"] = length(processing)
+	.["custom"] = custom_data
 
 /datum/controller/subsystem/throwing/fire(resumed = 0)
 	if(!resumed)
@@ -92,8 +95,10 @@ SUBSYSTEM_DEF(throwing)
 	var/last_move = 0
 	///When this variable is `FALSE`, non dense mobs will be hit by a thrown thing.
 	var/dodgeable = TRUE
+	/// Can a thrown mob move themselves to stop the throw?
+	var/block_movement = TRUE
 
-/datum/thrownthing/New(thrownthing, target, init_dir, maxrange, speed, thrower, diagonals_first, force, callback, target_zone, dodgeable)
+/datum/thrownthing/New(thrownthing, target, init_dir, maxrange, speed, thrower, diagonals_first, force, callback, target_zone, dodgeable, block_movement)
 	. = ..()
 	src.thrownthing = thrownthing
 	RegisterSignal(thrownthing, COMSIG_QDELETING, PROC_REF(on_thrownthing_qdel))
@@ -111,11 +116,11 @@ SUBSYSTEM_DEF(throwing)
 	src.callback = callback
 	src.target_zone = target_zone
 	src.dodgeable = dodgeable
+	src.block_movement = block_movement
 
 /datum/thrownthing/Destroy()
-	if(SSthrowing)
-		SSthrowing.processing -= thrownthing
-		SSthrowing.currentrun -= thrownthing
+	SSthrowing.processing -= thrownthing
+	SSthrowing.currentrun -= thrownthing
 	thrownthing.throwing = null
 	thrownthing = null
 	thrower = null
@@ -183,7 +188,7 @@ SUBSYSTEM_DEF(throwing)
 		 * If A will become X times bigger, T will become sqrt(X) times lower.
 		 */
 		if(!AM.no_gravity()) // If no gravity, it causes some problems. I think, it will work normally this way.
-			dist_travelled += 1 * sqrt(abs(AM.get_gravity()))
+			dist_travelled += 1 * sqrt(abs(AM.has_gravity()))
 
 		if(dist_travelled > MAX_THROWING_DIST)
 			finalize()

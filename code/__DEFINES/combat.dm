@@ -1,4 +1,4 @@
-//Damage things	//TODO: merge these down to reduce on defines
+//Damage things //TODO: merge these down to reduce on defines
 //Way to waste perfectly good damagetype names (BRUTE) on this... If you were really worried about case sensitivity, you could have just used lowertext(damagetype) in the proc...
 #define BRUTE "brute"
 #define BURN "fire"
@@ -15,13 +15,18 @@
 #define ENERGY "energy"
 #define BOMB "bomb"
 #define BIO "bio"
-#define RAD "rad"
 #define FIRE "fire"
 #define ACID "acid"
 #define MAGIC "magic"
 
-/// All armors
-#define ARMOR_LIST_ALL(...) list(ACID, BIO, BOMB, BULLET, ENERGY, FIRE, LASER, MAGIC, MELEE, RAD)
+/// Armor values that are used for damage
+#define ARMOR_LIST_DAMAGE list(BOMB, BULLET, ENERGY, LASER, MELEE)
+
+/// Armor values that are used for durability
+#define ARMOR_LIST_DURABILITY list(ACID, BIO, FIRE, MAGIC)
+
+/// All armors, preferable in the order as seen above
+#define ARMOR_LIST_ALL(...) list(ACID, BIO, BOMB, BULLET, ENERGY, FIRE, LASER, MAGIC, MELEE)
 
 #define STUN "stun"
 #define WEAKEN "weaken"
@@ -30,13 +35,13 @@
 #define PARALYZE "paralize"
 #define SLEEP "sleep"
 #define IMMOBILIZE "immobilize"
-#define IRRADIATE "irradiate"
 #define STUTTER "stutter"
 #define SLUR "slur"
 #define EYE_BLUR "eye_blur"
 #define DROWSY "drowsy"
 #define JITTER "jitter"
 #define CONFUSED "confused"
+#define EFFECT_UNCONSCIOUS "unconscious"
 
 //I hate adding defines like this but I'd much rather deal with bitflags than lists and string searches
 #define BRUTELOSS (1<<0)
@@ -95,6 +100,11 @@
 #define THROWN_PROJECTILE_ATTACK (1 << 3)
 #define LEAP_ATTACK (1 << 4)
 #define MELEE_ATTACKS (ITEM_ATTACK | THROWN_PROJECTILE_ATTACK | UNARMED_ATTACK | LEAP_ATTACK)
+#define ALL_ATTACK_TYPES (ALL)
+#define NON_PROJECTILE_ATTACKS ~PROJECTILE_ATTACK
+
+// the standard parry time out time
+#define PARRY_DEFAULT_TIMEOUT 1 SECONDS
 
 //attack visual effects
 #define ATTACK_EFFECT_PUNCH "punch"
@@ -160,6 +170,14 @@
 #define BODY_ZONE_PRECISE_R_HAND "r_hand"
 #define BODY_ZONE_PRECISE_L_FOOT "l_foot"
 #define BODY_ZONE_PRECISE_R_FOOT "r_foot"
+
+GLOBAL_LIST_INIT(body_zones, list(
+	BODY_ZONE_HEAD, BODY_ZONE_CHEST, BODY_ZONE_PRECISE_GROIN,
+	BODY_ZONE_L_ARM, BODY_ZONE_R_ARM, BODY_ZONE_L_LEG, BODY_ZONE_R_LEG,
+	BODY_ZONE_PRECISE_L_HAND, BODY_ZONE_PRECISE_R_HAND,
+	BODY_ZONE_PRECISE_L_FOOT, BODY_ZONE_PRECISE_R_FOOT,
+	BODY_ZONE_TAIL,
+))
 
 //We will round to this value in damage calculations.
 #define DAMAGE_PRECISION 0.1
@@ -233,6 +251,7 @@
 #define ATTACK_CHAIN_NO_AFTERATTACK (1<<1)
 // bitflag combinations
 #define ATTACK_CHAIN_PROCEED_SUCCESS (ATTACK_CHAIN_PROCEED|ATTACK_CHAIN_SUCCESS)
+#define ATTACK_CHAIN_PROCEED_NO_AFTERATTACK (ATTACK_CHAIN_PROCEED|ATTACK_CHAIN_NO_AFTERATTACK)
 #define ATTACK_CHAIN_BLOCKED_ALL (ATTACK_CHAIN_BLOCKED|ATTACK_CHAIN_NO_AFTERATTACK)
 #define ATTACK_CHAIN_CORE_RETURN_BITFLAGS (ATTACK_CHAIN_PROCEED|ATTACK_CHAIN_BLOCKED)
 /// Helper to check whether attack chain result was blocked
@@ -253,8 +272,50 @@
 #define CLICK_CD_RAPID (0.2 SECONDS)
 #define CLICK_CD_LOOK_UP_DOWN (0.5 SECONDS)
 #define CLICK_CD_THROW (0.8 SECONDS)
+#define CLICK_CD_PARRY (0.8 SECONDS)
+
+#define CLICK_CD_BREAKOUT (10 SECONDS)
 
 //the define for visible message range in combat
 #define SAMETILE_MESSAGE_RANGE 1
 #define COMBAT_MESSAGE_RANGE 3
 #define DEFAULT_MESSAGE_RANGE 7
+
+//Gun trigger guards
+#define TRIGGER_GUARD_ALLOW_ALL -1
+#define TRIGGER_GUARD_NONE 0
+#define TRIGGER_GUARD_NORMAL 1
+
+/// The amount of energy needed to increase the burn force by 1 damage during electrocution.
+#define JOULES_PER_DAMAGE (25 KILO JOULES)
+/// Calculates the amount of burn force when applying this much energy to a mob via electrocution from an energy source.
+#define ELECTROCUTE_DAMAGE(energy) (energy >= 1 KILO JOULES ? clamp(20 + round(energy / JOULES_PER_DAMAGE), 20, 195) + rand(-5,5) : 0)
+
+/// Alternate attack defines. Return these at the end of procs like afterattack_secondary.
+/// Calls the normal attack proc. For example, if returned in afterattack_secondary, will call afterattack.
+/// Will continue the chain depending on the return value of the non-alternate proc, like with normal attacks.
+#define SECONDARY_ATTACK_CALL_NORMAL 1
+
+/// Cancels the attack chain entirely.
+#define SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN 2
+
+/// Proceed with the attack chain, but don't call the normal methods.
+#define SECONDARY_ATTACK_CONTINUE_CHAIN 3
+
+///Deathmatch lobby current status
+#define DEATHMATCH_NOT_PLAYING 0
+#define DEATHMATCH_PRE_PLAYING 1
+#define DEATHMATCH_PLAYING 2
+
+///Deathmatch loadout groups
+#define LOADOUT_NONE NONE
+#define LOADOUT_ASSISTANT (1<<0)
+#define LOADOUT_UNFUNNY (1<<1)
+#define LOADOUT_SYNDICATE (1<<2)
+#define LOADOUT_NUKEOPS (1<<3)
+#define LOADOUT_NT (1<<4)
+#define LOADOUT_WIZARD (1<<5)
+
+#define HIT_RESULT_FAILED 0
+#define HIT_RESULT_SUCCESS 1
+#define HIT_RESULT_REFLECY_BACK -1

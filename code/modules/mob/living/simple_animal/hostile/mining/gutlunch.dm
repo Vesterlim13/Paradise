@@ -40,7 +40,7 @@
 	var/obj/item/udder/gutlunch/udder = null
 
 /mob/living/simple_animal/hostile/asteroid/gutlunch/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кишкожор",
 		GENITIVE = "кишкожора",
 		DATIVE = "кишкожору",
@@ -71,10 +71,10 @@
 	if(user.a_intent == INTENT_HARM)
 		return ..()
 
-	if(istype(I, /obj/item/reagent_containers/glass))
+	if(isglassreagentcontainer(I))
 		add_fingerprint(user)
 		if(stat != CONSCIOUS)
-			to_chat(user, span_warning("[capitalize(declent_ru(NOMINATIVE))] выглядит нездоровым."))
+			to_chat(user, span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] выглядит нездоровым."))
 			return ATTACK_CHAIN_PROCEED
 		if(udder.milkAnimal(I, user))
 			regenerate_icons()
@@ -116,7 +116,7 @@
 	if(is_type_in_typecache(target,wanted_objects)) //we eats
 		udder.generateMilk()
 		regenerate_icons()
-		visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] с хлюпаньем поглощает [target.declent_ru(ACCUSATIVE)]."))
+		visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] с хлюпаньем поглощает [target.declent_ru(ACCUSATIVE)]."))
 		qdel(target)
 		return
 	return ..()
@@ -125,7 +125,7 @@
 	name = "nutrient sac"
 
 /obj/item/udder/gutlunch/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "питательный мешок",
 		GENITIVE = "питательного мешка",
 		DATIVE = "питательному мешку",
@@ -148,7 +148,7 @@
 	gender = MALE
 
 /mob/living/simple_animal/hostile/asteroid/gutlunch/gubbuck/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "жирохрюн",
 		GENITIVE = "жирохрюна",
 		DATIVE = "жирохрюну",
@@ -168,7 +168,7 @@
 	gender = FEMALE
 
 /mob/living/simple_animal/hostile/asteroid/gutlunch/guthen/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "квохтун",
 		GENITIVE = "квохтуна",
 		DATIVE = "квохтуну",
@@ -195,7 +195,7 @@
 	var/growth = 0
 
 /mob/living/simple_animal/hostile/asteroid/gutlunch/grublunch/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "червожор",
 		GENITIVE = "червожора",
 		DATIVE = "червожору",
@@ -225,5 +225,5 @@
 	mind?.transfer_to(L)
 	L.faction = faction.Copy()
 	L.setDir(dir)
-	visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] вырастает в [L.declent_ru(ACCUSATIVE)]."))
+	visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] вырастает в [L.declent_ru(ACCUSATIVE)]."))
 	qdel(src)

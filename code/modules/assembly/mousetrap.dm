@@ -78,7 +78,7 @@
 		mouse.splat(src)
 
 	playsound(loc, 'sound/effects/snap.ogg', 50, TRUE)
-	layer = MOB_LAYER - 0.2
+	layer = BELOW_MOB_LAYER
 	armed = FALSE
 	update_icon()
 	pulse(FALSE, target)
@@ -156,7 +156,7 @@
 /obj/item/assembly/mousetrap/verb/hide_under_verb()
 	set src in oview(1)
 	set name = "Спрятать"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 
 	hide_under(usr)
 

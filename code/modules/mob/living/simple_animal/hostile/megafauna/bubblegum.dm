@@ -79,7 +79,7 @@ Difficulty: Hard
 	)
 
 /mob/living/simple_animal/hostile/megafauna/bubblegum/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "Бубльгум",
 		GENITIVE = "Бубльгума",
 		DATIVE = "Бубльгуму",
@@ -102,28 +102,28 @@ Difficulty: Hard
 	name = "Тройной заряд"
 	button_icon = 'icons/mob/actions/actions.dmi'
 	button_icon_state = "sniper_zoom"
-	chosen_message = span_colossus("Вы трижды атакуете цель, на которую нажмёте.")
+	chosen_message = span_colossus_alt("Вы трижды атакуете цель, на которую нажмёте.")
 	chosen_attack_num = 1
 
 /datum/action/innate/megafauna_attack/hallucination_charge
 	name = "Заряд галлюцинаций"
 	button_icon = 'icons/effects/bubblegum.dmi'
 	button_icon_state = "smack ya one"
-	chosen_message = span_colossus("Вы атакуете цель, на которую нажмёте, с галлюцинациями.")
+	chosen_message = span_colossus_alt("Вы атакуете цель, на которую нажмёте, с галлюцинациями.")
 	chosen_attack_num = 2
 
 /datum/action/innate/megafauna_attack/hallucination_surround
 	name = "Окружение цели"
 	button_icon = 'icons/turf/walls/wall.dmi'
 	button_icon_state = "wall"
-	chosen_message = span_colossus("Вы окружаете цель, на которую нажмёте, с галлюцинациями.")
+	chosen_message = span_colossus_alt("Вы окружаете цель, на которую нажмёте, с галлюцинациями.")
 	chosen_attack_num = 3
 
 /datum/action/innate/megafauna_attack/blood_warp
 	name = "Кровавый варп"
 	button_icon = 'icons/effects/blood.dmi'
 	button_icon_state = "floor1"
-	chosen_message = span_colossus("Вы телепортируетесь к крови вокруг выбранной позиции.")
+	chosen_message = span_colossus_alt("Вы телепортируетесь к крови вокруг выбранной позиции.")
 	chosen_attack_num = 4
 
 /mob/living/simple_animal/hostile/megafauna/bubblegum/enrage()
@@ -155,7 +155,7 @@ Difficulty: Hard
 		H.overlay_fullscreen("bubblegum", /atom/movable/screen/fullscreen/fog, 2)
 
 /mob/living/simple_animal/hostile/megafauna/bubblegum/death(gibbed)
-	qdel(second_life_portal)
+	QDEL_NULL(second_life_portal)
 	if(enraged && !second_life)
 		var/obj/structure/closet/crate/necropolis/bubblegum/bait/jebait = new /obj/structure/closet/crate/necropolis/bubblegum/bait(get_turf(src))
 		var/obj/effect/bubblegum_trigger/great_chest_ahead = new /obj/effect/bubblegum_trigger(jebait, ListTargets())
@@ -539,7 +539,7 @@ Difficulty: Hard
 	random_icon_states = list("gib3", "gib5", "gib6")
 
 /obj/effect/decal/cleanable/blood/gibs/bubblegum/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "густая кровь",
 		GENITIVE = "густой крови",
 		DATIVE = "густой крови",
@@ -606,7 +606,7 @@ Difficulty: Hard
 		return .
 	var/mob/living/bumped_living = bumped_atom
 	var/turf/living_turf = get_turf(bumped_living)
-	bumped_living.visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] врезается в [bumped_living.declent_ru(ACCUSATIVE)]!"), span_userdanger("[capitalize(declent_ru(NOMINATIVE))] втаптывает вас в землю!"))
+	bumped_living.visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] врезается в [bumped_living.declent_ru(ACCUSATIVE)]!"), span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] втаптывает вас в землю!"))
 	forceMove(living_turf)
 	bumped_living.apply_damage(istype(src, /mob/living/simple_animal/hostile/megafauna/bubblegum/hallucination) ? 15 : 30, BRUTE)
 	playsound(living_turf, 'sound/effects/meteorimpact.ogg', 100, TRUE)
@@ -623,6 +623,7 @@ Difficulty: Hard
 
 /obj/effect/temp_visual/bubblegum_hands
 	icon = 'icons/effects/bubblegum.dmi'
+	icon_state = null
 	duration = 9
 
 /obj/effect/temp_visual/bubblegum_hands/rightthumb
@@ -661,7 +662,7 @@ Difficulty: Hard
 	loot = list(/obj/effect/decal/cleanable/blood/gibs/bubblegum)
 
 /mob/living/simple_animal/hostile/megafauna/bubblegum/hallucination/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "галлюцинация Бубльгума",
 		GENITIVE = "галлюцинации Бубльгума",
 		DATIVE = "галлюцинации Бубльгума",

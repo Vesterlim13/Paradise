@@ -56,12 +56,6 @@
 	var/mob/living/carbon/carbon_mob = user.mob
 	carbon_mob.a_intent_change(intent)
 
-	// For change dir to mouse dir
-	if(intent == INTENT_HARM && (user.prefs.toggles3 & PREFTOGGLE_3_FACING_TO_MOUSE))
-		carbon_mob.face_mouse = TRUE
-	else
-		carbon_mob.face_mouse = FALSE
-
 	return TRUE
 
 /datum/keybinding/carbon/intent/help
@@ -122,3 +116,10 @@
 	name = "Harm Intent (зажать)"
 	intent = INTENT_HARM
 
+/datum/keybinding/carbon/parry
+	name = "Parry"
+	keys = list("Space")
+
+/datum/keybinding/carbon/parry/down(client/user)
+	. = ..()
+	SEND_SIGNAL(user.mob, COMSIG_CARBON_PARRY)

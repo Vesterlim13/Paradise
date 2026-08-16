@@ -1,14 +1,19 @@
 /turf
 	icon = 'icons/turf/floors.dmi'
+	abstract_type = /turf
 	level = 1
 	luminosity = 1
-
+	light_height = LIGHTING_HEIGHT_FLOOR
 	vis_flags = VIS_INHERIT_ID	// Important for interaction with and visualization of openspace.
 
 	/// Turf bitflags, see code/__DEFINES/flags.dm
 	var/turf_flags = NONE
 
 	var/intact = TRUE
+
+	/// Can you interact or see underfloor things. Can be HIDDEN, VISIBLE and INTERACTABLE
+	var/underfloor_accessibility = UNDERFLOOR_HIDDEN
+
 	var/turf/baseturf = /turf/baseturf_bottom
 	/// negative for faster, positive for slower
 	var/slowdown = 0
@@ -27,6 +32,21 @@
 	var/toxins = 0
 	var/sleeping_agent = 0
 	var/agent_b = 0
+	var/hydrogen = 0
+	var/water_vapor = 0
+	var/hypernoblium = 0
+	var/nitrium = 0
+	var/tritium = 0
+	var/bz = 0
+	var/pluoxium = 0
+	var/miasma = 0
+	var/freon = 0
+	var/healium = 0
+	var/proto_nitrate = 0
+	var/zauker = 0
+	var/halon = 0
+	var/helium = 0
+	var/antinoblium = 0
 
 	//Properties for airtight tiles (/wall)
 	var/thermal_conductivity = 0.05
@@ -56,8 +76,8 @@
 	var/directional_opacity = NONE
 	/// Lazylist of movable atoms providing opacity sources.
 	var/list/atom/movable/opacity_sources
-	/// Bool, whether this turf will always be illuminated no matter what area it is in
-	var/always_lit = FALSE
+	/// Bool, whether this turf will always be illuminated no matter what area it is in. Makes it look blue, be warned.
+	var/space_lit = FALSE
 	var/tmp/lighting_corners_initialised = FALSE
 	/// Our lighting object.
 	var/tmp/atom/movable/lighting_object/lighting_object
@@ -83,9 +103,35 @@
 
 	var/pressure_difference = 0
 	var/pressure_direction = 0
-	var/list/atmos_adjacent_turfs = list()
 	var/atmos_supeconductivity = 0
 
+	/// The general behavior of atmos on this tile.
+	var/atmos_mode = ATMOS_MODE_SEALED
+	/// The external environment that this tile is exposed to for ATMOS_MODE_EXPOSED_TO_ENVIRONMENT
+	var/atmos_environment
+
+	var/datum/gas_mixture/bound_to_turf/bound_air
+
+	/// The effect used to render a pressure overlay from this tile.
+	var/obj/effect/abstract/pressure_overlay/pressure_overlay
+
+	var/list/milla_data = list()
+
+/turf/vv_edit_var(var_name, new_value)
+	var/static/list/banned_edits = list(NAMEOF_STATIC(src, x), NAMEOF_STATIC(src, y), NAMEOF_STATIC(src, z))
+	if(var_name in banned_edits)
+		return FALSE
+	return ..()
+
+/**
+ * Turf Initialize
+ *
+ * Doesn't call parent, see [/atom/proc/Initialize]
+ * Please note, space tiles do not run this code.
+ * This is done because it's called so often that any extra code just slows things down too much
+ * If you add something relevant here add it there too
+ * [/turf/space/Initialize]
+ */
 /turf/Initialize(mapload)
 	SHOULD_CALL_PARENT(FALSE)
 	if(flags & INITIALIZED)
@@ -99,12 +145,12 @@
 	if(SSmapping.max_plane_offset)
 		if(!SSmapping.plane_offset_blacklist["[plane]"])
 			plane = plane - (PLANE_RANGE * SSmapping.z_level_to_plane_offset[z])
-		var/turf/T = GET_TURF_ABOVE(src)
-		if(T)
-			T.multiz_turf_new(src, DOWN)
-		T = GET_TURF_BELOW(src)
-		if(T)
-			T.multiz_turf_new(src, UP)
+		var/turf/turf = GET_TURF_ABOVE(src)
+		if(turf)
+			turf.multiz_turf_new(src, DOWN)
+		turf = GET_TURF_BELOW(src)
+		if(turf)
+			turf.multiz_turf_new(src, UP)
 
 	// by default, vis_contents is inherited from the turf that was here before
 	// Checking length(vis_contents) in a proc this hot has huge wins for performance.
@@ -120,9 +166,9 @@
 	for(var/atom/movable/content as anything in src)
 		Entered(content)
 
-	if(always_lit)
-		var/mutable_appearance/overlay = GLOB.fullbright_overlays[GET_TURF_PLANE_OFFSET(src) + 1]
-		add_overlay(overlay)
+	var/area/our_area = loc
+	if(!our_area.area_has_base_lighting && space_lit) //Only provide your own lighting if the area doesn't for you
+		add_overlay(GLOB.starlight_overlays[GET_TURF_PLANE_OFFSET(src) + 1])
 
 	if(light_power && light_range)
 		update_light()
@@ -130,10 +176,13 @@
 	if(opacity)
 		directional_opacity = ALL_CARDINALS
 
-	if(istype(loc, /area/space))
+	if(isspacearea(loc))
 		force_no_gravity = TRUE
 
 	ComponentInitialize()
+
+	initialize_milla()
+
 	return INITIALIZE_HINT_NORMAL
 
 /turf/Destroy(force)
@@ -157,12 +206,12 @@
 		for(var/A in B.contents)
 			qdel(A)
 		return
-	// Adds the adjacent turfs to the current atmos processing
-	for(var/turf/simulated/T in atmos_adjacent_turfs)
-		SSair.add_to_active(T)
-	SSair.remove_from_active(src)
-	QDEL_LIST(blueprint_data)
+
+	REMOVE_FROM_SMOOTH_QUEUE(src)
+
+	LAZYCLEARLIST(blueprint_data)
 	flags &= ~INITIALIZED
+	bound_air = null
 	..()
 
 	if(length(vis_contents))
@@ -189,31 +238,34 @@
 /turf/proc/blob_consume()
 	return
 
-/turf/rpd_act(mob/user, obj/item/rpd/our_rpd) //This is the default turf behaviour for the RPD; override it as required
-	if(our_rpd.mode == RPD_ATMOS_MODE)
-		our_rpd.create_atmos_pipe(user, src)
-	else if(our_rpd.mode == RPD_DISPOSALS_MODE)
-		for(var/obj/machinery/door/airlock/A in src)
-			if(A.density)
+/turf/rpd_act(mob/user, obj/item/rpd/our_rpd, mode)//This is the default turf behaviour for the RPD; override it as required
+	switch(mode)
+		if(RPD_ATMOS_MODE)
+			our_rpd.create_atmos_pipe(user, src)
+
+		if(RPD_DISPOSALS_MODE)
+			for(var/obj/machinery/door/airlock/A in src)
+				if(!A.density)
+					continue
+
 				to_chat(user, span_warning("That type of pipe won't fit under [A]!"))
 				return
-		our_rpd.create_disposals_pipe(user, src)
-	else if(our_rpd.mode == RPD_ROTATE_MODE)
-		our_rpd.rotate_all_pipes(user, src)
-	else if(our_rpd.mode == RPD_FLIP_MODE)
-		our_rpd.flip_all_pipes(user, src)
-	else if(our_rpd.mode == RPD_DELETE_MODE)
-		our_rpd.delete_all_pipes(user, src)
+			our_rpd.create_disposals_pipe(user, src)
 
-/turf/bullet_act(obj/projectile/proj)
-	if(istype(proj, /obj/projectile/beam/pulse))
-		ex_act(EXPLODE_HEAVY)
-	..()
-	return FALSE
+		if(RPD_ROTATE_MODE)
+			our_rpd.rotate_all_pipes(user, src)
+
+		if(RPD_FLIP_MODE)
+			our_rpd.flip_all_pipes(user, src)
+
+		if(RPD_DELETE_MODE)
+			our_rpd.delete_all_pipes(user, src)
 
 /turf/bullet_act(obj/projectile/proj)
 	if(istype(proj, /obj/projectile/bullet/gyro))
-		explosion(src, devastation_range = -1, heavy_impact_range = 0, light_impact_range = 2, cause = proj)
+		explosion(src, devastation_range = -1, heavy_impact_range = 0, light_impact_range = 2, cause = "[proj.type] fired by [key_name(proj.firer)] (hit turf)")
+	if(istype(proj, /obj/projectile/beam/pulse))
+		ex_act(EXPLODE_HEAVY)
 	..()
 	return FALSE
 
@@ -288,13 +340,7 @@
 /turf/proc/levelupdate()
 	for(var/obj/object in src)
 		if(object.level == 1 && (object.flags & INITIALIZED)) // Only do this if the object has initialized
-			object.hide(intact)
-
-// override for space turfs, since they should never hide anything
-/turf/space/levelupdate()
-	for(var/obj/object in src)
-		if(object.level == 1 && (object.flags & INITIALIZED))
-			object.hide(FALSE)
+			SEND_SIGNAL(object, COMSIG_OBJ_HIDE, underfloor_accessibility)
 
 // Removes all signs of lattice on the pos of the turf -Donkieyo
 /turf/proc/RemoveLattice()
@@ -317,56 +363,65 @@
 				if(!ispath(path))
 					warning("Z-level [z] has invalid baseturf '[check_level_trait(z, ZTRAIT_BASETURF)]'")
 					path = /turf/space
+		if(/turf/space/basic)
+			// basic doesn't initialize and this will cause issues
+			// no warning though because this can happen naturaly as a result of it being built on top of
+			path = /turf/space
+
 	if(!GLOB.use_preloader && path == type) // Don't no-op if the map loader requires it to be reconstructed
 		return src
 
-	set_light_on(FALSE)
-	var/old_opacity = opacity
-	var/old_always_lit = always_lit
 	var/old_lighting_object = lighting_object
-	var/old_blueprint_data = blueprint_data
-	var/old_directional_opacity = directional_opacity
-	var/old_dynamic_lumcount = dynamic_lumcount
 	var/old_lighting_corner_NE = lighting_corner_NE
 	var/old_lighting_corner_SE = lighting_corner_SE
 	var/old_lighting_corner_SW = lighting_corner_SW
 	var/old_lighting_corner_NW = lighting_corner_NW
-	var/old_type = type
+	var/old_directional_opacity = directional_opacity
+	var/old_dynamic_lumcount = dynamic_lumcount
+	var/old_opacity = opacity
+	// I'm so sorry brother
+	// This is used for a starlight optimization
+	var/old_light_range = light_range
+
+	var/old_blueprint_data = blueprint_data
 
 	BeforeChange()
 
 	var/old_baseturf = baseturf
+	var/old_type = type
+	var/datum/weakref/old_ref = weak_reference
+	weak_reference = null
 
 	var/list/post_change_callbacks = list()
 	SEND_SIGNAL(src, COMSIG_TURF_CHANGE, path, post_change_callbacks)
 
 	changing_turf = TRUE
-	qdel(src)	//Just get the side effects and call Destroy
+	qdel(src) //Just get the side effects and call Destroy
 	//We do this here so anything that doesn't want to persist can clear itself
-	var/list/old_comp_lookup = comp_lookup?.Copy()
-	var/list/old_signal_procs = signal_procs?.Copy()
+	var/list/old_listen_lookup = _listen_lookup?.Copy()
+	var/list/old_signal_procs = _signal_procs?.Copy()
 	var/carryover_turf_flags = (RESERVATION_TURF | UNUSED_RESERVATION_TURF) & turf_flags
-	var/turf/W = new path(src)
-	W.turf_flags |= carryover_turf_flags
+	var/turf/new_turf = new path(src)
+	new_turf.turf_flags |= carryover_turf_flags
 
 	// WARNING WARNING
 	// Turfs DO NOT lose their signals when they get replaced, REMEMBER THIS
 	// It's possible because turfs are fucked, and if you have one in a list and it's replaced with another one, the list ref points to the new turf
-	if(old_comp_lookup)
-		LAZYOR(W.comp_lookup, old_comp_lookup)
+	if(old_listen_lookup)
+		LAZYOR(new_turf._listen_lookup, old_listen_lookup)
 	if(old_signal_procs)
-		LAZYOR(W.signal_procs, old_signal_procs)
+		LAZYOR(new_turf._signal_procs, old_signal_procs)
 
 	for(var/datum/callback/callback as anything in post_change_callbacks)
-		callback.InvokeAsync(W)
+		callback.InvokeAsync(new_turf)
 
 	if(copy_existing_baseturf)
-		W.baseturf = old_baseturf
+		new_turf.baseturf = old_baseturf
 
 	if(!defer_change)
-		W.AfterChange(after_flags, oldType = old_type)
+		new_turf.AfterChange(after_flags, oldType = old_type)
 
-	W.blueprint_data = old_blueprint_data
+	new_turf.blueprint_data = old_blueprint_data
 
 	lighting_corner_NE = old_lighting_corner_NE
 	lighting_corner_SE = old_lighting_corner_SE
@@ -375,25 +430,19 @@
 
 	dynamic_lumcount = old_dynamic_lumcount
 
-	if(W.always_lit)
-		// We are guarenteed to have these overlays because of how generation works
-		var/mutable_appearance/overlay = GLOB.fullbright_overlays[GET_TURF_PLANE_OFFSET(src) + 1]
-		W.add_overlay(overlay)
-	else if(old_always_lit)
-		var/mutable_appearance/overlay = GLOB.fullbright_overlays[GET_TURF_PLANE_OFFSET(src) + 1]
-		W.cut_overlay(overlay)
-
-	// we need to refresh gravity for all living mobs to cover possible gravity change
-	for(var/mob/living/mob in contents)
-		if(HAS_TRAIT(mob, TRAIT_NEGATES_GRAVITY))
-			if(!isgroundlessturf(src))
-				ADD_TRAIT(mob, TRAIT_IGNORING_GRAVITY, IGNORING_GRAVITY_NEGATION)
-			else
-				REMOVE_TRAIT(mob, TRAIT_IGNORING_GRAVITY, IGNORING_GRAVITY_NEGATION)
-		mob.refresh_gravity()
+	new_turf.weak_reference = old_ref
 
 	if(SSlighting.initialized)
-		lighting_object = old_lighting_object
+		// Space tiles should never have lighting objects
+		if(!space_lit)
+			if(old_lighting_object)
+				lighting_object = old_lighting_object
+				vis_contents += lighting_object
+			// Should have a lighting object if we never had one
+			else
+				new /atom/movable/lighting_object(null, src)
+		else if(old_lighting_object)
+			qdel(old_lighting_object, force = TRUE)
 
 		directional_opacity = old_directional_opacity
 		recalculate_directional_opacity()
@@ -401,26 +450,48 @@
 		if(lighting_object && !lighting_object.needs_update)
 			lighting_object.update()
 
-		if(old_always_lit != always_lit)
-			if(!always_lit)
-				lighting_build_overlay()
-			else
-				lighting_clear_overlay()
+	// If we're space, then we're either lit, or not, and impacting our neighbors, or not
+	if(isspaceturf(src))
+		var/turf/space/lit_turf = src
+		// This also counts as a removal, so we need to do a full rebuild
+		if(!ispath(old_type, /turf/space))
+			lit_turf.update_starlight()
+			for(var/turf/space/space_tile in RANGE_TURFS(1, src) - src)
+				space_tile.update_starlight()
+		else if(old_light_range)
+			lit_turf.enable_starlight()
 
-		for(var/turf/space/S in RANGE_TURFS(1, src)) //RANGE_TURFS is in code\__HELPERS\game.dm
-			S.update_starlight()
+	// If we're a cordon we count against a light, but also don't produce any ourselves
+	else if(iscordon(src))
+		// This counts as removing a source of starlight, so we need to update the space tile to inform it
+		if(!ispath(old_type, /turf/space))
+			for(var/turf/space/space_tile in RANGE_TURFS(1, src))
+				space_tile.update_starlight()
+
+	// If we're not either, but were formerly a space turf, then we want light
+	else if(ispath(old_type, /turf/space))
+		for(var/turf/space/space_tile in RANGE_TURFS(1, src))
+			space_tile.enable_starlight()
 
 	if(old_opacity != opacity && SSticker)
 		GLOB.cameranet.bareMajorChunkChange(src)
 
 	// We will only run this logic if the tile is not on the prime z layer, since we use area overlays to cover that
 	if(SSmapping.z_level_to_plane_offset[z])
-		var/area/our_area = W.loc
+		var/area/our_area = new_turf.loc
 		if(our_area.lighting_effects)
-			W.add_overlay(our_area.lighting_effects[SSmapping.z_level_to_plane_offset[z] + 1])
-	SSdemo.mark_turf(W)
+			new_turf.add_overlay(our_area.lighting_effects[SSmapping.z_level_to_plane_offset[z] + 1])
 
-	return W
+	// we need to refresh gravity for all living mobs to cover possible gravity change
+	for(var/mob/living/mob in new_turf.contents)
+		if(HAS_TRAIT(mob, TRAIT_NEGATES_GRAVITY))
+			if(!isgroundlessturf(src))
+				ADD_TRAIT(mob, TRAIT_IGNORING_GRAVITY, IGNORING_GRAVITY_NEGATION)
+			else
+				REMOVE_TRAIT(mob, TRAIT_IGNORING_GRAVITY, IGNORING_GRAVITY_NEGATION)
+		mob.refresh_gravity()
+
+	return new_turf
 
 /turf/proc/BeforeChange()
 	return
@@ -429,23 +500,21 @@
 	return FALSE
 
 // I'm including `ignore_air` because BYOND lacks positional-only arguments
-/turf/proc/AfterChange(flags, oldType = null) //called after a turf has been replaced in ChangeTurf()
+/// Called after a turf has been replaced in ChangeTurf()
+/turf/proc/AfterChange(flags, oldType = null)
 	levelupdate()
-	CalculateAdjacentTurfs()
-
-	if(SSair && !(flags & CHANGETURF_IGNORE_AIR))
-		SSair.add_to_active(src)
+	initialize_milla()
+	recalculate_atmos_connectivity()
 
 	//update firedoor adjacency
 	var/list/turfs_to_check = get_adjacent_open_turfs(src) | src
-	for(var/I in turfs_to_check)
-		var/turf/T = I
-		for(var/obj/machinery/door/firedoor/FD in T)
-			FD.CalculateAffectingAreas()
+	for(var/turf/neighbor_turf in turfs_to_check)
+		for(var/obj/machinery/door/firedoor/firedoor in neighbor_turf)
+			firedoor.CalculateAffectingAreas()
 
 	if(!(flags & CHANGETURF_KEEP_CABLING) && !can_have_cabling())
-		for(var/obj/structure/cable/C in contents)
-			qdel(C)
+		for(var/obj/structure/cable/cable in contents)
+			qdel(cable)
 
 /turf/proc/ReplaceWithLattice()
 	ChangeTurf(baseturf)
@@ -487,7 +556,7 @@
 	for(var/dir in GLOB.cardinal)
 		T = get_step(src, dir)
 		if(istype(T) && !T.density)
-			if(!CanAtmosPass(T, FALSE))
+			if(!CanAtmosPass(dir))
 				L.Add(T)
 	return L
 
@@ -557,24 +626,24 @@
 	faller.drop_from_hands()
 
 /turf/singularity_act()
-	if(intact)
-		for(var/obj/O in contents) //this is for deleting things like wires contained in the turf
-			if(O.level != 1)
+	if(underfloor_accessibility < UNDERFLOOR_INTERACTABLE)
+		for(var/obj/on_top in contents) //this is for deleting things like wires contained in the turf
+			if(on_top.level != 1)
 				continue
-			if(O.invisibility == INVISIBILITY_MAXIMUM || O.invisibility == INVISIBILITY_ABSTRACT)
-				O.singularity_act()
+			if(HAS_TRAIT(on_top, TRAIT_UNDERFLOOR))
+				on_top.singularity_act()
 	ChangeTurf(baseturf)
 	return 2
 
-/turf/attackby(obj/item/I, mob/user, params)
+/turf/attackby(obj/item/used, mob/user, params)
 	. = ..()
 
 	if(ATTACK_CHAIN_CANCEL_CHECK(.) || !can_lay_cable())
 		return .
 
-	if(iscoil(I))
+	if(iscoil(used))
 		add_fingerprint(user)
-		var/obj/item/stack/cable_coil/coil = I
+		var/obj/item/stack/cable_coil/coil = used
 		for(var/obj/structure/cable/local_cable in src)
 			if(local_cable.d1 == 0 || local_cable.d2 == 0)
 				local_cable.attackby(coil, user, params)
@@ -584,9 +653,9 @@
 		. |= (ATTACK_CHAIN_BLOCKED_ALL)
 		return .
 
-	if(istype(I, /obj/item/twohanded/rcl))
+	if(istype(used, /obj/item/twohanded/rcl))
 		add_fingerprint(user)
-		var/obj/item/twohanded/rcl/rcl = I
+		var/obj/item/twohanded/rcl/rcl = used
 		if(!rcl.loaded)
 			to_chat(user, span_warning("The [rcl.name] has no cable!"))
 			return .
@@ -604,7 +673,7 @@
 	return TRUE
 
 /turf/proc/can_lay_cable()
-	return can_have_cabling() && !intact && transparent_floor != TURF_TRANSPARENT
+	return can_have_cabling() && underfloor_accessibility == UNDERFLOOR_INTERACTABLE
 
 /turf/proc/get_smooth_underlay_icon(mutable_appearance/underlay_appearance, turf/asking_turf, adjacency_dir)
 	underlay_appearance.icon = icon
@@ -632,17 +701,14 @@
 	var/static/list/ignored_atoms = typecacheof(list(/mob/dead, /obj/effect/landmark, /obj/docking_port))
 	var/list/allowed_contents = typecache_filter_list_reverse(get_all_contents_ignoring(ignore_typecache), ignored_atoms)
 	allowed_contents -= src
-	for(var/i in 1 to allowed_contents.len)
+	for(var/i in 1 to length(allowed_contents))
 		var/thing = allowed_contents[i]
 		qdel(thing, force=TRUE)
 
 	if(!turf_type)
 		return
 
-	var/turf/new_turf = ChangeTurf(turf_type, after_flags = flags)
-	SSair.remove_from_active(new_turf)
-	new_turf.CalculateAdjacentTurfs()
-	SSair.add_to_active(new_turf, TRUE)
+	ChangeTurf(turf_type, after_flags = flags)
 
 /turf/AllowDrop()
 	return TRUE
@@ -658,11 +724,11 @@
 	return FALSE
 
 //direction is direction of travel of air
-/turf/proc/zAirIn(direction, turf/source)
+/turf/proc/zAirIn(direction)
 	return FALSE
 
 //direction is direction of travel of air
-/turf/proc/zAirOut(direction, turf/source)
+/turf/proc/zAirOut(direction)
 	return FALSE
 
 /turf/proc/multiz_turf_del(turf/T, dir)
@@ -702,7 +768,7 @@
 		return FALSE
 
 	// Yes, you can fall up.
-	var/fall_dir = get_gravity() > 0 ? DOWN : UP
+	var/fall_dir = has_gravity() > 0 ? DOWN : UP
 
 	var/turf/target = get_step_multiz(src, fall_dir)
 	if(!target)
@@ -775,16 +841,17 @@
 			return I
 	return I
 
-/turf/hit_by_thrown_carbon(mob/living/carbon/human/C, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
+/turf/hit_by_thrown_mob(mob/living/throwned_mob, datum/thrownthing/throwingdatum, damage, mob_hurt, self_hurt)
 	if(mob_hurt || !density)
 		return
 	playsound(src, 'sound/weapons/punch1.ogg', 35, TRUE)
-	C.visible_message(
-		span_danger("[capitalize(C.declent_ru(NOMINATIVE))] с размаху вреза[PLUR_ET_YUT(C)]ся в [declent_ru(ACCUSATIVE)]!"),
+
+	throwned_mob.visible_message(
+		span_danger("[DECLENT_RU_CAP(throwned_mob, NOMINATIVE)] с размаху вреза[PLUR_ET_UT(throwned_mob)]ся в [declent_ru(ACCUSATIVE)]!"),
 		span_userdanger("Вы с размаху врезаетесь в [declent_ru(ACCUSATIVE)]!")
 	)
-	C.take_organ_damage(damage)
-	C.Weaken(0.1 SECONDS)
+	throwned_mob.take_organ_damage(damage)
+	throwned_mob.Weaken(0.1 SECONDS)
 
 /**
  * Check whether the specified turf is blocked by something dense inside it with respect to a specific atom.
@@ -836,11 +903,11 @@
 /// Accepts the appearance to make "spaceish", and the turf we're doing this for
 /proc/generate_space_underlay(mutable_appearance/underlay_appearance, turf/generate_for)
 	underlay_appearance.icon = 'icons/turf/space.dmi'
-	underlay_appearance.icon_state = "0"
+	underlay_appearance.icon_state = "space"
 	SET_PLANE(underlay_appearance, PLANE_SPACE, generate_for)
 	if(!generate_for.render_target)
-		generate_for.render_target = ref(generate_for)
-	var/atom/movable/emissive_blocker/em_block = new(null, generate_for)
+		generate_for.render_target = generate_for.UID()
+	var/atom/movable/render_step/emissive_blocker/em_block = new(null, generate_for)
 	underlay_appearance.overlays += em_block
 	// We used it because it's convienient and easy, but it's gotta go now or it'll hang refs
 	QDEL_NULL(em_block)
@@ -849,7 +916,7 @@
 	// I would like to use GLOB.starbright_overlays here
 	// But that breaks down for... some? reason. I think receiving a render relay breaks keep_together or something
 	// So we're just gonna accept  that this'll break with starlight color changing. hardly matters since this is really only for offset stuff, but I'd love to fix it someday
-	var/mutable_appearance/light = new(GLOB.default_lighting_underlays_by_z[generate_for.z])
+	var/mutable_appearance/light = new(GLOB.starlight_objects[GET_TURF_PLANE_OFFSET(generate_for) + 1])
 	light.render_target = ""
 	light.appearance_flags |= KEEP_TOGETHER
 	// Now apply a copy of the turf, set to multiply
@@ -876,7 +943,7 @@
 	// And rely on LIGHTING_MASK_LAYER to ensure we mask ONLY that bit
 	var/mutable_appearance/turf_mask = new(mask.appearance)
 	SET_PLANE(turf_mask, LIGHTING_PLANE, generate_for)
-	turf_mask.layer = LIGHTING_LAYER
+	turf_mask.layer = LIGHTING_MASK_LAYER
 	/// Any color becomes white. Anything else is black, and it's fully opaque
 	/// Ought to work
 	turf_mask.color = list(255,255,255,0, 255,255,255,0, 255,255,255,0, 0,0,0,0, 0,0,0,255)
@@ -898,3 +965,247 @@
 	}
 
 	return target_space_turf
+
+/turf/proc/initialize_milla()
+	var/datum/milla_safe/initialize_turf/milla = new()
+	milla.invoke_async(src)
+
+/datum/milla_safe/initialize_turf
+
+/datum/milla_safe/initialize_turf/on_run(turf/T)
+	if(!isnull(T))
+		set_tile_atmos(T, atmos_mode = T.atmos_mode, environment_id = SSmapping.environments[T.atmos_environment], innate_heat_capacity = T.heat_capacity, temperature = T.temperature)
+
+/turf/simulated/proc/update_hotspot(update_interval)
+	// This is a horrible (but fast) way to do this. Don't copy it.
+	// It's only used here because we know we're in safe code and this method is called a ton.
+	var/datum/gas_mixture/air
+	var/fuel_burnt = 0
+	var/obj/effect/hotspot/current_hotspot = active_hotspot
+	var/milla_tick = SSair.milla_tick
+	if(QDELETED(current_hotspot))
+		if(isnull(bound_air) || bound_air.lastread < milla_tick)
+			air = get_readonly_air()
+		else
+			air = bound_air
+
+		fuel_burnt = air.fuel_burnt()
+
+		if(fuel_burnt < 0.001)
+			return FALSE
+
+		current_hotspot = new(src)
+		active_hotspot = current_hotspot
+		current_hotspot.update_interval = update_interval
+		current_hotspot.update_tick = rand(0, update_interval - 1)
+
+	if(current_hotspot.data_tick != milla_tick)
+		if(!air)
+			if(isnull(bound_air) || bound_air.lastread < milla_tick)
+				air = get_readonly_air()
+			else
+				air = bound_air
+			fuel_burnt = air.fuel_burnt()
+		if(air.hotspot_volume() > 0)
+			current_hotspot.temperature = air.hotspot_temperature()
+			current_hotspot.volume = air.hotspot_volume() * CELL_VOLUME
+		else
+			current_hotspot.temperature = air.temperature()
+			current_hotspot.volume = CELL_VOLUME
+		current_hotspot.coldfire_possible = !!air.freon()
+	else
+		fuel_burnt = current_hotspot.fuel_burnt
+
+	if(fuel_burnt < 0.001)
+		// If it's old, delete it.
+		if(current_hotspot.death_timer < milla_tick)
+			QDEL_NULL(active_hotspot)
+			return FALSE
+		else
+			return TRUE
+
+	current_hotspot.perform_exposure()
+
+	current_hotspot.death_timer = SSair.milla_tick + 4
+
+	if(current_hotspot.update_tick == 0)
+		current_hotspot.update_visuals(current_hotspot.fuel_burnt)
+		current_hotspot.update_interval = update_interval
+	current_hotspot.update_tick = (current_hotspot.update_tick + 1) % update_interval
+	return TRUE
+
+/turf/simulated/proc/update_wind()
+	if(wind_tick != SSair.milla_tick)
+		QDEL_NULL(wind_effect)
+		wind_tick = null
+		return FALSE
+
+	var/obj/effect/wind/current_wind = wind_effect
+
+	if(QDELETED(current_wind))
+		current_wind = new(src)
+		wind_effect = current_wind
+
+	current_wind.dir = wind_direction(wind_x, wind_y)
+
+	// This is a horrible (but fast) way to do this. Don't copy it.
+	// It's only used here because we know we're in safe code and this method is called a ton.
+	var/datum/gas_mixture/air
+	if(isnull(bound_air) || bound_air.lastread < SSair.milla_tick)
+		air = get_readonly_air()
+	else
+		air = bound_air
+
+	var/wind_x_cached = wind_x
+	var/wind_y_cached = wind_y
+
+	var/wind = MAGNITUDE(wind_x_cached, wind_y_cached)
+	var/wind_strength = wind * air.total_moles() / MOLES_CELLSTANDARD
+	current_wind.alpha = min(255, 5 + wind_strength * 25)
+	return TRUE
+
+/// Do not call this directly. Use get_readonly_air or implement /datum/milla_safe.
+/turf/proc/private_unsafe_get_air()
+	RETURN_TYPE(/datum/gas_mixture)
+	if(isnull(bound_air))
+		SSair.bind_turf(src)
+	return bound_air
+
+/// Gets a read-only version of this tile's air. Do not use if you intend to modify the air later, implement /datum/milla_safe instead.
+/turf/proc/get_readonly_air()
+	RETURN_TYPE(/datum/gas_mixture)
+	// This is one of two intended places to call this otherwise-unsafe proc.
+	var/datum/gas_mixture/bound_to_turf/air = private_unsafe_get_air()
+	if(air.lastread < SSair.milla_tick)
+		var/list/milla_tile = new/list(MILLA_TILE_SIZE)
+		get_tile_atmos(src, milla_tile)
+		air.copy_from_milla(milla_tile)
+		air.lastread = SSair.milla_tick
+		air.readonly = null
+		air.dirty = FALSE
+		air.synchronized = FALSE
+	return air.get_readonly()
+
+/// Blindly releases air to this tile. Do not use if you care what the tile previously held, implement /datum/milla_safe instead.
+/turf/proc/blind_release_air(datum/gas_mixture/air)
+	var/datum/milla_safe/turf_blind_release/milla = new()
+	milla.invoke_async(src, air)
+
+/datum/milla_safe/turf_blind_release
+
+/datum/milla_safe/turf_blind_release/on_run(turf/T, datum/gas_mixture/air)
+	get_turf_air(T).merge(air)
+
+// Blindly sets the air in this tile. Do not use if you care what the tile previously held, implement /datum/milla_safe instead.
+/turf/proc/blind_set_air(datum/gas_mixture/air)
+	var/datum/milla_safe/turf_blind_set/milla = new()
+	milla.invoke_async(src, air)
+
+/datum/milla_safe/turf_blind_set
+
+/datum/milla_safe/turf_blind_set/on_run(turf/T, datum/gas_mixture/air)
+	get_turf_air(T).copy_from(air)
+
+/turf/return_analyzable_air()
+	return get_readonly_air()
+
+/obj/effect/abstract/pressure_overlay
+	name = null
+	icon = 'icons/effects/effects.dmi'
+	icon_state = "nothing"
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
+	// I'm really not sure this is the right var for this, but it's what the suply shuttle is using to determine if anything is blocking a tile, so let's not do that.
+	simulated = FALSE
+
+	layer = OBJ_LAYER
+	invisibility = 0
+
+	var/image/overlay
+
+/obj/effect/abstract/pressure_overlay/Initialize(mapload)
+	. = ..()
+	overlay = new(icon, src, "white")
+	overlay.alpha = 0
+	overlay.plane = ABOVE_LIGHTING_PLANE
+	overlay.blend_mode = BLEND_OVERLAY
+	overlay.appearance_flags = RESET_COLOR | RESET_ALPHA | RESET_TRANSFORM
+
+/obj/effect/abstract/pressure_overlay/onShuttleMove(turf/oldT, turf/T1, rotation, mob/requester)
+	// No, I don't think I will.
+	return FALSE
+
+/obj/effect/abstract/pressure_overlay/singularity_pull(atom/singularity, current_size)
+	// I am not a physical object, you have no control over me!
+	return
+
+/obj/effect/abstract/pressure_overlay/singularity_act()
+	// I don't taste good, either!
+	return
+
+/turf/proc/ensure_pressure_overlay()
+	if(isnull(pressure_overlay))
+		for(var/obj/effect/abstract/pressure_overlay/found_overlay in src)
+			pressure_overlay = found_overlay
+	if(isnull(pressure_overlay))
+		pressure_overlay = new(src)
+
+	if(isnull(pressure_overlay.loc))
+		// Not sure how exactly this happens, but I've seen it happen, so fix it.
+		pressure_overlay.forceMove(src)
+
+	if(isnull(pressure_overlay.overlay))
+		pressure_overlay.Initialize()
+
+	return pressure_overlay
+/**
+ * Checks whether the specified turf is blocked by something dense inside it, but ignores anything with the climbable trait
+ *
+ * Works similar to is_blocked_turf(), but ignores climbables and has less options. Primarily added for jaunting checks
+ */
+/turf/proc/is_blocked_turf_ignore_climbable()
+	if(density)
+		return TRUE
+
+	for(var/atom/movable/atom_content as anything in contents)
+		if(atom_content.density && !(atom_content.flags & ON_BORDER) && !HAS_TRAIT(atom_content, TRAIT_CLIMBABLE))
+			return TRUE
+	return FALSE
+
+/// Builds with rods. This doesn't exist to be overridden, just to remove duplicate logic for turfs that want
+/// To support floor tile creation
+/// I'd make it a component, but one of these things is space. So no.
+/turf/proc/build_with_rods(obj/item/stack/rods/used_rods, mob/user)
+	var/obj/structure/lattice/catwalk_bait = locate(/obj/structure/lattice, src)
+	var/obj/structure/lattice/catwalk/existing_catwalk = locate(/obj/structure/lattice/catwalk, src)
+	if(existing_catwalk)
+		to_chat(user, span_warning("There is already a catwalk here!"))
+		return
+
+	if(catwalk_bait)
+		if(!used_rods.use(1))
+			to_chat(user, span_warning("You need two rods to build a catwalk!"))
+			return
+
+		to_chat(user, span_notice("You construct a catwalk."))
+		playsound(src, 'sound/weapons/genhit.ogg', 50, TRUE)
+		catwalk_bait.replace_with_catwalk()
+		return
+
+	if(!used_rods.use(1))
+		to_chat(user, span_warning("You need one rod to build a lattice."))
+		return
+	to_chat(user, span_notice("You construct a lattice."))
+	playsound(src, 'sound/weapons/genhit.ogg', 50, TRUE)
+	ReplaceWithLattice()
+
+/turf/proc/add_blob_consume_component()
+	return
+
+// When our turf is washed, we may wash everything on top of the turf
+// By default we will only wash mopable things (like blood or vomit)
+// but you may optionally pass in all_contents = TRUE to wash everything
+/turf/wash_tg(clean_types, all_contents = FALSE)
+	. = ..()
+	for(var/atom/movable/to_clean as anything in src)
+		if(all_contents || HAS_TRAIT(to_clean, TRAIT_MOPABLE))
+			. |= to_clean.wash_tg(clean_types)

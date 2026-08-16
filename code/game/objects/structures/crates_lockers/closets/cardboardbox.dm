@@ -6,6 +6,7 @@
 	desc = "Just a box..."
 	icon = 'icons/obj/cardboard_boxes.dmi'
 	icon_state = "cardboard"
+	anchorable = FALSE
 	resistance_flags = FLAMMABLE
 	max_integrity = 70
 	integrity_failure = 0
@@ -84,7 +85,7 @@
 /obj/structure/closet/cardboard/proc/on_move(turf/old_loc, turf/new_loc, direction)
 	return
 
-/obj/structure/closet/cardboard/open()
+/obj/structure/closet/cardboard/open(mob/living/user, force = FALSE)
 	if(opened || !can_open())
 		return FALSE
 
@@ -157,7 +158,7 @@
 		"Clown", "CMO", "Coroner",
 		"Detective", "Engineering", "Genetics",
 		"HOP", "HOS", "Hydroponics",
-		"Internal Affairs Agent", "Janitor", "Magistrate",
+		"Lawyer", "Janitor", "Magistrate",
 		"Mechanic", "Medical", "Mime",
 		"Mining", "NT Representative", "Paramedic",
 		"Pod Pilot", "Prisoner", "Research Director",
@@ -236,7 +237,7 @@
 	default_alpha = LIGHTING_PLANE_ALPHA_VISIBLE
 
 /obj/structure/closet/cardboard/agent/nullspace/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "блюспейс коробка",
 		GENITIVE = "блюспейс коробки",
 		DATIVE = "блюспейс коробке",
@@ -259,10 +260,10 @@
 		return
 
 	playsound(old_loc, 'sound/magic/blink.ogg', 50)
-	old_loc.visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] [direction == UP ? "улета[PLUR_ET_YUT(src)] ввысь, сквозь потолок" : "провалива[PLUR_ET_YUT(src)]ся сквозь пол"]!"))
+	old_loc.visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] [direction == UP ? "улета[PLUR_ET_YUT(src)] ввысь, сквозь потолок" : "провалива[PLUR_ET_YUT(src)]ся сквозь пол"]!"))
 	do_sparks(rand(2, 5), TRUE, old_loc)
 	playsound(new_loc, 'sound/magic/blink.ogg', 50)
-	new_loc.visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] [direction == UP ? "появля[PLUR_ET_YUT(src)]ся из под пола" : "пада[PLUR_ET_YUT(src)] сквозь потолок"]!"))
+	new_loc.visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] [direction == UP ? "появля[PLUR_ET_YUT(src)]ся из под пола" : "пада[PLUR_ET_YUT(src)] сквозь потолок"]!"))
 	do_sparks(rand(2, 5), TRUE, new_loc)
 	change_colour()
 

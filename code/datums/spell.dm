@@ -6,7 +6,7 @@
 /obj/effect/proc_holder/singularity_act()
 	return
 
-/obj/effect/proc_holder/singularity_pull()
+/obj/effect/proc_holder/singularity_pull(atom/singularity, current_size)
 	return
 
 GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
@@ -36,7 +36,11 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 /datum/click_intercept/proc_holder/Destroy()
 	holder.mouse_override_icon = null
 	holder.mouse_pointer_icon = initial(holder.mouse_pointer_icon)
-	. = ..()
+	var/client/user_client = spell?.ranged_ability_user?.client
+	if(user_client && user_client.click_intercept == src)
+		user_client.click_intercept = null
+	spell = null
+	return ..()
 
 /obj/effect/proc_holder/proc/add_ranged_ability(mob/user, msg)
 	if(!user || !user.client)
@@ -68,14 +72,14 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	ranged_ability_user = null
 	active = FALSE
 	if(user.client)
-		qdel(user.client.click_intercept)
-		user.client.click_intercept = null
+		QDEL_NULL(user.client.click_intercept)
 		remove_mousepointer(user.client)
 		if(msg)
 			to_chat(user, msg)
 	update_icon()
 
 /obj/effect/proc_holder/spell
+	abstract_type = /obj/effect/proc_holder/spell
 	name = "Spell"
 	desc = "A wizard spell"
 	/// What panel the proc holder needs to go on.
@@ -90,7 +94,7 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	/// Whether an ability should start cooldown after cast or not.
 	var/should_recharge_after_cast = TRUE
 	/// Messace user get when clicks on rechargins spell button.
-	var/still_recharging_msg = span_notice("The spell is still recharging.")
+	var/still_recharging_msg = span_notice_alt("The spell is still recharging.")
 
 	/// Spell can only be cast with special wizard garb, equipped in appropriete slots.
 	var/clothes_req = TRUE
@@ -163,9 +167,9 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	var/gain_desc = null
 
 	/// The message displayed when a click based spell gets activated
-	var/selection_activated_message	= span_notice("Click on a target to cast the spell.")
+	var/selection_activated_message = span_notice_alt("Click on a target to cast the spell.")
 	/// The message displayed when a click based spell gets deactivated
-	var/selection_deactivated_message = span_notice("You choose to not cast this spell.")
+	var/selection_deactivated_message = span_notice_alt("You choose to not cast this spell.")
 
 	/// does this spell generate attack logs?
 	var/create_attack_logs = TRUE
@@ -196,8 +200,6 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 /obj/effect/proc_holder/spell/proc/cast_check(charge_check = TRUE, start_recharge = TRUE, mob/user = usr) //checks if the spell can be cast based on its settings; skipcharge is used when an additional cast_check is called inside the spell
 	if(!can_cast(user, charge_check, TRUE))
 		return FALSE
-
-	user.changeNext_click(CLICK_CD_CLICK_ABILITY)
 
 	if(ishuman(user))
 		var/mob/living/carbon/human/caster = user
@@ -256,8 +258,8 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 /obj/effect/proc_holder/spell/proc/playMagSound()
 	playsound(get_turf(usr), sound, 50, TRUE)
 
-/obj/effect/proc_holder/spell/New()
-	..()
+/obj/effect/proc_holder/spell/Initialize(mapload)
+	. = ..()
 	action = new(src)
 	still_recharging_msg = span_notice("[name] is still recharging.")
 	if(!gain_desc)
@@ -439,6 +441,8 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 	if(action)
 		action.UpdateButtonIcon()
 
+	user.changeNext_click(CLICK_CD_CLICK_ABILITY)
+
 /**
  * Will write additional logs if create_custom_logs is TRUE and the caster has a ckey. Override this
  *
@@ -463,8 +467,7 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 			spell.icon_state = overlay_icon_state
 			spell.set_anchored(TRUE)
 			spell.set_density(FALSE)
-			spawn(overlay_lifespan)
-				qdel(spell)
+			QDEL_IN(spell, overlay_lifespan)
 
 	custom_handler?.before_cast(targets, user, src)
 
@@ -668,4 +671,8 @@ GLOBAL_LIST_INIT(spells, typesof(/obj/effect/proc_holder/spell))
 
 /// Called when a spell is added
 /obj/effect/proc_holder/spell/proc/on_spell_gain(mob/user = usr)
+	return
+
+/// Called when a spell is removed
+/obj/effect/proc_holder/spell/proc/on_spell_removed(mob/user = usr)
 	return

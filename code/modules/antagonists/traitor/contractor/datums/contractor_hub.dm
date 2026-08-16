@@ -11,7 +11,7 @@
 	var/rep_per_completion = 2
 	/// Completing every contract at a given difficulty will always result in a sum of TC greater or equal than the difficulty's threshold.
 	/// Structure: EXTRACTION_DIFFICULTY_(EASY|MEDIUM|HARD) => number
-	var/difficulty_tc_thresholds = list(
+	var/difficulty_tc_thresholds = alist(
 		EXTRACTION_DIFFICULTY_EASY = 100,
 		EXTRACTION_DIFFICULTY_MEDIUM = 150,
 		EXTRACTION_DIFFICULTY_HARD = 200,
@@ -38,6 +38,8 @@
 		/datum/rep_purchase/item/balloon,
 		/datum/rep_purchase/item/contractor_partner,
 		/datum/rep_purchase/item/contractor_hardsuit,
+		/datum/rep_purchase/item/scorpion_hook,
+		/datum/rep_purchase/item/activation_upgrade,
 		/datum/rep_purchase/item/spai_kit,
 	)
 	// Variables
@@ -73,6 +75,14 @@
 			purchases[i] = new P
 		else
 			stack_trace("Expected Hub purchase [purchases[i]] to be a type but it wasn't!")
+
+/datum/contractor_hub/Destroy(force)
+	contractor_uplink = null
+	owner = null
+	current_contract = null
+	QDEL_LIST(contracts)
+	LAZYCLEARLIST(targets)
+	return ..()
 
 /datum/contractor_hub/ui_host(mob/user)
 	return contractor_uplink
@@ -153,7 +163,7 @@
 		"Дорогой бенефициар фонда, сообщаем вам, что оплата по просроченному платежу наконец-то завершена, и на ваш счёт зачислено [creds] кредит[DECL_CREDIT(creds)].",
 		"Привет, брат. Как дела? Ты давно угостил меня пивом, и я хочу отплатить тебе! [creds] кредит[DECL_CREDIT(creds)] твои, наслаждайся!",
 		"Благодарим вас за инвестицию в размере 500 кредитов! В знак признательности мы зачислили на ваш счёт [creds] кредит[DECL_CREDIT(creds)].",
-		"Ваш запрос на возврат 100 таблеток \"Доктор Денчиго\" с причиной \"Мне нужно гораздо больше, чем 100 таблеток!\" был принят. Мы зачислили на ваш счёт [creds] кредит[DECL_CREDIT(creds)].",
+		"Ваш запрос на возврат 100 таблеток \"Доктор Виталя\" с причиной \"Мне нужно гораздо больше, чем 100 таблеток!\" был принят. Мы зачислили на ваш счёт [creds] кредит[DECL_CREDIT(creds)].",
 		"Ваш запрос на возврат средств за подписку на WetSkrell.nt был получен. Мы зачислили на ваш счёт [creds] кредит[DECL_CREDIT(creds)].",
 	)))
 	// Clean up

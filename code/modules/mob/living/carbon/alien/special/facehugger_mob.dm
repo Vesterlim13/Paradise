@@ -24,7 +24,7 @@
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 	AI_delay_max = 0.5 SECONDS
 	mob_size = MOB_SIZE_SMALL
-	pass_flags = PASSTABLE | PASSMOB | PASSFENCE | PASSVEHICLE
+	pass_flags = PASSTABLE | PASSMOB | PASSFENCE | PASSVEHICLE | PASSDOOR
 	ventcrawler_trait = TRAIT_VENTCRAWLER_ALWAYS
 	mobility_flags = MOBILITY_FLAGS_REST_CAPABLE_DEFAULT
 	pull_force = MOVE_FORCE_EXTREMELY_WEAK
@@ -57,7 +57,7 @@
 	var/obj/item/clothing/mask/facehugger/hugger_holder
 
 /mob/living/simple_animal/hostile/facehugger/get_ru_names()
-	return  list(
+	return alist(
 		NOMINATIVE = "лицехват",
 		GENITIVE = "лицехвата",
 		DATIVE = "лицехвату",
@@ -132,7 +132,7 @@
 					continue
 				if(faction_check_mob(L) && !attack_same)
 					return
-	visible_message(span_danger("<b>[capitalize(declent_ru(NOMINATIVE))]</b> [ranged_message] на [A]!"))
+	visible_message(span_danger("<b>[DECLENT_RU_CAP(src, NOMINATIVE)]</b> [ranged_message] на [A]!"))
 	throw_at(A, jumpdistance, jumpspeed, spin = FALSE, diagonals_first = TRUE, dodgeable = FALSE)
 	COOLDOWN_START(src, ranged_cooldown, ranged_cooldown_time)
 
@@ -363,7 +363,7 @@
 	holder_type = /obj/item/clothing/mask/facehugger/lamarr
 
 /mob/living/simple_animal/hostile/facehugger/lamarr/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ламарр",
 		GENITIVE = "ламарр",
 		DATIVE = "ламарр",

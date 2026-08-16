@@ -237,6 +237,7 @@
 	maxstack = 50
 
 /datum/design/rglass
+	desc = "Сталь + Стекло" // because this design is used in ore redemption
 	id = "rglass"
 	build_type = AUTOLATHE | SMELTER
 	materials = list(MAT_METAL = 1000, MAT_GLASS = MINERAL_MATERIAL_AMOUNT)
@@ -313,6 +314,20 @@
 	build_type = AUTOLATHE
 	materials = list(MAT_METAL = 1500)
 	build_path = /obj/item/reagent_containers/food/drinks/shaker
+	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_DINNERWARE)
+
+/datum/design/coffeepot
+	id = "coffeepot"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 1000, MAT_GLASS = 3500)
+	build_path = /obj/item/reagent_containers/glass/coffeepot
+	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_DINNERWARE)
+
+/datum/design/syrup_bottle
+	id = "syrup_bottle"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 150, MAT_GLASS = 500)
+	build_path = /obj/item/reagent_containers/glass/bottle/syrup_bottle
 	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_DINNERWARE)
 
 /datum/design/cultivator
@@ -423,8 +438,36 @@
 /datum/design/c38hp
 	id = "c38hp"
 	build_type = AUTOLATHE
-	materials = list(MAT_METAL = 30500)
+	materials = list(MAT_METAL = 32000)
 	build_path = /obj/item/ammo_box/speedloader/c38/hp
+	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
+
+/datum/design/speedloader45colt
+	id = "speedloader9mm"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 2000)
+	build_path = /obj/item/ammo_box/speedloader/rubber45colt/empty
+	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
+
+/datum/design/c45colt
+	id = "c45colt"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 30500)
+	build_path = /obj/item/ammo_box/c45colt
+	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
+
+/datum/design/rubber45colt
+	id = "rubber45colt"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 20000)
+	build_path = /obj/item/ammo_box/rubber45colt
+	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
+
+/datum/design/ap45colt
+	id = "ap45colt"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 35000)
+	build_path = /obj/item/ammo_box/ap45colt
 	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
 
 /datum/design/recorder
@@ -567,6 +610,13 @@
 	build_path = /obj/item/reagent_containers/iv_bag
 	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_MEDICAL)
 
+/datum/design/handheld_defib
+	id = "handheld_defibrillator"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 2000, MAT_GLASS = 2000)
+	build_path = /obj/item/handheld_defibrillator
+	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_MEDICAL)
+
 /datum/design/prox_sensor
 	id = "prox_sensor"
 	build_type = AUTOLATHE
@@ -598,7 +648,7 @@
 /datum/design/enforcermag
 	id = "rubber9mmmag"
 	build_type = AUTOLATHE
-	materials = list(MAT_METAL = 2500)
+	materials = list(MAT_METAL = 2000)
 	build_path = /obj/item/ammo_box/magazine/enforcer/empty
 	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_SECURITY)
 
@@ -683,21 +733,7 @@
 	id = "9mmTEbox"
 	build_type = AUTOLATHE
 	materials = list(MAT_METAL = 30500)
-	build_path = /obj/item/ammo_box/c9mmte
-	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
-
-/datum/design/enforcer/disable
-	id = "enforcer_disable"
-	build_type = AUTOLATHE
-	materials = list(MAT_METAL = 25000)
-	build_path = /obj/item/ammo_box/enforcer/disabler
-	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_SECURITY)
-
-/datum/design/enforcer/laser
-	id = "enforcer_laser"
-	build_type = AUTOLATHE
-	materials = list(MAT_METAL = 35000)
-	build_path = /obj/item/ammo_box/enforcer/laser
+	build_path = /obj/item/ammo_box/dot45NR
 	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
 
 /datum/design/spectermag_disabler
@@ -720,7 +756,7 @@
 	build_type = AUTOLATHE
 	materials = list(MAT_METAL = 3000)
 	build_path = /obj/item/ammo_box/magazine/sparkle_a12/empty
-	category = list("hacked", "Security")
+	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
 
 /datum/design/buckshot_shell
 	id = "buckshot_shell"
@@ -781,15 +817,15 @@
 /datum/design/a357
 	id = "a357"
 	build_type = AUTOLATHE
-	materials = list(MAT_METAL = 75500)
+	materials = list(MAT_METAL = 79250)
 	build_path = /obj/item/ammo_box/a357
 	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
 
 /datum/design/c10mm
 	id = "c10mm"
 	build_type = AUTOLATHE
-	materials = list(MAT_METAL = 45750)
-	build_path = /obj/item/ammo_box/c10mm
+	materials = list(MAT_METAL = 45500)
+	build_path = /obj/item/ammo_box/m10mm
 	category = list(PRINTER_CATEGORY_HACKED, AUTOLATHE_CATEGORY_SECURITY)
 
 /datum/design/c45
@@ -876,6 +912,19 @@
 	build_path = /obj/item/assembly/mousetrap
 	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_MISC)
 
+/datum/design/toner
+	id = "toner"
+	build_type = AUTOLATHE | PROTOLATHE
+	materials = list(MAT_METAL = SMALL_MATERIAL_AMOUNT * 0.1, MAT_GLASS = SMALL_MATERIAL_AMOUNT * 0.1)
+	build_path = /obj/item/toner
+	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_MISC)
+
+/datum/design/toner/large
+	id = "toner_large"
+	materials = list(MAT_METAL = SMALL_MATERIAL_AMOUNT * 0.5, MAT_GLASS = SMALL_MATERIAL_AMOUNT * 0.5)
+	build_path = /obj/item/toner/large
+	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_MISC)
+
 /datum/design/vendor
 	id = "vendor"
 	build_type = AUTOLATHE
@@ -922,6 +971,46 @@
 /datum/design/cap_ammo
 	id = "cap_ammo"
 	build_type = AUTOLATHE
-	materials = list(MAT_METAL = 100)
+	materials = list(MAT_METAL = 600)
 	build_path = /obj/item/ammo_box/speedloader/caps
 	category = list(PRINTER_CATEGORY_INITIAL, AUTOLATHE_CATEGORY_MISC)
+
+//MARK: unlockable ammo
+/datum/design/sfg9mm
+	id = "sfg_mag_empty"
+	req_tech = list(RESEARCH_TREE_COMBAT = 8)
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 3000)
+	build_path = /obj/item/ammo_box/magazine/sfg9mm/empty
+	category = list(AUTOLATHE_CATEGORY_IMPORTED)
+
+/datum/design/smgm9mm
+	id = "saber_mag_empty"
+	req_tech = list(RESEARCH_TREE_COMBAT = 8)
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 3000)
+	build_path = /obj/item/ammo_box/magazine/smgm9mm/empty
+	category = list(AUTOLATHE_CATEGORY_IMPORTED)
+
+/datum/design/ak814_mag
+	id = "ak814_mag_empty"
+	req_tech = list(RESEARCH_TREE_COMBAT = 8)
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 3000)
+	build_path = /obj/item/ammo_box/magazine/ak814/fusty/empty
+	category = list(AUTOLATHE_CATEGORY_IMPORTED)
+
+/datum/design/aksu_ammo_box
+	id = "aksu_ammo_box"
+	req_tech = list(RESEARCH_TREE_COMBAT = 8)
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 35000)
+	build_path = /obj/item/ammo_box/a545x39/fusty
+	category = list(AUTOLATHE_CATEGORY_IMPORTED)
+
+/datum/design/laser_carbine_mag
+	id = "lk_mag_empty"
+	build_type = AUTOLATHE
+	materials = list(MAT_METAL = 3000)
+	build_path = /obj/item/ammo_box/magazine/ik60mag/empty
+	category = list(AUTOLATHE_CATEGORY_IMPORTED)

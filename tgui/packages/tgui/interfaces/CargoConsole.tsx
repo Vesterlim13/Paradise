@@ -21,7 +21,7 @@ export const CargoConsole = (_props: unknown) => {
   const [contentsModalTitle, setContentsModalTitle] = useState<string>(null);
 
   return (
-    <Window width={1000} height={800}>
+    <Window width={1000} height={800} theme="cargo">
       <Window.Content>
         <Stack fill vertical>
           <ContentsModal
@@ -171,15 +171,18 @@ const CataloguePane = (properties: CataloguePaneProps) => {
     (crate) => crate.name
   );
 
+  const targetCategory = !searchText
+    ? filter(categories, (c) => c.name === category)[0]?.category || category
+    : null;
+
   const cratesToShow = flow([
     (supply_packs) =>
-      filter<SupplyPack>(
-        supply_packs,
-        (pack) =>
-          pack.cat ===
-          (filter(categories, (c) => c.name === category)[0].category ||
-            searchText)
-      ),
+      filter<SupplyPack>(supply_packs, (pack) => {
+        if (searchText) {
+          return true;
+        }
+        return pack.cat === targetCategory;
+      }),
     (supply_packs) =>
       searchText ? filter<SupplyPack>(supply_packs, packSearch) : supply_packs,
     (supply_packs) =>

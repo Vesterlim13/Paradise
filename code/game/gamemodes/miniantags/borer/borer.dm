@@ -4,7 +4,7 @@
 	tts_seed = "Gman"
 	var/host_resisting = FALSE
 
-/mob/living/captive_brain/say(message)
+/mob/living/captive_brain/say(message, verb = "говор[PLUR_IT_YAT(src)]", sanitize = TRUE, ignore_speech_problems = FALSE, ignore_atmospherics = FALSE, ignore_languages = FALSE, ignore_emotes = FALSE)
 	if(client)
 		if(check_mute(client.ckey, MUTE_IC))
 			to_chat(src, span_warning("Вы не можете говорить в IC (muted)."))
@@ -13,7 +13,7 @@
 		if(client.handle_spam_prevention(message,MUTE_IC))
 			return
 
-	if(istype(loc,/mob/living/simple_animal/borer))
+	if(isborer(loc))
 		message = trim(sanitize(copytext_char(message, 1, MAX_MESSAGE_LEN)))
 		if(!message)
 			return
@@ -34,8 +34,8 @@
 	var/mob/living/simple_animal/borer/B = loc
 
 	if(!istype(B))
-		log_runtime(EXCEPTION("Trapped mind found without a borer!"), src)
-		return FALSE
+		. = FALSE
+		CRASH("Trapped mind found without a borer!")
 
 	return B.host.say_understands(other, speaking)
 
@@ -141,7 +141,7 @@
 	var/obj/effect/proc_holder/spell/borer_dominate/dominate_spell = new
 
 /mob/living/simple_animal/borer/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "мозговой червь",
 		GENITIVE = "мозгового червя",
 		DATIVE = "мозговому червю",
@@ -150,9 +150,9 @@
 		PREPOSITIONAL = "мозговом черве",
 	)
 
-/mob/living/simple_animal/borer/New(atom/newloc, gen=1)
+/mob/living/simple_animal/borer/Initialize(mapload, gen = 1)
 	antag_datum.borer_rank = new BORER_RANK_YOUNG(src)
-	..(newloc)
+	. = ..()
 	remove_from_all_data_huds()
 	generation = gen
 	add_language(LANGUAGE_HIVE_BORER)
@@ -160,6 +160,11 @@
 	real_name = "Мозговой червь [rand(1000,9999)]"
 	truename = "[borer_names[min(generation, length(borer_names))]] [rand(1000,9999)]"
 	GrantBorerActions()
+
+/mob/living/simple_animal/borer/Destroy()
+	detach()
+	host = null
+	return ..()
 
 /mob/living/simple_animal/borer/death(gibbed)
 	. = ..()
@@ -211,7 +216,7 @@
 	status_tab_data[++status_tab_data.len] = list("Rank", antag_datum.borer_rank?.rankname)
 	status_tab_data[++status_tab_data.len] = list("Evolution points", antag_datum.evo_points)
 
-/mob/living/simple_animal/borer/say(message, verb = "говор%(ит,ят)%", sanitize = TRUE, ignore_speech_problems = FALSE, ignore_atmospherics = FALSE, ignore_languages = FALSE)
+/mob/living/simple_animal/borer/say(message, verb = "говор[PLUR_IT_YAT(src)]", sanitize = TRUE, ignore_speech_problems = FALSE, ignore_atmospherics = FALSE, ignore_languages = FALSE, ignore_emotes = FALSE)
 	var/list/message_pieces = parse_languages(message)
 
 	for(var/datum/multilingual_say_piece/S in message_pieces)
@@ -241,21 +246,21 @@
 		return
 
 	if(src && !QDELETED(src) && !QDELETED(host))
-		var/say_string = (docile) ? "slurs" :"states"
+		var/say_string = (docile) ? "оскорбляет" :"заявляет"
 		if(host)
 			to_chat(host, span_changeling("<i>[truename] [say_string]:</i> [sended_message]"))
 			add_say_logs(src, sended_message, host, "BORER")
 
 			for(var/M in GLOB.dead_mob_list)
 				if(isobserver(M))
-					to_chat(M, span_changeling("<i>Кортикальная связь <b>[truename]</b> ([ghost_follow_link(src, ghost=M)]): [sended_message]</i>"))
+					to_chat(M, span_changeling("([ghost_follow_link(src, ghost = M)]) <i>Кортикальная связь <b>[truename]</b>: [sended_message]</i>"))
 
 		to_chat(src, span_changeling("<i>[truename] [say_string]:</i> [sended_message]"))
 		talk_to_borer_action.Grant(host)
 
 /mob/living/simple_animal/borer/verb/toggle_silence_inside_host()
 	set name = "Говорить носителю"
-	set category = STATPANEL_BORER
+	set category = VERB_CATEGORY_BORER
 	set desc = "Toggle whether you will be able to say audible messages while inside your host."
 
 	if(talk_inside_host)
@@ -285,7 +290,7 @@
 
 	for(var/M in GLOB.dead_mob_list)
 		if(isobserver(M))
-			to_chat(M, span_changeling("<i>Кортикальная связь <b>[src]</b> ([ghost_follow_link(src, ghost=M)]): [input]</i>"))
+			to_chat(M, span_changeling("([ghost_follow_link(src, ghost = M)]) <i>Кортикальная связь <b>[src]</b>: [input]</i>"))
 
 	to_chat(src, span_changeling("<i>[src] says:</i> [input]"))
 
@@ -310,7 +315,7 @@
 
 	for(var/M in GLOB.dead_mob_list)
 		if(isobserver(M))
-			to_chat(M, span_changeling("<i>Кортикальная связь <b>[B]</b> ([ghost_follow_link(src, ghost=M)]): [input]</i>"))
+			to_chat(M, span_changeling("([ghost_follow_link(src, ghost = M)]) <i>Кортикальная связь <b>[B]</b>: [input]</i>"))
 
 	to_chat(src, span_changeling("<i>[B.truename] says:</i> [input]"))
 
@@ -367,7 +372,7 @@
 	else
 		return ..()
 
-/mob/living/simple_animal/borer/OnUnarmedAttack(mob/living/carbon/human/human)
+/mob/living/simple_animal/borer/OnUnarmedAttack(mob/living/carbon/human/human, proximity_flag, list/modifiers)
 	if(!istype(human))
 		return
 
@@ -415,8 +420,8 @@
 			attack_ghost(ghost)
 
 	if(href_list["borer_use_chem"])
-		locate(href_list["src"])
-		if(!istype(src, /mob/living/simple_animal/borer))
+		locateUID(href_list["src"])
+		if(!isborer(src))
 			return
 
 		var/datum/reagent/reagent = href_list["borer_use_chem"]
@@ -553,9 +558,9 @@
 	RemoveInfestActions()
 	forceMove(get_turf(host))
 
-	machine = null
+	unset_machine()
 	host.reset_perspective(null)
-	host.machine = null
+	host.unset_machine()
 
 	var/mob/living/carbon/human = host
 	human.borer = null
@@ -673,8 +678,7 @@
 		borer.detach()
 		return
 
-	log_runtime(EXCEPTION("Missing borer or missing host brain upon borer release."), src)
-	return
+	CRASH("Missing borer or missing host brain upon borer release.")
 
 //Check for brain worms in head.
 /mob/proc/has_brain_worms()
@@ -726,7 +730,7 @@
 
 	controlling = FALSE
 	reset_perspective(null)
-	machine = null
+	unset_machine()
 	sneaking = FALSE
 
 	RemoveControlActions()
@@ -757,7 +761,7 @@
 		host_brain.computer_id = null
 		host_brain.lastKnownIP = null
 
-		host.ckey = host_brain.ckey
+		host.possess_by_player(host_brain.ckey)
 
 		if(!host.computer_id)
 			host.computer_id = b2h_id
@@ -765,7 +769,7 @@
 		if(!host.lastKnownIP)
 			host.lastKnownIP = b2h_ip
 
-	qdel(host_brain)
+	QDEL_NULL(host_brain)
 
 	return
 

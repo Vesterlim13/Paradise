@@ -4,7 +4,6 @@
 	icon_state = "cabinet"
 	overlay_sparking = "c_sparking"
 	overlay_locked = "c_locked"
-	overlay_locker = "c_locker"
 	overlay_unlocked = "c_unlocked"
 	max_integrity = 70
 	resistance_flags = FLAMMABLE
@@ -13,7 +12,7 @@
 	open_sound_volume = 25
 
 /obj/structure/closet/cabinet/add_debris_element()
-	AddElement(/datum/element/debris, DEBRIS_WOOD, -40, 5)
+	generate_debris_handler(DEBRIS_WOOD, -40, 5)
 
 /obj/structure/closet/acloset
 	name = "strange closet"

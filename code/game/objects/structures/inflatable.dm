@@ -3,12 +3,22 @@
 	desc = "A folded membrane which rapidly expands into a large cubical shape on activation."
 	icon = 'icons/obj/inflatable.dmi'
 	icon_state = "folded_wall"
+	var/obj/structure/inflatable/structure_path = /obj/structure/inflatable
 
 /obj/item/inflatable/attack_self(mob/user)
 	playsound(loc, 'sound/items/zip.ogg', 75, TRUE)
 	to_chat(user, span_notice("You inflate [src]."))
-	var/obj/structure/inflatable/R = new /obj/structure/inflatable(user.loc)
-	transfer_fingerprints_to(R)
+	inflate(user)
+
+/obj/item/inflatable/proc/inflate(mob/user)
+	if(QDELETED(src))
+		return
+	if(!do_after(user, 0.5 SECONDS, src))
+		return
+	if(QDELETED(src) || QDELETED(user))
+		return
+	var/obj/structure/inflatable/inflated_structure = new structure_path(user.loc)
+	transfer_fingerprints_to(inflated_structure)
 	qdel(src)
 
 /obj/structure/inflatable
@@ -25,19 +35,19 @@
 
 /obj/structure/inflatable/Initialize(mapload, location)
 	. = ..()
-	air_update_turf(TRUE)
+	recalculate_atmos_connectivity()
 
 /obj/structure/inflatable/Destroy()
 	var/turf/T = get_turf(src)
 	. = ..()
-	T.air_update_turf(TRUE)
+	T.recalculate_atmos_connectivity()
 
-/obj/structure/inflatable/CanAtmosPass(turf/T, vertical)
+/obj/structure/inflatable/CanAtmosPass(direction)
 	return !density
 
 /obj/structure/inflatable/attackby(obj/item/I, mob/living/user, params)
 	. = ..()
-	if(!ATTACK_CHAIN_CANCEL_CHECK(.) && !QDELETED(src) && (is_sharp(I) || is_pointed(I)))
+	if(!ATTACK_CHAIN_CANCEL_CHECK(.) && !QDELETED(src) && (I.sharp || is_pointed(I)))
 		deconstruct(FALSE)
 
 /obj/structure/inflatable/attack_hand(mob/user)
@@ -65,7 +75,7 @@
 
 /obj/structure/inflatable/verb/hand_deflate()
 	set name = "Сдуть"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in oview(1)
 
 	if(usr.incapacitated() || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED))
@@ -77,14 +87,7 @@
 	name = "inflatable door"
 	desc = "A folded membrane which rapidly expands into a simple door on activation."
 	icon_state = "folded_door"
-
-/obj/item/inflatable/door/attack_self(mob/user)
-	playsound(loc, 'sound/items/zip.ogg', 75, TRUE)
-	to_chat(user, span_notice("You inflate [src]."))
-	var/obj/structure/inflatable/door/R = new /obj/structure/inflatable/door(user.loc)
-	src.transfer_fingerprints_to(R)
-	R.add_fingerprint(user)
-	qdel(src)
+	structure_path = /obj/structure/inflatable/door
 
 /obj/structure/inflatable/door //Based on mineral door code
 	name = "inflatable door"
@@ -113,7 +116,7 @@
 	if(istype(mover, /obj/effect/beam))
 		return !opacity
 
-/obj/structure/inflatable/door/CanAtmosPass(turf/T, vertical)
+/obj/structure/inflatable/door/CanAtmosPass(direction)
 	return !density
 
 /obj/structure/inflatable/door/proc/try_to_operate(atom/user)
@@ -146,7 +149,7 @@
 	set_density(state_closed)
 	set_opacity(state_closed)
 	update_icon(UPDATE_ICON_STATE)
-	air_update_turf(TRUE)
+	recalculate_atmos_connectivity()
 	is_operating = FALSE
 
 /obj/structure/inflatable/door/update_icon_state()

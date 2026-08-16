@@ -1,7 +1,7 @@
 
 /mob/living/simple_animal/bot/ed209/syndicate
 	name = "Syndicate Sentry Bot"
-	desc = "Охранный робот Синдиката."
+	desc = "Охранный робот \"Синдиката\"."
 	model = "Guardian"
 	icon = 'icons/obj/mecha/mecha.dmi'
 	icon_state = "darkgygax"
@@ -17,7 +17,7 @@
 	shoot_sound = 'sound/weapons/wave.ogg'
 	anchored = TRUE
 	window_id = "syndiebot"
-	window_name = "Интерфейс Часового Робота Синдиката"
+	window_name = "Интерфейс Часового Робота \"Синдиката\""
 	var/turf/saved_turf
 	var/stepsound = 'sound/mecha/mechstep.ogg'
 	var/area/syndicate_depot/core/depotarea
@@ -26,13 +26,13 @@
 	var/turf/spawn_turf
 
 /mob/living/simple_animal/bot/ed209/syndicate/get_ru_names()
-	return list(
-		NOMINATIVE = "робот-часовой Синдиката",
-		GENITIVE = "робота-часового Синдиката",
-		DATIVE = "роботу-часовому Синдиката",
-		ACCUSATIVE = "робота-часового Синдиката",
-		INSTRUMENTAL = "роботом-часовым Синдиката",
-		PREPOSITIONAL = "роботе-часовом Синдиката",
+	return alist(
+		NOMINATIVE = "робот-часовой \"Синдиката\"",
+		GENITIVE = "робота-часового \"Синдиката\"",
+		DATIVE = "роботу-часовому \"Синдиката\"",
+		ACCUSATIVE = "робота-часового \"Синдиката\"",
+		INSTRUMENTAL = "роботом-часовым \"Синдиката\"",
+		PREPOSITIONAL = "роботе-часовом \"Синдиката\"",
 	)
 
 /mob/living/simple_animal/bot/ed209/syndicate/Initialize(mapload)
@@ -85,9 +85,9 @@
 	if(saved_turf && current_turf != saved_turf)
 		playsound(loc, stepsound, 40, TRUE)
 	if(spawn_turf && !are_zs_connected(src, spawn_turf))
-		raise_alert("[capitalize(declent_ru(NOMINATIVE))] потерялся в пространстве.")
+		raise_alert("[DECLENT_RU_CAP(src, NOMINATIVE)] потерялся в пространстве.")
 		raised_alert = FALSE
-		raise_alert("[capitalize(declent_ru(NOMINATIVE))] активировал протокол само-уничтожения.")
+		raise_alert("[DECLENT_RU_CAP(src, NOMINATIVE)] активировал протокол само-уничтожения.")
 		explode()
 	saved_turf = current_turf
 	switch(mode)
@@ -178,13 +178,13 @@
 		if(depotarea)
 			depotarea.list_remove(src, depotarea.guard_list)
 		GLOB.move_manager.stop_looping(src)
-		visible_message(span_userdanger("[capitalize(declent_ru(NOMINATIVE))] разлетается на части!"))
+		visible_message(span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] разлетается на части!"))
 		do_sparks(3, TRUE, src)
 		new /obj/effect/decal/cleanable/blood/oil(loc)
 		var/obj/structure/mecha_wreckage/gygax/dark/wreck = new /obj/structure/mecha_wreckage/gygax/dark(loc)
 		wreck.name = "sentry bot wreckage"
 
-		raise_alert("[capitalize(declent_ru(NOMINATIVE))] уничтожен.")
+		raise_alert("[DECLENT_RU_CAP(src, NOMINATIVE)] уничтожен.")
 		qdel(src)
 
 /mob/living/simple_animal/bot/ed209/syndicate/set_weapon()
@@ -193,7 +193,7 @@
 /mob/living/simple_animal/bot/ed209/syndicate/emp_act(severity)
 	return
 
-/mob/living/simple_animal/bot/ed209/syndicate/OnUnarmedAttack(atom/A)
+/mob/living/simple_animal/bot/ed209/syndicate/OnUnarmedAttack(atom/A, proximity_flag, list/modifiers)
 	return shootAt(A)
 
 /mob/living/simple_animal/bot/ed209/syndicate/start_cuffing(mob/living/carbon/C)

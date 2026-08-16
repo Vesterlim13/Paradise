@@ -3,6 +3,7 @@
 	desc = "Summons things."
 	icon = 'icons/obj/radio.dmi'
 	icon_state = "radio"
+	item_state = "radio_uplink"
 	implant_state = "implant-syndicate"
 	origin_tech = "materials=4;magnets=4;programming=4;biotech=4;syndicate=5;bluespace=5"
 	implant_data = /datum/implant_fluff/uplink
@@ -50,6 +51,7 @@
 
 /obj/item/implant/uplink/activate(cause)
 	hidden_uplink?.check_trigger(imp_in)
+	return ..()
 
 /obj/item/implanter/uplink
 	name = "bio-chip implanter (uplink)"

@@ -11,6 +11,7 @@
 	consume_sound = 'sound/items/drink.ogg'
 	trash = /obj/item/trash/snack_bowl
 	bitesize = 5
+	abstract_type = /obj/item/reagent_containers/food/snacks/soup
 
 /obj/item/reagent_containers/food/snacks/soup/meatballsoup
 	name = "meatball soup"
@@ -93,6 +94,25 @@
 		reagents.add_reagent("vitamin", 1)
 	. = ..()
 
+/obj/item/reagent_containers/food/snacks/soup/sawdustsoup
+	name = "sawdust soup"
+	desc = "ЧТООО как этот суп попал в мои опилки!?"
+	icon_state = "sawdustsoup"
+	filling_color = "#D3C28D"
+	list_reagents = list("nutriment" = 15)
+	tastes = list("wood" = 1)
+	foodtype = GROSS
+
+/obj/item/reagent_containers/food/snacks/soup/sawdustsoup/get_ru_names()
+	return alist(
+		NOMINATIVE = "суп из опилок",
+		GENITIVE = "супа из опилок",
+		DATIVE = "супу из опилок",
+		ACCUSATIVE = "суп из опилок",
+		INSTRUMENTAL = "супом из опилок",
+		PREPOSITIONAL = "супе из опилок",
+	)
+
 /obj/item/reagent_containers/food/snacks/soup/tomatosoup
 	name = "tomato soup"
 	desc = "Drinking this feels like being a vampire! A tomato vampire..."
@@ -128,8 +148,8 @@
 	tastes = list("beet" = 1)
 	foodtype = VEGETABLES
 
-/obj/item/reagent_containers/food/snacks/soup/beetsoup/New()
-	..()
+/obj/item/reagent_containers/food/snacks/soup/beetsoup/Initialize(mapload)
+	. = ..()
 	name = pick("borsch","bortsch","borstch","borsh","borshch","borscht")
 
 /obj/item/reagent_containers/food/snacks/soup/rassolnik
@@ -163,6 +183,23 @@
 	tastes = list("tomato" = 1, "carrot" = 1)
 	foodtype = VEGETABLES
 
+/obj/item/reagent_containers/food/snacks/soup/stew/batya
+	name = "great soup"
+	desc = "Этот великий суп был приготовлен самим Bat'Ya, ценящийся всеми сословиями. Но даже от одного только взгляда на него — у вас уже слезятся глаза. Ты его не сможешь доесть, даже не пытайся."
+	antable = FALSE
+	bitesize = 0.01
+	randomize_position = FALSE
+
+/obj/item/reagent_containers/food/snacks/soup/stew/batya/get_ru_names()
+	return alist(
+		NOMINATIVE = "великий суп",
+		GENITIVE = "великого супа",
+		DATIVE = "великому супу",
+		ACCUSATIVE = "великий суп",
+		INSTRUMENTAL = "великим супом",
+		PREPOSITIONAL = "великом супе",
+	)
+
 /obj/item/reagent_containers/food/snacks/soup/stewedsoymeat
 	name = "stewed soy meat"
 	desc = "Even non-vegetarians will LOVE this!"
@@ -171,6 +208,7 @@
 	list_reagents = list("nutriment" = 8)
 	tastes = list("soy" = 1, "vegetables" = 1)
 	foodtype = VEGETABLES
+
 
 //////////////////////
 //		Chili		//

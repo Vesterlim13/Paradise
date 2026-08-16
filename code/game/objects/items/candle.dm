@@ -1,6 +1,8 @@
 #define TALL_CANDLE 1
 #define MID_CANDLE 2
 #define SHORT_CANDLE 3
+/// For how bright candles are
+#define CANDLE_LUM 3
 
 /obj/item/candle
 	name = "red candle"
@@ -17,7 +19,7 @@
 	var/start_lit = FALSE
 	var/flickering = FALSE
 	light_color = "#E09D37"
-	light_system = MOVABLE_LIGHT
+	light_system = OVERLAY_LIGHT
 	light_range = CANDLE_LUM
 	light_on = FALSE
 
@@ -43,11 +45,11 @@
 		return FALSE
 	return TRUE
 
-/obj/item/candle/get_heat()
-	return lit * 1000
+/obj/item/candle/get_temperature()
+	return lit * T1000K
 
 /obj/item/candle/attackby(obj/item/I, mob/user, params)
-	if(I.get_heat() && light(span_notice("[user] lights [src] with [I].")))
+	if(I.get_temperature() && light(span_notice("[user] lights [src] with [I].")))
 		add_fingerprint(user)
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 	return ..()
@@ -57,7 +59,7 @@
 	if(I.tool_use_check(user, 0)) //Don't need to flash eyes because you are a badass
 		light(span_notice("[user] casually lights the [name] with [I], what a badass."))
 
-/obj/item/candle/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume, global_overlay = TRUE)
+/obj/item/candle/fire_act(exposed_temperature, exposed_volume)
 	if(!lit)
 		light() //honk
 	return ..()
@@ -111,7 +113,7 @@
 		qdel(src)
 	if(isturf(loc)) //start a fire if possible
 		var/turf/T = loc
-		T.hotspot_expose(700, 5)
+		T.hotspot_expose(700, 1)
 
 /obj/item/candle/proc/unlight()
 	if(lit)
@@ -148,4 +150,4 @@
 #undef TALL_CANDLE
 #undef MID_CANDLE
 #undef SHORT_CANDLE
-
+#undef CANDLE_LUM

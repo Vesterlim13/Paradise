@@ -11,7 +11,7 @@
 	breakout_time = 30 SECONDS
 
 /obj/item/restraints/legcuffs/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кандалы",
 		GENITIVE = "кандалов",
 		DATIVE = "кандалам",
@@ -34,7 +34,7 @@
 	var/obj/item/assembly/signaler/sig = null
 
 /obj/item/restraints/legcuffs/beartrap/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "капкан",
 		GENITIVE = "капкана",
 		DATIVE = "капкану",
@@ -75,7 +75,7 @@
 	if(istype(I, /obj/item/grenade/iedcasing))	//Let's get explosive.
 		add_fingerprint(user)
 		if(IED)
-			to_chat(user, span_warning("[capitalize(IED.declent_ru(NOMINATIVE))] уже прикреплен[GEND_A_O_Y(IED)] к [declent_ru(DATIVE)]!"))
+			to_chat(user, span_warning("[DECLENT_RU_CAP(IED, NOMINATIVE)] уже прикреплен[GEND_A_O_Y(IED)] к [declent_ru(DATIVE)]!"))
 			return ATTACK_CHAIN_PROCEED
 		if(!user.drop_transfer_item_to_loc(I, src))
 			return ..()
@@ -90,10 +90,10 @@
 		var/obj/item/assembly/signaler/signaler = I
 		add_fingerprint(user)
 		if(sig)
-			to_chat(user, span_warning("[capitalize(signaler.declent_ru(NOMINATIVE))] уже подключен[GEND_A_O_Y(signaler)] к [declent_ru(DATIVE)]!"))
+			to_chat(user, span_warning("[DECLENT_RU_CAP(signaler, NOMINATIVE)] уже подключен[GEND_A_O_Y(signaler)] к [declent_ru(DATIVE)]!"))
 			return ATTACK_CHAIN_PROCEED
 		if(signaler.secured)
-			to_chat(user, span_notice("[capitalize(signaler.declent_ru(NOMINATIVE))] не долж[GEND_EN_NA_NO_NY(signaler)] быть закреплен[GEND_A_O_Y(signaler)]."))
+			to_chat(user, span_notice("[DECLENT_RU_CAP(signaler, NOMINATIVE)] не долж[GEND_EN_NA_NO_NY(signaler)] быть закреплен[GEND_A_O_Y(signaler)]."))
 			balloon_alert(user, "невозможно")
 			return ATTACK_CHAIN_PROCEED
 		if(!user.drop_transfer_item_to_loc(I, src))
@@ -216,7 +216,7 @@
 	var/spin_sound = 'sound/items/bola_spin.ogg'
 
 /obj/item/restraints/legcuffs/bola/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "бола",
 		GENITIVE = "болы",
 		DATIVE = "боле",
@@ -328,8 +328,8 @@
 		target.visible_message(span_danger("[target] отража[PLUR_ET_YUT(target)] [declent_ru(ACCUSATIVE)]!"))
 		return TRUE
 
-	target.visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] сковыва[PLUR_ET_YUT(target)] ноги [target.declent_ru(GENITIVE)]!"))
-	to_chat(target, span_userdanger("[capitalize(declent_ru(NOMINATIVE))] сковыва[PLUR_ET_YUT(target)] ваши ноги!"))
+	target.visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] сковыва[PLUR_ET_YUT(target)] ноги [target.declent_ru(GENITIVE)]!"))
+	to_chat(target, span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] сковыва[PLUR_ET_YUT(target)] ваши ноги!"))
 	target.apply_restraints(src, ITEM_SLOT_LEGCUFFED)
 	if(weaken_amt)
 		target.Weaken(weaken_amt)
@@ -350,7 +350,7 @@
 	weaken_amt = 2 SECONDS
 
 /obj/item/restraints/legcuffs/bola/tactical/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "укреплённая бола",
 		GENITIVE = "укреплённой болы",
 		DATIVE = "укрёпленной боле",
@@ -368,9 +368,10 @@
 	w_class = WEIGHT_CLASS_SMALL
 	breakout_time = 4 SECONDS
 	reusable = FALSE
+	custom_price = PAYCHECK_MIN * 1.2
 
 /obj/item/restraints/legcuffs/bola/energy/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "энергетическая бола",
 		GENITIVE = "энергетической болы",
 		DATIVE = "энергетической боле",
@@ -387,7 +388,7 @@
 	reusable = FALSE
 
 /obj/item/restraints/legcuffs/bola/sinew/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "бола из черепов",
 		GENITIVE = "болы из черепов",
 		DATIVE = "боле из черепов",

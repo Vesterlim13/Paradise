@@ -1,4 +1,4 @@
-// status values shared between lighting fixtures and items
+// Defines that handle the current status of a light
 #define LIGHT_OK 0
 #define LIGHT_EMPTY 1
 #define LIGHT_BROKEN 2

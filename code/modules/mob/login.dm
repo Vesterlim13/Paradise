@@ -41,7 +41,9 @@
 	world.update_status()
 
 	client.images = list()				//remove the images such as AIs being unable to see runes
-	client.screen = list()				//remove hud items just in case
+	client.clear_screen()			//remove hud items just in case
+	client.set_right_click_menu_mode(shift_to_open_context_menu)
+
 
 	if(!hud_used)
 		create_mob_hud()	 // creating a hud will add it to the client's screen, which can process a disconnect
@@ -55,7 +57,7 @@
 
 	next_move = 1
 
-	SSdemo.write_event_line("setmob [client.ckey] \ref[src]")
+	//SSdemo.write_event_line("setmob [client.ckey] \ref[src]")
 
 	add_sight(SEE_SELF)
 
@@ -87,11 +89,16 @@
 
 	add_click_catcher()
 
-	if(viewing_alternate_appearances && length(viewing_alternate_appearances))
-		for(var/datum/alternate_appearance/AA in viewing_alternate_appearances)
-			AA.display_to(list(src))
+	//Reload alternate appearances
+	for(var/datum/atom_hud/alternate_appearance/alt_hud as anything in GLOB.active_alternate_appearances)
+		alt_hud.check_hud(src)
 
 	update_client_colour(0)
+	update_ambience_area(get_area(src))
+
+	if(HAS_TRAIT(src, TRAIT_DEAF))
+		stop_sound_channel(CHANNEL_AMBIENCE)
+
 	update_morgue()
 	client.init_verbs()
 
@@ -107,7 +114,11 @@
 	clear_important_client_contents(client)
 	enable_client_mobs_in_contents(client)
 
+	AddElement(/datum/element/weather_listener, /datum/weather/ash_storm, ZTRAIT_ASHSTORM, GLOB.ash_storm_sounds)
+	AddElement(/datum/element/weather_listener, /datum/weather/snow_storm, ZTRAIT_SNOWSTORM, GLOB.snowstorm_sounds)
+
 	SEND_SIGNAL(src, COMSIG_MOB_CLIENT_LOGIN, client)
+	SEND_SIGNAL(client, COMSIG_CLIENT_MOB_LOGIN, src)
 	SEND_SIGNAL(src, COMSIG_MOB_LOGIN)
 	return TRUE
 

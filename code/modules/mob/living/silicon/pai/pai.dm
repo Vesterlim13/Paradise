@@ -11,6 +11,8 @@
 	holder_type = /obj/item/holder/pai
 	can_buckle_to = FALSE
 	mobility_flags = MOBILITY_FLAGS_REST_CAPABLE_DEFAULT
+	interaction_flags_mouse_drop = NEED_HANDS | ALLOW_PAI
+	looting_icon_mode = LOOT_ICON_ICON_TO_HTML
 
 	var/ram = 100	// Used as currency to purchase different abilities
 	var/userDNA		// The DNA string of our assigned user
@@ -215,7 +217,7 @@
 		return list("Перезагрузка систем связи через:", "[(timeleft / 60) % 60]:[add_zero(num2text(timeleft % 60), 2)]")
 
 /mob/living/silicon/pai/init_subsystems()
-	gps = new(src, gpstag = "pAI0", upgraded = TRUE, tracking = FALSE)
+	gps = new(src, "pAI0", TRUE, FALSE)
 
 /mob/living/silicon/pai/get_status_tab_items()
 	var/list/status_tab_data = ..()
@@ -298,7 +300,7 @@
 // to it. Really this deserves its own file, but for the moment it can sit here. ~ Z
 
 /mob/living/silicon/pai/verb/fold_out()
-	set category = STATPANEL_PAICOMMANDS
+	set category = VERB_CATEGORY_PAICOMMANDS
 	set name = "В мобильную форму"
 
 	if(stat || HAS_TRAIT(src, TRAIT_INCAPACITATED))
@@ -333,7 +335,7 @@
 	card.screen_loc = null
 
 /mob/living/silicon/pai/verb/fold_up()
-	set category = STATPANEL_PAICOMMANDS
+	set category = VERB_CATEGORY_PAICOMMANDS
 	set name = "Из мобильной формы"
 
 	if(stat || HAS_TRAIT(src, TRAIT_INCAPACITATED))
@@ -350,7 +352,7 @@
 	close_up()
 
 /mob/living/silicon/pai/proc/choose_chassis()
-	set category = STATPANEL_PAICOMMANDS
+	set category = VERB_CATEGORY_PAICOMMANDS
 	set name = "Мобильные формы"
 
 	var/list/my_choices = list()
@@ -397,7 +399,7 @@
 	chassis = my_choices[choice]
 
 /mob/living/silicon/pai/proc/choose_verbs()
-	set category = STATPANEL_PAICOMMANDS
+	set category = VERB_CATEGORY_PAICOMMANDS
 	set name = "Модуляция речи"
 
 	var/choice = tgui_input_list(usr, "Какой тип модуляции речи вы бы хотели использовать? Этот выбор можно сделать лишь единожды.", "Модуляция речи", possible_say_verbs)
@@ -413,7 +415,7 @@
 /mob/living/silicon/pai/proc/pai_change_voice()
 	set name = "Сменить голос"
 	set desc = "Express yourself!"
-	set category = STATPANEL_PAICOMMANDS
+	set category = VERB_CATEGORY_PAICOMMANDS
 	change_voice()
 
 /mob/living/silicon/pai/post_lying_on_rest()
@@ -428,7 +430,7 @@
 	update_icons()
 
 /mob/living/silicon/pai/verb/pAI_suicide()
-	set category = STATPANEL_PAICOMMANDS
+	set category = VERB_CATEGORY_PAICOMMANDS
 	set name = "Выгрузить личность"
 	set desc = "Kill yourself and become a ghost (You will receive a confirmation prompt.)"
 
@@ -636,31 +638,22 @@
 	return H
 
 /mob/living/silicon/pai/mouse_drop_dragged(atom/over_object, mob/user, src_location, over_location, params)
-	if(!ishuman(user) || !Adjacent(user) || user.incapacitated() || HAS_TRAIT(user, TRAIT_HANDS_BLOCKED))
-		return ..()
+	if(!ishuman(user))
+		return
 
-	if(usr == src)
-		switch(tgui_alert(user, "[src] хочет, чтобы вы его подобрали. Подобрать?", "Подбор", list("Да", "Нет")))
-			if("Да")
-				if(Adjacent(user))
-					get_scooped(user)
-				else
-					to_chat(src, span_warning("Вам нужно подойти поближе."))
-
-			if("Нет")
-				to_chat(src, span_warning("[user] не хо[PLUR_CHET_TYAT(user)] вас подбирать..."))
-	else
-		if(Adjacent(user))
+	if(user != src)
+		if(user.IsReachableBy(src))
 			get_scooped(user)
-		else
-			return ..()
+		return
 
-/mob/living/silicon/pai/on_forcemove(atom/newloc)
-	if(card)
-		card.loc = newloc
-	else //something went very wrong.
-		CRASH("pAI without card")
-	loc = card
+	switch(tgui_alert(user, "[src] хочет, чтобы вы его подобрали. Подобрать?", "Подбор", list("Да", "Нет")))
+		if("Да")
+			if(!user.IsReachableBy(src))
+				to_chat(src, span_warning("Вам нужно подойти поближе."))
+				return
+			get_scooped(user)
+		if("Нет")
+			to_chat(src, span_warning("[user] не хо[PLUR_CHET_TYAT(user)] вас подбирать..."))
 
 /mob/living/silicon/pai/extinguish_light(force = FALSE)
 	flashlight_on = FALSE

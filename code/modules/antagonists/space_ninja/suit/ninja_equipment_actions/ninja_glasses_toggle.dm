@@ -4,7 +4,7 @@
 
 /datum/action/item_action/ninja_glasses_toggle
 	name = "Toggle Visor Mode"
-	desc = "Toggles Visor mode to the next one. Available modes: Thermals, Blind protection, Night vision"
+	desc = "Переключает режим визора. Доступные режимы: Термальный, Защита от ослепления, Ночное видение."
 	button_icon = 'icons/mob/actions/actions_ninja.dmi'
 	background_icon = 'icons/mob/actions/actions_ninja.dmi'
 	background_icon_state = "background_green"
@@ -19,23 +19,23 @@
 			vision_flags &= ~SEE_MOBS
 			icon_state = "[initial(icon_state)]"
 			item_state = "[initial(item_state)]"
-			to_chat(user, span_notice("Night Vision mode Active"))
+			balloon_alert(user, "режим — Ночное видение")
 		if(NINJA_THERMALS)
 			see_in_dark = 2
 			lighting_alpha = 220
 			flash_protect = FLASH_PROTECTION_SENSITIVE
 			vision_flags |= SEE_MOBS
-			icon_state = "[initial(icon_state)]_red"
-			item_state = "[initial(item_state)]_red"
-			to_chat(user, span_notice("Thermal Vision mode Active"))
+			icon_state = "securityhudnight"
+			item_state = "securityhudnight"
+			balloon_alert(user, "режим — Термальное видение")
 		if(NINJA_FLASHPROTECTION)
 			see_in_dark = 2
 			lighting_alpha = null
 			flash_protect = FLASH_PROTECTION_FLASH
 			vision_flags &= ~SEE_MOBS
-			icon_state = "[initial(icon_state)]_blue"
-			item_state = "[initial(item_state)]_blue"
-			to_chat(user, span_notice("Blindness Protection mode Active"))
+			icon_state = "healthhudnight"
+			item_state = "healthhudnight"
+			balloon_alert(user, "режим — Защита от ослепления")
 
 	if(n_mask && istype(user.wear_mask, /obj/item/clothing/mask/gas/space_ninja))
 		n_mask.icon_state = "ninja_mask_[n_mask.visuals_type]_[current_mode]"

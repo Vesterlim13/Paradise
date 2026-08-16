@@ -11,7 +11,7 @@
 	attack_verb = list("предупредил", "насторожил")
 
 /obj/item/caution/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "знак мокрого пола",
 		GENITIVE = "знака мокрого пола",
 		DATIVE = "знаку мокрого пола",
@@ -68,7 +68,7 @@
 		return
 
 	var/mob/living/carbon/victim = proximity_check_mob
-	visible_message("[capitalize(declent_ru(NOMINATIVE))] сообщает: \"Бег по мокрому полу может быть опасен для вашего здоровья!\"")
+	visible_message("[DECLENT_RU_CAP(src, NOMINATIVE)] сообщает: \"Бег по мокрому полу может быть опасен для вашего здоровья!\"")
 	explosion(loc, devastation_range = -1, heavy_impact_range = 0, light_impact_range = 2, cause = src)
 	if(!ishuman(victim))
 		return

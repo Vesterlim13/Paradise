@@ -32,6 +32,8 @@
 
 	clothing_traits = list(TRAIT_NO_BREATH)
 
+	cares_about_temperature = TRUE
+
 	var/stat = CONSCIOUS //UNCONSCIOUS is the idle state in this case
 
 	var/sterile = FALSE
@@ -41,7 +43,7 @@
 	var/mob/living/simple_animal/hostile/facehugger/holdered_mob
 
 /obj/item/clothing/mask/facehugger/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "лицехват",
 		GENITIVE = "лицехвата",
 		DATIVE = "лицехвату",
@@ -95,13 +97,13 @@
 	if(real)//So that giant red text about probisci doesn't show up for fake ones
 		switch(stat)
 			if(DEAD,UNCONSCIOUS)
-				. += span_boldannounceic("[capitalize(declent_ru(NOMINATIVE))] не двигается.")
+				. += span_boldannounceic("[DECLENT_RU_CAP(src, NOMINATIVE)] не двигается.")
 			if(CONSCIOUS)
-				. += span_boldannounceic("[capitalize(declent_ru(NOMINATIVE))] кажется, активен!")
+				. += span_boldannounceic("[DECLENT_RU_CAP(src, NOMINATIVE)] кажется, активен!")
 		if(sterile)
 			. += span_boldannounceic("Похоже хоботок [GEND_HIS_HER(src)] удалили.")
 
-/obj/item/clothing/mask/facehugger/temperature_expose(datum/gas_mixture/air, exposed_temperature, exposed_volume)
+/obj/item/clothing/mask/facehugger/temperature_expose(exposed_temperature, exposed_volume)
 	..()
 	if(exposed_temperature > 300)
 		Die()
@@ -196,7 +198,7 @@
 	if(loc == attached_mob)
 		return FALSE
 
-	var/text_name = capitalize(declent_ru(NOMINATIVE))
+	var/text_name = DECLENT_RU_CAP(src, NOMINATIVE)
 
 	if(!sterile)
 		attached_mob.apply_damage(strength, BRUTE, BODY_ZONE_HEAD, forced = TRUE, silent = TRUE)
@@ -291,7 +293,7 @@
 		if(!H.check_has_mouth())
 			return
 
-	var/text_name = capitalize(declent_ru(NOMINATIVE))
+	var/text_name = DECLENT_RU_CAP(src, NOMINATIVE)
 	if(!sterile)
 
 		target.visible_message(span_danger("[text_name] отпускает лицо [target.declent_ru(GENITIVE)] после долгого контакта!"), \
@@ -313,7 +315,7 @@
 	else
 		addtimer(CALLBACK(src, PROC_REF(try_drop_hugger), target), 0.5 SECONDS)
 
-/obj/item/clothing/mask/facehugger/container_resist(mob/living/L)
+/obj/item/clothing/mask/facehugger/container_resist_act(mob/living/L)
 	var/mob/living/mob = src.loc
 
 	if(istype(mob) || isstorage(loc))
@@ -351,7 +353,7 @@
 		holdered_mob?.death()
 	if(iscarbon(loc))
 		remove_clothing_traits(loc)
-	visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] сворачивается в клубок!"))
+	visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] сворачивается в клубок!"))
 
 /proc/CanHug(mob/living/hugged_mob)
 	if(!istype(hugged_mob))
@@ -384,7 +386,7 @@
 	holder_flags = ALIEN_HOLDER | HUMAN_HOLDER
 
 /obj/item/clothing/mask/facehugger/lamarr/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ламарр",
 		GENITIVE = "ламарр",
 		DATIVE = "ламарр",

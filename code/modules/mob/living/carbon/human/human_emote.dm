@@ -53,6 +53,11 @@
 		'sound/misc/guitar_rifs/guitar_riff_8.ogg',
 	)
 
+/datum/emote/living/carbon/human/airguitar/get_sound(mob/living/carbon/human/user)
+	if(isskeleton(user))
+		return 'sound/misc/guitar_rifs/skeleton_guitar_riff.ogg'
+	return ..()
+
 /datum/emote/living/carbon/human/airguitar/run_emote(mob/living/carbon/human/user, params, type_override, intentional)
 	// check hands status
 	var/obj/item/organ/external/left_arm = user.bodyparts_by_name[BODY_ZONE_L_ARM]
@@ -238,6 +243,7 @@
 	cooldown = 5 SECONDS
 	unintentional_audio_cooldown = 3.5 SECONDS
 	volume = 80
+	use_sound_tokens = TRUE
 	species_type_blacklist_typecache = list(
 		/datum/species/machine,	// has silicon scream
 		/datum/species/monkey,	// screech instead
@@ -270,6 +276,7 @@
 	emote_type = EMOTE_AUDIBLE  // Don't make this one a mouth emote since we don't want it to be caught by nobreath
 	unintentional_stat_allowed = UNCONSCIOUS
 	volume = 100
+	use_sound_tokens = TRUE
 
 /datum/emote/living/carbon/human/gasp/get_sound(mob/living/carbon/human/user)
 	if(user.is_muzzled())	// If you're muzzled you're not making noise
@@ -300,7 +307,11 @@
 		else
 			volume_decrease = 95
 	sound_volume -= volume_decrease
-	// special handling here: we don't want monkeys' gasps to sound through walls so you can actually walk past xenobio
+	// special handling here: we don't want monkeys' gasps to sound through walls so you can actually walk past xenobio.
+	// Sound tokens always carry through walls, so only minded mobs get one, the mindless fall back to wall-blocked playsound.
+	if(use_sound_tokens && user.mind)
+		playsoundtoken(source = user, soundin = sound_path, volume = sound_volume, range = sound_token_range, frequency = user.get_age_pitch())
+		return
 	playsound(user.loc, sound_path, sound_volume, TRUE, -10, frequency = user.get_age_pitch(), ignore_walls = !isnull(user.mind))
 
 /datum/emote/living/carbon/human/shake
@@ -1053,7 +1064,7 @@
 	if(isslimeperson(user))
 		return TRUE
 	for(var/obj/item/organ/external/bodypart as anything in user.bodyparts) // if your limbs are squishy you can squish too!
-		if(bodypart.dna && istype(bodypart.dna.species, /datum/species/slime))
+		if(bodypart.dna && isslimeperson(bodypart))
 			return TRUE
 	return FALSE
 
@@ -1110,14 +1121,14 @@
 	. = ..()
 	if(.)
 		var/turf/turf_user = get_turf(user)
-		var/datum/gas_mixture/source_env = turf_user.return_air()
+		var/datum/gas_mixture/source_env = turf_user.get_readonly_air()
 		if(!source_env)
 			return
 		for(var/mob/living/carbon/human/H in range(4, user))
-			if(!isvulpkanin(H) || !H.can_hear() || H.stat != CONSCIOUS)
+			if(!isvulpkanin(H) || HAS_TRAIT(H, TRAIT_DEAF) || H.stat != CONSCIOUS)
 				continue
 			var/turf/T = get_turf(H)
-			var/datum/gas_mixture/hearer_env = T.return_air()
+			var/datum/gas_mixture/hearer_env = T.get_readonly_air()
 			if(!hearer_env)
 				continue
 			var/distance = 4

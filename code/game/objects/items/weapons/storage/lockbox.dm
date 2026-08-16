@@ -1,8 +1,11 @@
 /obj/item/storage/lockbox
 	name = "lockbox"
 	desc = "A locked box."
+	icon = 'icons/obj/storage/boxes.dmi'
 	icon_state = "lockbox+l"
-	item_state = "syringe_kit"
+	righthand_file = 'icons/mob/inhands/storage_righthand.dmi'
+	lefthand_file = 'icons/mob/inhands/storage_lefthand.dmi'
+	item_state = "lockbox"
 	w_class = WEIGHT_CLASS_BULKY
 	max_w_class = WEIGHT_CLASS_NORMAL
 	storage_slots = 4
@@ -59,6 +62,12 @@
 
 	return ..()
 
+/obj/item/storage/lockbox/dump_storage(mob/user, obj/item/storage/target)
+	if(locked)
+		user?.balloon_alert(user, "заперто")
+		return
+	return ..()
+
 /obj/item/storage/lockbox/show_to(mob/user)
 	if(locked)
 		to_chat(user, span_warning("It's locked!"))
@@ -85,7 +94,10 @@
 		origin_tech = null //wipe out any origin tech if it's unlocked in any way so you can't double-dip tech levels at R&D.
 
 /obj/item/storage/lockbox/hear_talk(mob/living/M, list/message_pieces)
-	return
+	if(locked)
+		return
+
+	..()
 
 /obj/item/storage/lockbox/hear_message(mob/living/M, msg)
 	return
@@ -112,7 +124,7 @@
 
 /obj/item/storage/lockbox/sibyl_system_mod/populate_contents()
 	for(var/i in 1 to 10)
-		new /obj/item/sibyl_system_mod(src)
+		new /obj/item/gun_module/sibyl(src)
 
 /obj/item/storage/lockbox/clusterbang
 	name = "lockbox (clusterbang)"
@@ -122,10 +134,27 @@
 /obj/item/storage/lockbox/clusterbang/populate_contents()
 	new /obj/item/grenade/clusterbuster(src)
 
+/obj/item/storage/lockbox/suppression
+	name = "Lockbox (Suppression Implants)"
+	desc = "Содержит био-чипы \"Подавление\" для ограничения навыков боевых искусств."
+	req_access = list(ACCESS_SECURITY)
+
+/obj/item/storage/lockbox/suppression/populate_contents()
+	new /obj/item/implantcase/suppression(src)
+	new /obj/item/implanter/suppression(src)
+
+/obj/item/storage/lockbox/suppression/cargo
+
+/obj/item/storage/lockbox/suppression/cargo/populate_contents()
+	for(var/i in 1 to 3)
+		new /obj/item/implantcase/suppression(src)
+	new /obj/item/implanter/suppression(src)
+
 /obj/item/storage/lockbox/medal
 	name = "medal box"
 	desc = "A locked box used to store medals of honor."
 	icon_state = "medalbox+l"
+	item_state = "medalbox"
 	w_class = WEIGHT_CLASS_NORMAL
 	max_w_class = WEIGHT_CLASS_SMALL
 	max_combined_w_class = 20
@@ -162,6 +191,20 @@
 	max_w_class = WEIGHT_CLASS_BULKY
 	max_combined_w_class = 4 //The sum of the w_classes of all the items in this storage item.
 	storage_slots = 1
+
+/obj/item/storage/lockbox/research/modsuit
+	name = "Plating lockbox"
+	desc = "Большой защитный кейс. Электронный замок выглядит довольно уязвимым."
+
+/obj/item/storage/lockbox/research/modsuit/emp_act(severity) //I want emp to get around it, it's not a gun, I just want people not to always make sec / med modsuits.
+	. = ..()
+	if(!broken || !prob(50 / severity))
+		return
+
+	locked = FALSE
+	broken = TRUE
+	update_icon(UPDATE_ICON_STATE)
+	origin_tech = null //wipe out any origin tech if it's unlocked in any way so you can't double-dip tech levels at R&D.
 
 /obj/item/storage/lockbox/research/mantis
 	name = "lockbox(hidden blade implant)"

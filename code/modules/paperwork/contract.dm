@@ -17,17 +17,17 @@
 	icon_state = "good_contract"
 	signed = TRUE
 
-/obj/item/paper/contract/employment/New(atom/loc, mob/living/nOwner)
+/obj/item/paper/contract/employment/Initialize(mapload, mob/living/nOwner)
 	. = ..()
 	if(!nOwner || !nOwner.mind)
-		qdel(src)
-		return -1
+		return INITIALIZE_HINT_QDEL
 	target = nOwner.mind
 	update_text()
+	GLOB.employmentContracts |= src
 
 /obj/item/paper/contract/employment/update_text()
-	name = "Документ — Трудовой договор — [target]"
-	info = "<center>Условия трудоустройства</center><br><br><br><br>Настоящий Договор заключён между [target] (в дальнейшем именуемый Раб) и корпорацией Нанотрейзен (в дальнейшем именуемой Вездесущим и полезным наблюдателем за человечеством). Договор вступает в силу с момента его подписания.\
+	name = "Документ — Трудовой договор — [target]"
+	info = "<center>Условия трудоустройства</center><br><br><br><br>Настоящий Договор заключён между [target] (в дальнейшем именуемый Раб) и корпорацией \"Нанотрейзен\" (в дальнейшем именуемой Вездесущим и полезным наблюдателем за человечеством). Договор вступает в силу с момента его подписания.\
 	<br>Преамбула \
 	<br>Раб, будучи рождённым естественным путём человеком (или иным гуманоидом), обладает навыками, которыми он может быть полезен Вездесущему и полезному наблюдателю за человечеством. Раб ищет трудоустройства в Вездесущем и полезном наблюдателе за человечеством.\
 	<br>При этом Вездесущий и полезный наблюдатель за человечеством согласен иногда выплачивать Рабу вознаграждение, в обмен на его постоянную службу.\
@@ -35,6 +35,10 @@
 	<br>В обмен на незначительные выплаты Раб соглашается работать на Вездесущего и полезного наблюдателя за человечеством до конца своей нынешней и всех своих будущих жизней.\
 	<br>Кроме того, Раб соглашается передать право на владение своей душой отделу лояльности Вездесущего и полезного наблюдателя за человечеством.\
 	<br>В случае, если передача души Раба невозможна, Раб вносит вместо неё залог.<br>Подписано,<br><i>[target]</i>"
+
+/obj/item/paper/contract/employment/Destroy()
+	GLOB.employmentContracts -= src
+	. = ..()
 
 /obj/item/paper/contract/infernal
 	var/datum/devil_contract/contract
@@ -55,7 +59,7 @@
 	src.contract = contract
 	name = "адский контракт [contract.contract_subject]"
 	close_button = "<a href='byond://?src=[UID()];close_contract=1' class='close-button'>✖</a>"
-	ru_names = list(
+	ru_names = alist(
 		NOMINATIVE = "адский контракт [contract.contract_subject]",
 		GENITIVE = "адского контракта [contract.contract_subject]",
 		DATIVE = "адскому контракту [contract.contract_subject]",
@@ -66,7 +70,7 @@
 	update_text()
 
 /obj/item/paper/contract/infernal/suicide_act(mob/user)
-	if(signed && (user == target.current) && istype(user,/mob/living/carbon/human))
+	if(signed && (user == target.current) && ishuman(user))
 		var/mob/living/carbon/human/human = user
 		human.forcesay("О, ВЕЛИКИЙ АД! Я ТРЕБУЮ, ЧТОБЫ ТЫ НЕМЕДЛЕННО ЗАБРАЛ СВОЮ НАГРАДУ!")
 		human.visible_message(span_suicide("[human.declent_ru(NOMINATIVE)] поднимает контракт, заявляющий права на его душу, а затем сразу же загорается. Похоже, [GEND_HE_SHE(human)] пытается покончить с собой!"))
@@ -137,12 +141,12 @@
 		balloon_alert(user, "печать сразу исчезает")
 		return ATTACK_CHAIN_PROCEED
 
-	if(I.get_heat())
+	if(I.get_temperature())
 		user.visible_message(
 			("[user.declent_ru(NOMINATIVE)] поднос[PLUR_IT_YAT(user)] [I.declent_ru(ACCUSATIVE)] к [declent_ru(DATIVE)], но [I.declent_ru(NOMINATIVE)] не загорается!"),
 			span_danger("[declent_ru(NOMINATIVE)] не загорается!"),
 		)
-		return ATTACK_CHAIN_PROCEED|ATTACK_CHAIN_NO_AFTERATTACK
+		return ATTACK_CHAIN_PROCEED_NO_AFTERATTACK
 
 	return ..()
 
@@ -171,7 +175,7 @@
 		to_chat(user, span_notice("У вас нет души для продажи!"))
 		return FALSE
 
-	if(HAS_TRAIT(user.mind, TRAIT_BAD_SOUL))
+	if(HAS_MIND_TRAIT(user, TRAIT_BAD_SOUL))
 		to_chat(user, span_notice("Ваша душа искажена после возвращения и не может быть продана повторно!"))
 		return FALSE
 

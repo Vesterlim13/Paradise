@@ -22,20 +22,20 @@ GLOBAL_LIST_INIT(potentialRandomZlevels, generateMapList(filename = "config/away
 	if(CONFIG_GET(string/override_away_mission))
 		log_startup_progress_global("Mapping", "Away mission overridden by configuration to [CONFIG_GET(string/override_away_mission)].")
 
-	var/file = wrap_file(map)
+	var/file = WRAP_FILE(map)
 	var/bounds = GLOB.maploader.load_map(file, 1, 1, 1, shouldCropMap = FALSE, measureOnly = TRUE)
 	var/total_z = bounds[MAP_MAXZ] - bounds[MAP_MINZ] + 1
 	var/map_z_level
 	var/list/map_z_levels = list()
 	if(total_z == 1)
-		map_z_level = GLOB.space_manager.add_new_zlevel(AWAY_MISSION, linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT, HAS_WEATHER))
+		map_z_level = GLOB.space_manager.add_new_zlevel(AWAY_MISSION, linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT))
 		map_z_levels += map_z_level
 	else
-		map_z_level = GLOB.space_manager.add_new_zlevel(AWAY_MISSION, linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT, HAS_WEATHER, ZTRAIT_UP))
+		map_z_level = GLOB.space_manager.add_new_zlevel(AWAY_MISSION, linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT, ZTRAIT_UP))
 		map_z_levels += map_z_level
 		for(var/i in 2 to total_z-1)
-			map_z_levels += GLOB.space_manager.add_new_zlevel(AWAY_MISSION + "([i])", linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT, HAS_WEATHER, ZTRAIT_UP, ZTRAIT_DOWN))
-		map_z_levels += GLOB.space_manager.add_new_zlevel(AWAY_MISSION  + "([total_z])", linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT, HAS_WEATHER, ZTRAIT_DOWN))
+			map_z_levels += GLOB.space_manager.add_new_zlevel(AWAY_MISSION + "([i])", linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT, ZTRAIT_UP, ZTRAIT_DOWN))
+		map_z_levels += GLOB.space_manager.add_new_zlevel(AWAY_MISSION  + "([total_z])", linkage = UNAFFECTED, traits = list(AWAY_LEVEL, BLOCK_TELEPORT, ZTRAIT_DOWN))
 
 	GLOB.maploader.load_map(file, z_offset = map_z_level)
 	log_world("  Away mission loaded: [map]")
@@ -75,4 +75,29 @@ GLOBAL_LIST_INIT(potentialRandomZlevels, generateMapList(filename = "config/away
 		potentialMaps.Add(t)
 
 	return potentialMaps
+
+
+/datum/milla_safe_must_sleep/late_setup_level
+
+// Ensures that atmos and environment are set up.
+/datum/milla_safe_must_sleep/late_setup_level/on_run(turf/bot_left, turf/top_right, smoothTurfs)
+	var/subtimer = start_watch()
+	log_debug("Setting up atmos")
+	/* setup_allturfs is superfluous during server initialization because
+	 * air subsystem will call subsequently call setup_allturfs with _every_
+	 * turf in the world */
+	if(SSair && SSair.initialized)
+		SSair.setup_turfs(bot_left, top_right)
+	log_debug("Unfreezing atmos.")
+	set_zlevel_freeze(bot_left.z, FALSE)
+	log_debug("\tTook [stop_watch(subtimer)]s")
+
+/datum/milla_safe/freeze_z_level
+	var/done = FALSE
+
+// Ensures that atmos is frozen before loading
+/datum/milla_safe/freeze_z_level/on_run(z)
+	log_debug("Freezing atmos.")
+	set_zlevel_freeze(z, TRUE)
+	done = TRUE
 

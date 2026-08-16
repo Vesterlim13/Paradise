@@ -14,9 +14,8 @@
 
 	level = 1
 
-/obj/machinery/atmospherics/pipe/manifold/New()
-
-	..()
+/obj/machinery/atmospherics/pipe/manifold/Initialize(mapload)
+	. = ..()
 
 	alpha = 255
 	icon = null
@@ -53,23 +52,11 @@
 					connected_to = c
 					node3 = target
 				break
-	var/turf/T = src.loc			// hide if turf is not intact
-	if(!T.transparent_floor)
-		hide(T.intact)
-	update_icon()
 
-/obj/machinery/atmospherics/pipe/manifold/hide(i)
-	if(level == 1 && issimulatedturf(loc))
-		invisibility = i ? INVISIBILITY_MAXIMUM : 0
+	update_icon()
 
 /obj/machinery/atmospherics/pipe/manifold/pipeline_expansion()
 	return list(node1, node2, node3)
-
-/obj/machinery/atmospherics/pipe/manifold/process_atmos()
-	if(!parent)
-		..()
-	else
-		. = PROCESS_KILL
 
 /obj/machinery/atmospherics/pipe/manifold/Destroy()
 	. = ..()
@@ -194,6 +181,12 @@
 
 /obj/machinery/atmospherics/pipe/manifold/visible/purple
 	color = PIPE_COLOR_PURPLE
+
+/obj/machinery/atmospherics/pipe/manifold/visible/red
+	color = PIPE_COLOR_RED
+
+/obj/machinery/atmospherics/pipe/manifold/visible/blue
+	color = PIPE_COLOR_BLUE
 
 /obj/machinery/atmospherics/pipe/manifold/hidden
 	icon_state = "map"

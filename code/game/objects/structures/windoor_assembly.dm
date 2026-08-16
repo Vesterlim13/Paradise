@@ -36,7 +36,7 @@
 	if(set_dir)
 		dir = set_dir
 	ini_dir = dir
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 
 	var/static/list/loc_connections = list(
 		COMSIG_ATOM_EXIT = PROC_REF(on_exit),
@@ -46,7 +46,7 @@
 /obj/structure/windoor_assembly/Destroy()
 	set_density(FALSE)
 	QDEL_NULL(electronics)
-	air_update_turf(1)
+	recalculate_atmos_connectivity()
 	return ..()
 
 /obj/structure/windoor_assembly/Move(atom/newloc, direct = NONE, glide_size_override = 0, update_dir = TRUE)
@@ -73,12 +73,13 @@
 			if(!valid_build_direction(loc, object.dir, is_fulltile = fulltile))
 				return FALSE
 
-/obj/structure/windoor_assembly/CanAtmosPass(turf/T, vertical)
-	if(get_dir(loc, T) == dir)
+/obj/structure/windoor_assembly/CanAtmosPass(direction)
+	if(direction == dir)
 		return !density
-	return TRUE
+	else
+		return TRUE
 
-/obj/structure/windoor_assembly/proc/on_exit(datum/source, atom/movable/leaving, atom/newLoc)
+/obj/structure/windoor_assembly/proc/on_exit(datum/source, atom/movable/leaving, direction)
 	SIGNAL_HANDLER
 
 	if(leaving.movement_type & PHASING)
@@ -90,7 +91,7 @@
 	if(leaving.pass_flags == PASSEVERYTHING || (pass_flags_self & leaving.pass_flags) || ((pass_flags_self & LETPASSTHROW) && leaving.throwing))
 		return
 
-	if(density && dir == get_dir(leaving, newLoc))
+	if(density && dir == direction)
 		leaving.Bump(src)
 		return COMPONENT_ATOM_BLOCK_EXIT
 
@@ -336,7 +337,7 @@
 //Flips the windoor assembly, determines whather the door opens to the left or the right
 /obj/structure/windoor_assembly/verb/flip()
 	set name = "Повернуть"
-	set category = STATPANEL_OBJECT
+	set category = VERB_CATEGORY_OBJECT
 	set src in oview(1)
 	if(usr.incapacitated() || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED))
 		return

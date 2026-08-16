@@ -1,3 +1,17 @@
+/// Pure Black and white colorblindness. Every species except Vulpkanins and Tajarans will have this.
+#define GREYSCALE_COLOR_REPLACE list( \
+	"red" = "grey", \
+	"blue" = "grey", \
+	"green" = "grey", \
+	"orange" = "light grey", \
+	"yellow" = "light grey", \
+	"brown" = "grey", \
+	"gold" = "light grey", \
+	"cyan" = "silver", \
+	"magenta" = "grey", \
+	"purple" = "grey", \
+	"pink" = "light grey" \
+)
 
 /obj/item/organ/internal/eyes
 	name = "eyeballs"
@@ -13,6 +27,7 @@
 	/// Gets set by eye-dependent disabilities such as colourblindness so the eyes can transfer the disability during transplantation.
 	var/list/dependent_disabilities
 	var/weld_proof = null //If set, the eyes will not take damage during welding. eg. IPC optical sensors do not take damage when they weld things while all other eyes will.
+	min_broken_damage = EYE_BROKEN_THRESHOLD // for a smoother transition from blur to blindness
 
 	var/vision_flags = 0
 	var/see_in_dark = 2
@@ -22,7 +37,7 @@
 	var/examine_mod = 1
 
 /obj/item/organ/internal/eyes/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "глаза человека",
 		GENITIVE = "глаз человека",
 		DATIVE = "глазам человека",
@@ -65,13 +80,20 @@
 	else
 		//If we're here, that means the mob acquired the colourblindness gene while they didn't have eyes. Better handle it.
 		target.update_client_colour()
+	RegisterSignal(target, COMSIG_COMPONENT_CLEAN_FACE_ACT, PROC_REF(on_face_wash))
 
 /obj/item/organ/internal/eyes/remove(mob/living/carbon/target, special = ORGAN_MANIPULATION_DEFAULT)
 	//If special is set, that means these eyes are getting deleted (i.e. during set_species())
 	if(special == ORGAN_MANIPULATION_DEFAULT && HAS_TRAIT(target, TRAIT_COLORBLIND))
 		LAZYOR(dependent_disabilities, TRAIT_COLORBLIND)
 		target.force_gene_block(GLOB.colourblindblock, FALSE)
+	UnregisterSignal(target, COMSIG_COMPONENT_CLEAN_FACE_ACT)
 	return ..()
+
+/// When our owner washes their face. The idea that spessmen wash their eyeballs is highly disturbing but this is the easiest way to get rid of cursed crayon eye coloring
+/obj/item/organ/internal/eyes/proc/on_face_wash()
+	SIGNAL_HANDLER
+	wash_tg(CLEAN_WASH)
 
 /obj/item/organ/internal/eyes/surgeryize()
 	if(!owner)
@@ -108,7 +130,7 @@
 	drop_sound = 'sound/items/handling/drop/component_drop.ogg'
 
 /obj/item/organ/internal/eyes/cybernetic/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кибернетические глаза",
 		GENITIVE = "кибернетических глаз",
 		DATIVE = "кибернетическим глазам",
@@ -128,3 +150,5 @@
 				E.heal_internal_damage(G.heal_rate)
 				owner.AdjustEyeBlurry(-2 SECONDS)
 	return ..() | update_flags
+
+#undef GREYSCALE_COLOR_REPLACE

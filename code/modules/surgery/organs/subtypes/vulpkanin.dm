@@ -1,3 +1,22 @@
+/// Red colorblindness. Vulpkanins/Wolpins have this.
+#define PROTANOPIA_COLOR_REPLACE list( \
+	"red" = "darkolivegreen", \
+	"green" = "darkslategrey", \
+	"orange" = "goldenrod", \
+	"yellow" = "goldenrod", \
+	"brown" = "darkolivegreen", \
+	"gold" = "goldenrod", \
+	"cyan" = "steelblue", \
+	"magenta" = "blue", \
+	"purple" = "darkslategrey", \
+	"pink" = "beige" \
+)
+
+#define MATRIX_VULP_CBLIND list(\
+	0.51, 0.4, 0.12,\
+	0.49, 0.41, 0.12,\
+	0, 0.2, 0.76)
+
 /obj/item/organ/external/head/vulpkanin
 	species_type = /datum/species/vulpkanin
 
@@ -13,7 +32,7 @@
 	alcohol_intensity = 1.4
 
 /obj/item/organ/internal/liver/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "печень вульпканина",
 		GENITIVE = "печени вульпканина",
 		DATIVE = "печени вульпканина",
@@ -33,7 +52,7 @@
 	see_in_dark = 8
 
 /obj/item/organ/internal/eyes/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "глаза вульпканина",
 		GENITIVE = "глаз вульпканина",
 		DATIVE = "глазам вульпканина",
@@ -50,7 +69,7 @@
 	replace_colours = PROTANOPIA_COLOR_REPLACE
 
 /obj/item/organ/internal/eyes/vulpkanin/wolpin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "глаза вульпина",
 		GENITIVE = "глаз вульпина",
 		DATIVE = "глазам вульпина",
@@ -65,7 +84,7 @@
 	desc = "Парный орган, отвечающий за аудиальное восприятие окружающей среды и получение информации о положении гуманоида в пространстве. Эти принадлежали вульпканину."
 
 /obj/item/organ/internal/ears/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "уши вульпканина",
 		GENITIVE = "ушей вульпканина",
 		DATIVE = "ушам вульпканина",
@@ -83,7 +102,7 @@
 	item_base = "vulpkanin_heart"
 
 /obj/item/organ/internal/heart/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сердце вульпканина",
 		GENITIVE = "сердца вульпканина",
 		DATIVE = "сердцу вульпканина",
@@ -100,7 +119,7 @@
 	mmi_icon = 'icons/obj/species_organs/vulpkanin.dmi'
 
 /obj/item/organ/internal/brain/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "мозг вульпканина",
 		GENITIVE = "мозга вульпканина",
 		DATIVE = "мозгу вульпканина",
@@ -117,7 +136,7 @@
 	item_state = "vulpkanin_lungs"
 
 /obj/item/organ/internal/lungs/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "лёгкие вульпканина",
 		GENITIVE = "лёгких вульпканина",
 		DATIVE = "лёгким вульпканина",
@@ -134,7 +153,7 @@
 	item_state = "vulpkanin_kidneys"
 
 /obj/item/organ/internal/kidneys/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "почки вульпканина",
 		GENITIVE = "почек вульпканина",
 		DATIVE = "почкам вульпканина",
@@ -151,7 +170,7 @@
 	max_damage = 25
 
 /obj/item/organ/external/tail/vulpkanin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "хвост вульпканина",
 		GENITIVE = "хвоста вульпканина",
 		DATIVE = "хвосту вульпканина",
@@ -159,3 +178,6 @@
 		INSTRUMENTAL = "хвостом вульпканина",
 		PREPOSITIONAL = "хвосте вульпканина",
 	)
+
+#undef PROTANOPIA_COLOR_REPLACE
+#undef MATRIX_VULP_CBLIND

@@ -7,7 +7,7 @@
 	desc = "Электрический прибор для измерения параметров тока и прозвонки электрических цепей. \
 			Результаты ЭКГ, снятого данным аппаратом, не признаются ни одной клиникой."
 	gender = MALE
-	icon = 'icons/obj/device.dmi'
+	icon = 'icons/obj/tools.dmi'
 	icon_state = "multitool"
 	righthand_file = 'icons/mob/inhands/tools_righthand.dmi'
 	lefthand_file = 'icons/mob/inhands/tools_lefthand.dmi'
@@ -17,6 +17,7 @@
 	slot_flags = ITEM_SLOT_BELT
 	w_class = WEIGHT_CLASS_SMALL
 	throw_speed = 3
+	usesound = 'sound/items/multitool.ogg'
 	drop_sound = 'sound/items/handling/drop/multitool_drop.ogg'
 	pickup_sound = 'sound/items/handling/pickup/multitool_pickup.ogg'
 	materials = list(MAT_METAL=50, MAT_GLASS=20)
@@ -33,7 +34,7 @@
 	var/broken_type = /obj/item/multitool_broken
 
 /obj/item/multitool/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "мультиметр",
 		GENITIVE = "мультиметра",
 		DATIVE = "мультиметру",
@@ -85,16 +86,17 @@
 	name = "broken multimeter"
 	desc = "Электрический прибор для измерения параметров тока и прозвонки электрических цепей. \
 			Похоже, что он полностью сгорел."
-	icon = 'icons/obj/device.dmi'
+	icon = 'icons/obj/tools.dmi'
 	icon_state = "multitool_broken"
-	belt_icon = "multitool_broken"
+	item_state = "multitool"
+	belt_icon = "multitool"
 	righthand_file = 'icons/mob/inhands/tools_righthand.dmi'
 	lefthand_file = 'icons/mob/inhands/tools_lefthand.dmi'
 	w_class = WEIGHT_CLASS_SMALL
 	materials = list(MAT_METAL=50, MAT_GLASS=20)
 
 /obj/item/multitool_broken/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сломанный мультиметр",
 		GENITIVE = "сломанного мультиметра",
 		DATIVE = "сломанному мультиметру",
@@ -116,8 +118,8 @@
 	origin_tech = "magnets=1;engineering=2;syndicate=1"
 	emp_shielded = TRUE
 
-/obj/item/multitool/ai_detect/New()
-	..()
+/obj/item/multitool/ai_detect/Initialize(mapload)
+	. = ..()
 	START_PROCESSING(SSobj, src)
 
 /obj/item/multitool/ai_detect/Destroy()
@@ -166,7 +168,7 @@
 /obj/item/multitool/ai_detect/admin/multitool_detect()
 	var/turf/our_turf = get_turf(src)
 	for(var/mob/J in urange(rangewarning, our_turf))
-		if(check_rights(R_ADMIN, 0, J))
+		if(check_rights(R_ADMIN, FALSE, J))
 			detect_state = PROXIMITY_NEAR
 			var/turf/detect_turf = get_turf(J)
 			if(get_dist(our_turf, detect_turf) < rangealert)
@@ -184,12 +186,13 @@
 			Похоже, что он предназначен для измерения показателей электрических объектов."
 	icon = 'icons/obj/abductor.dmi'
 	toolspeed = 0.1
+	usesound = 'sound/items/multitool2.ogg'
 	origin_tech = "magnets=5;engineering=5;abductor=3"
 	shows_wire_information = TRUE
 	emp_shielded = TRUE
 
 /obj/item/multitool/abductor/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "чужеродный мультиметр",
 		GENITIVE = "чужеродного мультиметра",
 		DATIVE = "чужеродному мультиметру",
@@ -208,7 +211,7 @@
 	emp_shielded = TRUE
 
 /obj/item/multitool/brass/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "латунный мультиметр",
 		GENITIVE = "латунного мультиметра",
 		DATIVE = "латунному мультиметру",
@@ -226,7 +229,7 @@
 	emp_shielded = TRUE
 
 /obj/item/multitool/old/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "старый мультиметр",
 		GENITIVE = "старого мультиметра",
 		DATIVE = "старому мультиметру",
@@ -235,6 +238,24 @@
 		PREPOSITIONAL = "старом мультиметре",
 	)
 
+/obj/item/multitool/industrial
+	name = "industrial multitool"
+	desc = "Электрический прибор для измерения параметров тока и прозвонки электрических цепей. \
+			Оснащён более производительным процессором, по сравнению со стандартными моделями, что значительно увеличивает скорость работы."
+	icon_state = "multitool_industrial"
+	usesound = 'sound/items/multitool2.ogg'
+	toolspeed = 0.6
+	resistance_flags = FIRE_PROOF | ACID_PROOF
+
+/obj/item/multitool/industrial/get_ru_names()
+	return alist(
+		NOMINATIVE = "продвинутый мультиметр",
+		GENITIVE = "продвинутого мультиметра",
+		DATIVE = "продвинутому мультиметру",
+		ACCUSATIVE = "продвинутый мультиметр",
+		INSTRUMENTAL = "продвинутым мультиметром",
+		PREPOSITIONAL = "продвинутом мультиметре",
+	)
 #undef PROXIMITY_NONE
 #undef PROXIMITY_ON_SCREEN
 #undef PROXIMITY_NEAR

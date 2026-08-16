@@ -11,6 +11,8 @@
 	panel_overlay = "ammovend_panel"
 	screen_overlay = "ammovend_overlay"
 	refill_canister = /obj/item/vending_refill/ammo
+	all_products_free = TRUE
+
 	product_categories = list(
 		list(
 			"name" = "Боеприпасы",
@@ -31,12 +33,12 @@
 			"name" = "Магазины",
 			"icon" = "gun",
 			"products" = list(
-				/obj/item/ammo_box/magazine/wt550m9  = 10,
-				/obj/item/ammo_box/magazine/sp91rc = 10,
-				/obj/item/ammo_box/magazine/sparkle_a12 = 10,
-				/obj/item/ammo_box/magazine/enforcer/lethal = 10,
-				/obj/item/ammo_box/magazine/lr30mag = 10,
-				/obj/item/weapon_cell/specter = 10,
+				/obj/item/ammo_box/magazine/wt550m9  = 4,
+				/obj/item/ammo_box/magazine/sp91rc = 4,
+				/obj/item/ammo_box/magazine/sparkle_a12 = 4,
+				/obj/item/ammo_box/magazine/enforcer/lethal = 4,
+				/obj/item/ammo_box/magazine/lr30mag = 4,
+				/obj/item/weapon_cell/specter = 4,
 			),
 		),
 		list(
@@ -57,15 +59,8 @@
 		/obj/item/ammo_box/a357 = 1,
 	)
 
-	prices = list(
-		/obj/item/storage/box/flashbangs = 99,
-		/obj/item/storage/box/barrier = 69,
-		/obj/item/storage/box/teargas = 99,
-		/obj/item/ammo_box/a357 = 299,
-	)
-
 /obj/machinery/vending/ammo/get_ru_names()
-	return	list(
+	return alist(
 		NOMINATIVE = "торговый автомат Liberty",
 		GENITIVE = "торгового автомата Liberty",
 		DATIVE = "торговому автомату Liberty",

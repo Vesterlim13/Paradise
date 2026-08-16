@@ -59,12 +59,10 @@
 	var/datum/action/innate/terrorspider/queen/queennest/queennest_action
 	var/datum/action/innate/terrorspider/queen/queensense/queensense_action
 	var/datum/action/innate/terrorspider/queen/queeneggs/queeneggs_action
-	var/datum/action/innate/terrorspider/ventsmash/ventsmash_action
-	var/datum/action/innate/terrorspider/remoteview/remoteview_action
 	tts_seed = "Anivia"
 
 /mob/living/simple_animal/hostile/poison/terror_spider/queen/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "Королева Ужаса",
 		GENITIVE = "Королевы Ужаса",
 		DATIVE = "Королеве Ужаса",
@@ -73,17 +71,23 @@
 		PREPOSITIONAL = "Королеве Ужаса",
 	)
 
-/mob/living/simple_animal/hostile/poison/terror_spider/queen/New()
-	..()
-	ventsmash_action = new()
+/mob/living/simple_animal/hostile/poison/terror_spider/queen/Initialize(mapload)
+	. = ..()
+	var/datum/action/innate/terrorspider/ventsmash/ventsmash_action = new
 	ventsmash_action.Grant(src)
-	remoteview_action = new()
+	var/datum/action/innate/terrorspider/remoteview/remoteview_action = new
 	remoteview_action.Grant(src)
 	grant_queen_subtype_abilities()
 	spider_myqueen = src
 	if(spider_awaymission)
 		spider_growinstantly = TRUE
 		spider_spawnfrequency = 150
+
+/mob/living/simple_animal/hostile/poison/terror_spider/queen/Destroy()
+	QDEL_NULL(queennest_action)
+	QDEL_NULL(queensense_action)
+	QDEL_NULL(queeneggs_action)
+	return ..()
 
 /mob/living/simple_animal/hostile/poison/terror_spider/queen/proc/grant_queen_subtype_abilities()
 	queennest_action = new()
@@ -127,7 +131,7 @@
 			if(T.spider_myqueen != src)
 				continue
 			if(T.spider_tier < spider_tier)
-				T.visible_message(span_danger("[capitalize(T.declent_ru(NOMINATIVE))] корчится от боли!"))
+				T.visible_message(span_danger("[DECLENT_RU_CAP(T, NOMINATIVE)] корчится от боли!"))
 				to_chat(T, span_userdanger("Психическая реакция от смерти [declent_ru(GENITIVE)] ошеломляет вас! Вы чувствуете, как жизнь начинает утекать из вас..."))
 				T.degenerate = TRUE
 		for(var/thing in GLOB.ts_spiderling_list)
@@ -161,7 +165,7 @@
 						// nesting in a hallway would be very stupid - crew would find and kill you almost instantly
 				var/numhostiles = 0
 				for(var/mob/living/H in oview(10, src))
-					if(!istype(H, /mob/living/simple_animal/hostile/poison/terror_spider))
+					if(!isterrorspider(H))
 						if(H.stat != DEAD)
 							numhostiles += 1
 							// nesting RIGHT NEXT TO SOMEONE is even worse
@@ -179,10 +183,10 @@
 				if(ok_to_nest && entry_vent)
 					nest_vent = entry_vent
 					neststep = 1
-					visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] приживается, начиная строить гнездо."))
+					visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] приживается, начиная строить гнездо."))
 				else if(entry_vent)
 					if(!path_to_vent)
-						visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] настороженно оглядывается — затем ищет лучшее место для строительста гнезда."))
+						visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] настороженно оглядывается — затем ищет лучшее место для строительста гнезда."))
 						path_to_vent = 1
 				else
 					neststep = -1
@@ -347,7 +351,7 @@
 	return valid_types
 
 /mob/living/simple_animal/hostile/poison/terror_spider/queen/proc/DoQueenScreech(light_range, light_chance, camera_range, camera_chance)
-	visible_message(span_userdanger("[capitalize(declent_ru(NOMINATIVE))] издает пронзительный визг!"))
+	visible_message(span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] издает пронзительный визг!"))
 	playsound(src.loc, 'sound/creatures/terrorspiders/queen_shriek.ogg', 100, TRUE)
 	for(var/obj/machinery/light/L in orange(light_range, src))
 		if(L.on && prob(light_chance))
@@ -365,20 +369,13 @@
 	. += span_notice("Она отложила [eggslaid] [eggslaid != 1 ? "яиц" : "яйцо"].")
 	. += span_notice("Она прожила [MinutesAlive()] минут.")
 
-/obj/projectile/terrorspider/queen
-	name = "queen venom"
-	icon_state = "toxin3"
-	damage = 40
-	stamina = 40
-	damage_type = BURN
-
 /obj/structure/spider/terrorweb/queen
 	name = "airtight web"
 	desc = "Эта многослойная паутина, кажется, способна противостоять давлению воздуха."
 	max_integrity = 30
 
 /obj/structure/spider/terrorweb/queen/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "воздухонепроницаемая паутина",
 		GENITIVE = "воздухонепроницаемой паутины",
 		DATIVE = "воздухонепроницаемой паутине",
@@ -389,12 +386,12 @@
 
 /obj/structure/spider/terrorweb/queen/Initialize(mapload)
 	. = ..()
-	air_update_turf(TRUE)
+	recalculate_atmos_connectivity()
 
-/obj/structure/spider/terrorweb/queen/CanAtmosPass(turf/T, vertical)
+/obj/structure/spider/terrorweb/queen/CanAtmosPass(direction)
 	return FALSE
 
 /obj/structure/spider/terrorweb/queen/Destroy()
-	var/turf/T = get_turf(src)
+	var/turf/location = get_turf(src)
 	. = ..()
-	T.air_update_turf(TRUE)
+	location.recalculate_atmos_connectivity()

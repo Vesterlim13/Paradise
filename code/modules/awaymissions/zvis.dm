@@ -12,12 +12,9 @@
 	var/offset_z
 	var/global/list/levels[0]
 
-/obj/effect/levelref/New()
-	..()
-	levels += src
-
 /obj/effect/levelref/Initialize(mapload)
 	. = ..()
+	levels += src
 	for(var/obj/effect/levelref/O in levels)
 		if(id == O.id && O != src)
 			other = O
@@ -69,7 +66,7 @@
 
 	INVOKE_ASYNC(src, PROC_REF(trigger))
 
-/obj/effect/portal_sensor/proc/on_exited(datum/source, atom/movable/departed, atom/newLoc)
+/obj/effect/portal_sensor/proc/on_exited(datum/source, atom/movable/departed, direction)
 	SIGNAL_HANDLER
 
 	INVOKE_ASYNC(src, PROC_REF(trigger))
@@ -107,7 +104,7 @@
 
 // for second floor showing floor below
 /turf/simulated/floor/indestructible/upperlevel
-	icon = 'icons/turf/areas.dmi'
+	icon = 'icons/area/areas.dmi'
 	icon_state = "dark128"
 	layer = AREA_LAYER + 0.5
 	appearance_flags = TILE_BOUND|KEEP_TOGETHER|LONG_GLIDE
@@ -153,8 +150,8 @@
 		var/atom/A = X
 		if(A && A.invisibility <= SEE_INVISIBLE_LIVING)
 			var/image/I = image(A, layer = AREA_LAYER + A.layer * 0.01, dir = A.dir)
-			I.pixel_x = A.pixel_x
-			I.pixel_y = A.pixel_y
+			I.pixel_w = A.pixel_x
+			I.pixel_z = A.pixel_y
 			underlays += I
 
 /obj/effect/visual_portal
@@ -258,7 +255,11 @@
 	var/ox = moving_atom.x - x
 	var/oy = moving_atom.y - y
 	moving_atom.forceMove(locate(other.x + ox, other.y + oy, other.z))
-	sleep(1)
+	addtimer(CALLBACK(src, PROC_REF(complete_teleport), moving_atom, other), 0.1 SECONDS)
+
+/obj/effect/visual_portal/proc/complete_teleport(atom/movable/moving_atom, obj/effect/visual_portal/other)
+	if(!moving_atom || !other)
+		return
 	moving_atom.forceMove(get_turf(other.loc))
 
 /obj/effect/visual_portal/attack_ghost(mob/user)

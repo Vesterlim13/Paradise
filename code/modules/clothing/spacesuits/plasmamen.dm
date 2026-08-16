@@ -7,28 +7,29 @@
 	strip_delay = 200
 	tint = 2
 	HUDType = 0
-	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 100, RAD = 0, FIRE = 100, ACID = 75)
+	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 100, FIRE = 100, ACID = 75)
 	resistance_flags = FIRE_PROOF
 	light_range = 4
 	light_on = FALSE
-	light_system = MOVABLE_LIGHT_DIRECTIONAL
+	light_system = OVERLAY_LIGHT_DIRECTIONAL
 	can_toggle = TRUE
-	var/on = FALSE
-	var/smile = FALSE
-	var/smile_color = "#FF0000"
-	var/visor_icon = "envisor"
-	var/smile_state = "envirohelm_smile"
 	actions_types = list(/datum/action/item_action/toggle_helmet_light, /datum/action/item_action/toggle_welding_screen/plasmaman)
 	visor_vars_to_toggle = VISOR_FLASHPROTECT | VISOR_TINT
 	flags_inv = HIDEHEADSETS|HIDEGLASSES|HIDENAME
+	visor_flags_cover = HEADCOVERSMOUTH|HEADCOVERSEYES
 	visor_flags_inv = HIDEGLASSES|HIDENAME
 	icon = 'icons/obj/clothing/species/plasmaman/hats.dmi'
 	species_restricted = list(SPECIES_PLASMAMAN)
 	sprite_sheets = list(SPECIES_PLASMAMAN = 'icons/mob/clothing/species/plasmaman/helmet.dmi')
 	var/upgradable = FALSE
+	var/on = FALSE
+	var/smile = FALSE
+	var/smile_color = "#FF0000"
+	var/visor_icon = "envisor"
+	var/smile_state = "envirohelm_smile"
 
 /obj/item/clothing/head/helmet/space/plasmaman/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем плазмолюда",
 		GENITIVE = "защитного шлема плазмолюда",
 		DATIVE = "защитному шлему плазмолюда",
@@ -108,17 +109,25 @@
 		var/datum/atom_hud/H = GLOB.huds[HUDType]
 		H.hide_from(user)
 
+/obj/item/clothing/head/helmet/space/plasmaman/wash_tg(clean_types)
+	. = NONE
+	if(smile && (clean_types & CLEAN_TYPE_HARD_DECAL))
+		smile = FALSE
+		update_appearance(UPDATE_OVERLAYS)
+		. |= COMPONENT_CLEANED|COMPONENT_CLEANED_GAIN_XP
+	. |= ..()
+
 /obj/item/clothing/head/helmet/space/plasmaman/security
 	name = "security plasma envirosuit helmet"
 	desc = "Шлем защитного костюма плазмолюда, созданный специально для офицеров службы безопасности."
 	icon_state = "security_envirohelm"
 	item_state = "security_envirohelm"
-	armor = list(MELEE = 35, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 35, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 100, FIRE = 100, ACID = 50)
 	HUDType = DATA_HUD_SECURITY_ADVANCED
 	examine_extensions = EXAMINE_HUD_SECURITY_READ | EXAMINE_HUD_SECURITY_WRITE
 
 /obj/item/clothing/head/helmet/space/plasmaman/security/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем службы безопасности",
 		GENITIVE = "защитного шлема службы безопасности",
 		DATIVE = "защитному шлему службы безопасности",
@@ -132,11 +141,11 @@
 	desc = "Шлем защитного костюма плазмолюда, созданный специально для детектива."
 	icon_state = "white_envirohelm"
 	item_state = "white_envirohelm"
-	armor = list(MELEE = 25, BULLET = 5, LASER = 25, ENERGY = 10, BOMB = 0, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 25, BULLET = 5, LASER = 25, ENERGY = 10, BOMB = 0, BIO = 100, FIRE = 100, ACID = 50)
 	examine_extensions = EXAMINE_HUD_SECURITY_READ | EXAMINE_HUD_SECURITY_WRITE | EXAMINE_HUD_SCIENCE
 
 /obj/item/clothing/head/helmet/space/plasmaman/security/dec/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем детектива",
 		GENITIVE = "защитного шлема детектива",
 		DATIVE = "защитному шлему детектива",
@@ -152,7 +161,7 @@
 	item_state = "warden_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/security/warden/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем смотрителя",
 		GENITIVE = "защитного шлема смотрителя",
 		DATIVE = "защитному шлему смотрителя",
@@ -168,7 +177,7 @@
 	item_state = "hos_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/security/hos/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем главы службы безопасности",
 		GENITIVE = "защитного шлема главы службы безопасности",
 		DATIVE = "защитному шлему главы службы безопасности",
@@ -186,7 +195,7 @@
 	examine_extensions = EXAMINE_HUD_MEDICAL
 
 /obj/item/clothing/head/helmet/space/plasmaman/medical/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем врача",
 		GENITIVE = "защитного шлема врача",
 		DATIVE = "защитному шлему врача",
@@ -202,7 +211,7 @@
 	item_state = "brigphysician_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/medical/brigphysician/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем бригмедика",
 		GENITIVE = "защитного шлема бригмедика",
 		DATIVE = "защитному шлему бригмедика",
@@ -218,7 +227,7 @@
 	item_state = "coroner_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/medical/coroner/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем патологоанатома",
 		GENITIVE = "защитного шлема патологоанатома",
 		DATIVE = "защитному шлему патологоанатома",
@@ -234,7 +243,7 @@
 	item_state = "paramedic_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/medical/paramedic/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем парамедика",
 		GENITIVE = "защитного шлема парамедика",
 		DATIVE = "защитному шлему парамедика",
@@ -253,7 +262,7 @@
 	examine_extensions = EXAMINE_HUD_MEDICAL | EXAMINE_HUD_SCIENCE
 
 /obj/item/clothing/head/helmet/space/plasmaman/cmo/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем главного врача",
 		GENITIVE = "защитного шлема главного врача",
 		DATIVE = "защитному шлему главного врача",
@@ -270,7 +279,7 @@
 	HUDType = DATA_HUD_MEDICAL_ADVANCED
 
 /obj/item/clothing/head/helmet/space/plasmaman/genetics/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем генетика",
 		GENITIVE = "защитного шлема генетика",
 		DATIVE = "защитному шлему генетика",
@@ -287,7 +296,7 @@
 	examine_extensions = EXAMINE_HUD_SCIENCE
 
 /obj/item/clothing/head/helmet/space/plasmaman/viro/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем вирусолога",
 		GENITIVE = "защитного шлема вирусолога",
 		DATIVE = "защитному шлему вирусолога",
@@ -305,7 +314,7 @@
 	examine_extensions = EXAMINE_HUD_SCIENCE
 
 /obj/item/clothing/head/helmet/space/plasmaman/chemist/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем химика",
 		GENITIVE = "защитного шлема химика",
 		DATIVE = "защитному шлему химика",
@@ -323,7 +332,7 @@
 	examine_extensions = EXAMINE_HUD_SCIENCE
 
 /obj/item/clothing/head/helmet/space/plasmaman/science/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем учёного",
 		GENITIVE = "защитного шлема учёного",
 		DATIVE = "защитному шлему учёного",
@@ -340,7 +349,7 @@
 	HUDType = DATA_HUD_MEDICAL_ADVANCED
 
 /obj/item/clothing/head/helmet/space/plasmaman/science/xeno/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем ксенобиолога",
 		GENITIVE = "защитного шлема ксенобиолога",
 		DATIVE = "защитному шлему ксенобиолога",
@@ -359,7 +368,7 @@
 	HUDType = DATA_HUD_DIAGNOSTIC
 
 /obj/item/clothing/head/helmet/space/plasmaman/rd/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем научного руководителя",
 		GENITIVE = "защитного шлема научного руководителя",
 		DATIVE = "защитному шлему научного руководителя",
@@ -376,7 +385,7 @@
 	HUDType = DATA_HUD_DIAGNOSTIC
 
 /obj/item/clothing/head/helmet/space/plasmaman/robotics/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем робототехника",
 		GENITIVE = "защитного шлема робототехника",
 		DATIVE = "защитному шлему робототехника",
@@ -390,12 +399,12 @@
 	desc = "Шлем защитного костюма плазмолюда, созданный специально для инженеров."
 	icon_state = "engineer_envirohelm"
 	item_state = "engineer_envirohelm"
-	armor = list(MELEE = 15, BULLET = 5, LASER = 20, ENERGY = 10, BOMB = 20, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 15, BULLET = 5, LASER = 20, ENERGY = 10, BOMB = 20, BIO = 100, FIRE = 100, ACID = 50)
 	vision_flags = SEE_TURFS
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE
 
 /obj/item/clothing/head/helmet/space/plasmaman/engineering/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем инженера",
 		GENITIVE = "защитного шлема инженера",
 		DATIVE = "защитному шлему инженера",
@@ -412,7 +421,7 @@
 	HUDType = DATA_HUD_DIAGNOSTIC
 
 /obj/item/clothing/head/helmet/space/plasmaman/engineering/mecha/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем механика",
 		GENITIVE = "защитного шлема механика",
 		DATIVE = "защитному шлему механика",
@@ -427,11 +436,11 @@
 	icon_state = "ce_envirohelm"
 	item_state = "ce_envirohelm"
 	gas_transfer_coefficient = 0.01
-	armor = list(MELEE = 40, BULLET = 5, LASER = 10, ENERGY = 25, BOMB = 50, BIO = 100, RAD = 0, FIRE = 100, ACID = 90)
+	armor = list(MELEE = 40, BULLET = 5, LASER = 10, ENERGY = 25, BOMB = 50, BIO = 100, FIRE = 100, ACID = 90)
 	max_heat_protection_temperature = FIRE_IMMUNITY_MAX_TEMP_PROTECT
 
 /obj/item/clothing/head/helmet/space/plasmaman/engineering/ce/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем старшего инженера",
 		GENITIVE = "защитного шлема старшего инженера",
 		DATIVE = "защитному шлему старшего инженера",
@@ -445,13 +454,13 @@
 	desc = "Шлем защитного костюма плазмолюда, созданный специально для атмосферных техников."
 	icon_state = "atmos_envirohelm"
 	item_state = "atmos_envirohelm"
-	armor = list(MELEE = 15, BULLET = 5, LASER = 20, ENERGY = 10, BOMB = 20, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 15, BULLET = 5, LASER = 20, ENERGY = 10, BOMB = 20, BIO = 100, FIRE = 100, ACID = 50)
 	vision_flags = SEE_TURFS
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE
 	max_heat_protection_temperature = FIRE_IMMUNITY_MAX_TEMP_PROTECT
 
 /obj/item/clothing/head/helmet/space/plasmaman/atmospherics/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем атмосферного техника",
 		GENITIVE = "защитного шлема атмосферного техника",
 		DATIVE = "защитному шлему атмосферного техника",
@@ -467,7 +476,7 @@
 	item_state = "cargo_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/cargo/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем грузчика",
 		GENITIVE = "защитного шлема грузчика",
 		DATIVE = "защитному шлему грузчика",
@@ -483,7 +492,7 @@
 	item_state = "qm_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/qm/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем Квартирмейстера",
 		GENITIVE = "защитного шлема Квартирмейстера",
 		DATIVE = "защитному шлему Квартирмейстера",
@@ -498,14 +507,14 @@
 	icon_state = "explorer_envirohelm"
 	item_state = "explorer_envirohelm"
 	visor_icon = "explorer_envisor"
-	armor = list(MELEE = 30, BULLET = 20, LASER = 20, ENERGY = 20, BOMB = 50, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 30, BULLET = 20, LASER = 20, ENERGY = 20, BOMB = 50, BIO = 100, FIRE = 100, ACID = 50)
 	vision_flags = SEE_TURFS
 	min_cold_protection_temperature = FIRE_HELM_MIN_TEMP_PROTECT
 	max_heat_protection_temperature = FIRE_HELM_MAX_TEMP_PROTECT
 	upgradable = TRUE
 
 /obj/item/clothing/head/helmet/space/plasmaman/mining/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем шахтёра",
 		GENITIVE = "защитного шлема шахтёра",
 		DATIVE = "защитному шлему шахтёра",
@@ -519,10 +528,10 @@
 	desc = "Шлем защитного костюма плазмолюда, созданный специально для священника."
 	icon_state = "chap_envirohelm"
 	item_state = "chap_envirohelm"
-	armor = list(MELEE = 20, BULLET = 7, LASER = 2, ENERGY = 2, BOMB = 2, BIO = 100, RAD = 0, FIRE = 100, ACID = 80)
+	armor = list(MELEE = 20, BULLET = 7, LASER = 2, ENERGY = 2, BOMB = 2, BIO = 100, FIRE = 100, ACID = 80)
 
 /obj/item/clothing/head/helmet/space/plasmaman/chaplain/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем священника",
 		GENITIVE = "защитного шлема священника",
 		DATIVE = "защитному шлему священника",
@@ -539,7 +548,7 @@
 	examine_extensions = EXAMINE_HUD_SCIENCE
 
 /obj/item/clothing/head/helmet/space/plasmaman/white/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем плазмолюда белого цвета",
 		GENITIVE = "защитного шлема плазмолюда белого цвета",
 		DATIVE = "защитному шлему плазмолюда белого цвета",
@@ -557,31 +566,31 @@
 	examine_extensions = EXAMINE_HUD_SECURITY_READ
 
 /obj/item/clothing/head/helmet/space/plasmaman/nt/get_ru_names()
-	return list(
-		NOMINATIVE = "защитный шлем Нанотрейзен",
-		GENITIVE = "защитного шлема Нанотрейзен",
-		DATIVE = "защитному шлему Нанотрейзен",
-		ACCUSATIVE = "защитный шлем Нанотрейзен",
-		INSTRUMENTAL = "защитным шлемом Нанотрейзен",
-		PREPOSITIONAL = "защитном шлеме Нанотрейзен",
+	return alist(
+		NOMINATIVE = "защитный шлем \"Нанотрейзен\"",
+		GENITIVE = "защитного шлема \"Нанотрейзен\"",
+		DATIVE = "защитному шлему \"Нанотрейзен\"",
+		ACCUSATIVE = "защитный шлем \"Нанотрейзен\"",
+		INSTRUMENTAL = "защитным шлемом \"Нанотрейзен\"",
+		PREPOSITIONAL = "защитном шлеме \"Нанотрейзен\"",
 	)
 
 /obj/item/clothing/head/helmet/space/plasmaman/nt_rep
 	name = "nanotrasen representative envirosuit helmet"
-	desc = "Шлем защитного костюма плазмолюда, созданный специально для представителя Нанотрейзен."
+	desc = "Шлем защитного костюма плазмолюда, созданный специально для представителя \"Нанотрейзен\"."
 	icon_state = "ntrep_envirohelm"
 	item_state = "ntrep_envirohelm"
 	HUDType = DATA_HUD_SECURITY_BASIC
 	examine_extensions = EXAMINE_HUD_SKILLS
 
 /obj/item/clothing/head/helmet/space/plasmaman/nt_rep/get_ru_names()
-	return list(
-		NOMINATIVE = "защитный шлем представителя Нанотрейзен",
-		GENITIVE = "защитного шлема представителя Нанотрейзен",
-		DATIVE = "защитному шлему представителя Нанотрейзен",
-		ACCUSATIVE = "защитный шлем представителя Нанотрейзен",
-		INSTRUMENTAL = "защитным шлемом представителя Нанотрейзен",
-		PREPOSITIONAL = "защитном шлеме представителя Нанотрейзен",
+	return alist(
+		NOMINATIVE = "защитный шлем представителя \"Нанотрейзен\"",
+		GENITIVE = "защитного шлема представителя \"Нанотрейзен\"",
+		DATIVE = "защитному шлему представителя \"Нанотрейзен\"",
+		ACCUSATIVE = "защитный шлем представителя \"Нанотрейзен\"",
+		INSTRUMENTAL = "защитным шлемом представителя \"Нанотрейзен\"",
+		PREPOSITIONAL = "защитном шлеме представителя \"Нанотрейзен\"",
 	)
 
 /obj/item/clothing/head/helmet/space/plasmaman/chef
@@ -591,7 +600,7 @@
 	item_state = "chef_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/chef/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем повара",
 		GENITIVE = "защитного шлема повара",
 		DATIVE = "защитному шлему повара",
@@ -609,7 +618,7 @@
 	visor_icon = "prototype_envisor"
 
 /obj/item/clothing/head/helmet/space/plasmaman/librarian/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем библиотекаря",
 		GENITIVE = "защитного шлема библиотекаря",
 		DATIVE = "защитному шлему библиотекаря",
@@ -628,7 +637,7 @@
 	examine_extensions = EXAMINE_HUD_BOTANY
 
 /obj/item/clothing/head/helmet/space/plasmaman/botany/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем ботаника",
 		GENITIVE = "защитного шлема ботаника",
 		DATIVE = "защитному шлему ботаника",
@@ -644,7 +653,7 @@
 	item_state = "janitor_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/janitor/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем уборщика",
 		GENITIVE = "защитного шлема уборщика",
 		DATIVE = "защитному шлему уборщика",
@@ -661,7 +670,7 @@
 	visor_icon = "mime_envisor"
 
 /obj/item/clothing/head/helmet/space/plasmaman/mime/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем мима",
 		GENITIVE = "защитного шлема мима",
 		DATIVE = "защитному шлему мима",
@@ -678,7 +687,7 @@
 	visor_icon = "clown_envisor"
 
 /obj/item/clothing/head/helmet/space/plasmaman/clown/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем клоуна",
 		GENITIVE = "защитного шлема клоуна",
 		DATIVE = "защитному шлему клоуна",
@@ -692,12 +701,12 @@
 	desc = "Шлем защитного костюма плазмолюда, созданный специально для главы персонала."
 	icon_state = "hop_envirohelm"
 	item_state = "hop_envirohelm"
-	armor = list(MELEE = 25, BULLET = 15, LASER = 25, ENERGY = 10, BOMB = 25, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 25, BULLET = 15, LASER = 25, ENERGY = 10, BOMB = 25, BIO = 100, FIRE = 100, ACID = 50)
 	HUDType = DATA_HUD_SECURITY_BASIC
 	examine_extensions = EXAMINE_HUD_SKILLS
 
 /obj/item/clothing/head/helmet/space/plasmaman/hop/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем главы персонала",
 		GENITIVE = "защитного шлема главы персонала",
 		DATIVE = "защитному шлему главы персонала",
@@ -711,12 +720,12 @@
 	desc = "Шлем защитного костюма плазмолюда, имеющий множество эмблем и маркировок, демонстрирующих, что их владелец — капитан."
 	icon_state = "cap_envirohelm"
 	item_state = "cap_envirohelm"
-	armor = list(MELEE = 25, BULLET = 15, LASER = 25, ENERGY = 10, BOMB = 25, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 25, BULLET = 15, LASER = 25, ENERGY = 10, BOMB = 25, BIO = 100, FIRE = 100, ACID = 50)
 	HUDType = DATA_HUD_SECURITY_BASIC
 	examine_extensions = EXAMINE_HUD_SKILLS
 
 /obj/item/clothing/head/helmet/space/plasmaman/captain/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем капитана",
 		GENITIVE = "защитного шлема капитана",
 		DATIVE = "защитному шлему капитана",
@@ -730,12 +739,12 @@
 	desc = "Шлем защитного костюма плазмолюда, созданный специально для офицера \"Синий Щит\"."
 	icon_state = "bs_envirohelm"
 	item_state = "bs_envirohelm"
-	armor = list(MELEE = 35, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 100, RAD = 0, FIRE = 100, ACID = 50)
+	armor = list(MELEE = 35, BULLET = 30, LASER = 30,ENERGY = 10, BOMB = 25, BIO = 100, FIRE = 100, ACID = 50)
 	HUDType = DATA_HUD_MEDICAL_ADVANCED
 	examine_extensions = EXAMINE_HUD_MEDICAL
 
 /obj/item/clothing/head/helmet/space/plasmaman/blueshield/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем офицера \"Синий Щит\"",
 		GENITIVE = "защитного шлема офицера \"Синий Щит\"",
 		DATIVE = "защитному шлему офицера \"Синий Щит\"",
@@ -750,12 +759,12 @@
 	icon_state = "wizard_envirohelm"
 	item_state = "wizard_envirohelm"
 	gas_transfer_coefficient = 0.01
-	armor = list(MELEE = 30, BULLET = 20, LASER = 20, ENERGY = 20, BOMB = 20, BIO = 100, RAD = 0, FIRE = 100, ACID = 100)
+	armor = list(MELEE = 30, BULLET = 20, LASER = 20, ENERGY = 20, BOMB = 20, BIO = 100, FIRE = 100, ACID = 100)
 	resistance_flags = FIRE_PROOF | ACID_PROOF
 	magical = TRUE
 
 /obj/item/clothing/head/helmet/space/plasmaman/wizard/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "магический защитный шлем плазмолюда",
 		GENITIVE = "магического защитного шлема плазмолюда",
 		DATIVE = "магическому защитному шлему плазмолюда",
@@ -766,38 +775,38 @@
 
 /obj/item/clothing/head/helmet/space/plasmaman/syndicate
 	name = "syndicate officer envirosuit helmet"
-	desc = "Тактический шлем защитного костюма плазмолюда, созданный для офицеров Синдиката."
+	desc = "Тактический шлем защитного костюма плазмолюда, созданный для офицеров \"Синдиката\"."
 	icon_state = "syndicatecentcomm_envirohelm"
 	item_state = "syndicatecentcomm_envirohelm"
 	vision_flags = SEE_MOBS
 	lighting_alpha = LIGHTING_PLANE_ALPHA_MOSTLY_VISIBLE
 
 /obj/item/clothing/head/helmet/space/plasmaman/syndicate/get_ru_names()
-	return list(
-		NOMINATIVE = "защитный шлем офицера Синдиката",
-		GENITIVE = "защитного шлема офицера Синдиката",
-		DATIVE = "защитному шлему офицера Синдиката",
-		ACCUSATIVE = "защитный шлем офицера Синдиката",
-		INSTRUMENTAL = "защитным шлемом офицера Синдиката",
-		PREPOSITIONAL = "защитном шлеме офицера Синдиката",
+	return alist(
+		NOMINATIVE = "защитный шлем офицера \"Синдиката\"",
+		GENITIVE = "защитного шлема офицера \"Синдиката\"",
+		DATIVE = "защитному шлему офицера \"Синдиката\"",
+		ACCUSATIVE = "защитный шлем офицера \"Синдиката\"",
+		INSTRUMENTAL = "защитным шлемом офицера \"Синдиката\"",
+		PREPOSITIONAL = "защитном шлеме офицера \"Синдиката\"",
 	)
 
 /obj/item/clothing/head/helmet/space/plasmaman/centcomm
 	name = "Central command officer envirosuit helmet"
-	desc = "Тактический шлем защитного костюма плазмолюда, созданный для офицеров Нанотрейзен."
+	desc = "Тактический шлем защитного костюма плазмолюда, созданный для офицеров \"Нанотрейзен\"."
 	icon_state = "centcomm_envirohelm"
 	item_state = "centcomm_envirohelm"
 	HUDType = DATA_HUD_SECURITY_BASIC
 	examine_extensions = EXAMINE_HUD_SKILLS
 
 /obj/item/clothing/head/helmet/space/plasmaman/centcomm/get_ru_names()
-	return list(
-		NOMINATIVE = "защитный шлем офицера ЦК",
-		GENITIVE = "защитного шлема офицера ЦК",
-		DATIVE = "защитному шлему офицера ЦК",
-		ACCUSATIVE = "защитный шлем офицера ЦК",
-		INSTRUMENTAL = "защитным шлемом офицера ЦК",
-		PREPOSITIONAL = "защитном шлеме офицера ЦК",
+	return alist(
+		NOMINATIVE = "защитный шлем офицера ЦК \"Нанотрейзен\"",
+		GENITIVE = "защитного шлема офицера ЦК \"Нанотрейзен\"",
+		DATIVE = "защитному шлему офицера ЦК \"Нанотрейзен\"",
+		ACCUSATIVE = "защитный шлем офицера ЦК \"Нанотрейзен\"",
+		INSTRUMENTAL = "защитным шлемом офицера ЦК \"Нанотрейзен\"",
+		PREPOSITIONAL = "защитном шлеме офицера ЦК \"Нанотрейзен\"",
 	)
 
 /obj/item/clothing/head/helmet/space/plasmaman/mining_medic
@@ -809,7 +818,7 @@
 	examine_extensions = EXAMINE_HUD_MEDICAL
 
 /obj/item/clothing/head/helmet/space/plasmaman/mining_medic/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "защитный шлем шахтёрского врача",
 		GENITIVE = "защитного шлема шахтёрского врача",
 		DATIVE = "защитному шлему шахтёрского врача",
@@ -826,7 +835,7 @@
 	item_color = "syndie_envirohelm"
 
 /obj/item/clothing/head/helmet/space/plasmaman/syndie/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "тактический защитный шлем",
 		GENITIVE = "тактического защитного шлема",
 		DATIVE = "тактическому защитному шлему",

@@ -26,7 +26,7 @@
 
 	var/turf/location = get_turf(loc)
 	if(location)
-		location.hotspot_expose(1000, 1000)
+		location.hotspot_expose(1000, 1)
 
 	sparks.start()
 
@@ -58,5 +58,5 @@
 		activate()
 	add_fingerprint(user)
 
-/obj/item/assembly/igniter/get_heat()
+/obj/item/assembly/igniter/get_temperature()
 	return 20000

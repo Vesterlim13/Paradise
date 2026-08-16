@@ -1,4 +1,5 @@
 /atom/movable
+	abstract_type = /atom/movable
 	layer = OBJ_LAYER
 	appearance_flags = TILE_BOUND|PIXEL_SCALE|LONG_GLIDE
 	glide_size = DEFAULT_GLIDE_SIZE // Default, adjusted when mobs move based on their movement delays
@@ -77,10 +78,10 @@
 	/// without snowflake code all of the place.
 	var/set_dir_on_move = TRUE
 
-	/// Either FALSE, [EMISSIVE_BLOCK_GENERIC], or [EMISSIVE_BLOCK_UNIQUE]
-	var/blocks_emissive = FALSE
+	/// Either [EMISSIVE_BLOCK_NONE], [EMISSIVE_BLOCK_GENERIC], or [EMISSIVE_BLOCK_UNIQUE]
+	var/blocks_emissive = EMISSIVE_BLOCK_NONE
 	///Internal holder for emissive blocker object, do not use directly use blocks_emissive
-	var/atom/movable/emissive_blocker/em_block
+	var/atom/movable/render_step/emissive_blocker/em_block
 
 	///Lazylist to keep track on the sources of illumination.
 	var/list/affected_dynamic_lights
@@ -93,11 +94,12 @@
 	///is the mob currently ascending or descending through z levels?
 	var/currently_z_moving
 
-	/// Whether a user will face atoms on entering them with a mouse. Despite being a mob variable, it is here for performance
-	var/face_mouse = FALSE
-
+	/// The degree of thermal insulation that mobs in list/contents have from the external environment, between 0 and 1
+	var/contents_thermal_insulation = 0
+	/// The degree of pressure protection that mobs in list/contents have from the external environment, between 0 and 1
+	var/contents_pressure_protection = 0
 	var/pressure_resistance = 10
-	var/last_high_pressure_movement_air_cycle = 0
+	var/last_high_pressure_movement_time = 0
 
 	var/atom/orbiting = null
 	var/cached_transform = null
@@ -121,40 +123,33 @@
 	/// Last location of the atom for demo recording purposes
 	var/atom/demo_last_loc
 
+/mutable_appearance/emissive_blocker
+
+/mutable_appearance/emissive_blocker/New()
+	. = ..()
+	// Need to do this here because it's overridden by the parent call
+	// This is a microop which is the sole reason why this child exists, because its static this is a really cheap way to set color without setting or checking it every time we create an atom
+	color = EM_BLOCK_COLOR
+
 /atom/movable/attempt_init(loc, ...)
-	var/turf/T = get_turf(src)
-	if(T && SSatoms.initialized != INITIALIZATION_INSSATOMS && GLOB.space_manager.is_zlevel_dirty(T.z))
-		GLOB.space_manager.postpone_init(T.z, src)
+	var/turf/current_turf = get_turf(src)
+	if(current_turf && SSatoms.initialized != INITIALIZATION_INSSATOMS && GLOB.space_manager.is_zlevel_dirty(current_turf.z))
+		GLOB.space_manager.postpone_init(current_turf.z, src)
 		return
 	. = ..()
 
 /atom/movable/Initialize(mapload, ...)
 	. = ..()
-	switch(blocks_emissive)
-		if(EMISSIVE_BLOCK_GENERIC)
-			var/static/mutable_appearance/emissive_blocker/blocker = new
-			blocker.icon = icon
-			blocker.icon_state = icon_state
-			blocker.dir = dir
-			blocker.alpha = alpha
-			blocker.appearance_flags |= appearance_flags
-			blocker.plane = GET_NEW_PLANE(EMISSIVE_PLANE, PLANE_TO_OFFSET(plane))
-			// Ok so this is really cursed, but I want to set with this blocker cheaply while
-			// still allowing it to be removed from the overlays list later.
-			// So I'm gonna flatten it, then insert the flattened overlay into overlays AND the managed overlays list, directly.
-			// I'm sorry!
-			var/mutable_appearance/flat = blocker.appearance
-			overlays += flat
-			if(managed_overlays)
-				if(islist(managed_overlays))
-					managed_overlays += flat
-				else
-					managed_overlays = list(managed_overlays, flat)
-			else
-				managed_overlays = flat
 
-		if(EMISSIVE_BLOCK_UNIQUE)
-			render_target = ref(src)
+	// This one is incredible.
+	// `if(x) else { /* code */ }` is surprisingly fast, and it's faster than a switch, which is seemingly not a jump table.
+	// From what I can tell, a switch case checks every single branch individually, although sane, is slow in a hot proc like this.
+	// So, we make the most common `blocks_emissive` value, EMISSIVE_BLOCK_GENERIC, 0, getting to the fast else branch quickly.
+	// If it fails, then we can check over every value it can be (here, EMISSIVE_BLOCK_UNIQUE is the only one that matters).
+	// This saves several hundred milliseconds of init time.
+	if(blocks_emissive)
+		if(blocks_emissive == EMISSIVE_BLOCK_UNIQUE)
+			render_target = UID_of(src)
 			em_block = new(null, src)
 			overlays += em_block
 			if(managed_overlays)
@@ -164,14 +159,39 @@
 					managed_overlays = list(managed_overlays, em_block)
 			else
 				managed_overlays = em_block
+	else
+		var/static/mutable_appearance/emissive_blocker/blocker = new()
+		if(!blocker)
+			WARNING("Emissive blocker static instance is null during init of [src]! Skipping emissive setup.")
+			return
+		blocker.icon = icon
+		blocker.icon_state = icon_state
+		blocker.dir = dir
+		blocker.appearance_flags = appearance_flags | EMISSIVE_APPEARANCE_FLAGS
+		blocker.plane = GET_NEW_PLANE(EMISSIVE_PLANE, PLANE_TO_OFFSET(plane)) // Takes a light path through the normal macro for a microop
+		if(IS_TOPDOWN_PLANE(plane))
+			blocker.layer = TOPDOWN_TO_EMISSIVE_LAYER(layer)
+		// Ok so this is really cursed, but I want to set with this blocker cheaply while
+		// Still allowing it to be removed from the overlays list later
+		// So I'm gonna flatten it, then insert the flattened overlay into overlays AND the managed overlays list, directly
+		// I'm sorry
+		var/mutable_appearance/flat = blocker.appearance
+		overlays += flat
+		if(managed_overlays)
+			if(islist(managed_overlays))
+				managed_overlays += flat
+			else
+				managed_overlays = list(managed_overlays, flat)
+		else
+			managed_overlays = flat
 
 	if(opacity)
 		AddElement(/datum/element/light_blocking)
 
 	switch(light_system)
-		if(MOVABLE_LIGHT)
+		if(OVERLAY_LIGHT)
 			AddComponent(/datum/component/overlay_lighting)
-		if(MOVABLE_LIGHT_DIRECTIONAL)
+		if(OVERLAY_LIGHT_DIRECTIONAL)
 			AddComponent(/datum/component/overlay_lighting, is_directional = TRUE)
 
 /atom/movable/Destroy(force)
@@ -201,23 +221,51 @@
 
 	. = ..()
 
-	LAZYNULL(important_recursive_contents)//has to be before moveToNullspace() so that we can exit our spatial_grid cell if we're in it
-
 	if(loc)
 		loc.handle_atom_del(src)
-	for(var/atom/movable/AM in contents)
-		qdel(AM)
+	for(var/atom/movable/movable_content in contents)
+		qdel(movable_content)
+
 	move_to_null_space()
 
-/atom/movable/get_emissive_block()
-	switch(blocks_emissive)
-		if(EMISSIVE_BLOCK_GENERIC)
-			return fast_emissive_blocker(src)
-		if(EMISSIVE_BLOCK_UNIQUE)
-			if(!em_block && !QDELETED(src))
-				render_target = ref(src)
+	// This absolutely must be after moveToNullspace()
+	// We rely on Entered and Exited to manage this list, and the copy of this list that is on any /atom/movable "Containers"
+	// If we clear this before the nullspace move, a ref to this object will be hung in any of its movable containers
+	LAZYNULL(important_recursive_contents)
+
+	vis_locs = null //clears this atom out of all viscontents
+
+	// Checking length(vis_contents) before cutting has significant speed benefits
+	if(length(vis_contents))
+		vis_contents.Cut()
+
+/atom/movable/proc/update_emissive_block()
+	// This one is incredible.
+	// `if(x) else { /* code */ }` is surprisingly fast, and it's faster than a switch, which is seemingly not a jump table.
+	// From what I can tell, a switch case checks every single branch individually, although sane, is slow in a hot proc like this.
+	// So, we make the most common `blocks_emissive` value, EMISSIVE_BLOCK_GENERIC, 0, getting to the fast else branch quickly.
+	// If it fails, then we can check over every value it can be (here, EMISSIVE_BLOCK_UNIQUE is the only one that matters).
+	// This saves several hundred milliseconds of init time.
+	if(blocks_emissive)
+		if(blocks_emissive == EMISSIVE_BLOCK_UNIQUE)
+			if(em_block)
+				SET_PLANE(em_block, EMISSIVE_PLANE, src)
+			else if(!QDELETED(src))
+				render_target = UID_of(src)
 				em_block = new(null, src)
 			return em_block
+		// Implied else if(blocks_emissive == EMISSIVE_BLOCK_NONE) -> return
+	// EMISSIVE_BLOCK_GENERIC == 0
+	else
+		return fast_emissive_blocker(src)
+
+/atom/movable/update_overlays()
+	var/list/overlays = ..()
+	var/emissive_block = update_emissive_block()
+	if(emissive_block)
+		// Emissive block should always go at the beginning of the list
+		overlays.Insert(1, emissive_block)
+	return overlays
 
 /atom/movable/vv_edit_var(var_name, var_value)
 	var/static/list/banned_edits = list(NAMEOF_STATIC(src, step_x) = TRUE, NAMEOF_STATIC(src, step_y) = TRUE, NAMEOF_STATIC(src, step_size) = TRUE, NAMEOF_STATIC(src, bounds) = TRUE)
@@ -232,21 +280,21 @@
 
 	switch(var_name)
 		if(NAMEOF(src, x))
-			var/turf/T = locate(var_value, y, z)
-			if(T)
-				admin_teleport(T)
+			var/turf/current_turf = locate(var_value, y, z)
+			if(current_turf)
+				admin_teleport(current_turf)
 				return TRUE
 			return FALSE
 		if(NAMEOF(src, y))
-			var/turf/T = locate(x, var_value, z)
-			if(T)
-				admin_teleport(T)
+			var/turf/current_turf = locate(x, var_value, z)
+			if(current_turf)
+				admin_teleport(current_turf)
 				return TRUE
 			return FALSE
 		if(NAMEOF(src, z))
-			var/turf/T = locate(x, y, var_value)
-			if(T)
-				admin_teleport(T)
+			var/turf/current_turf = locate(x, y, var_value)
+			if(current_turf)
+				admin_teleport(current_turf)
 				return TRUE
 			return FALSE
 		if(NAMEOF(src, loc))
@@ -256,6 +304,9 @@
 			return FALSE
 		if(NAMEOF(src, anchored))
 			set_anchored(var_value)
+			. = TRUE
+		if(NAMEOF(src, pulledby))
+			set_pulledby(var_value)
 			. = TRUE
 		if(NAMEOF(src, glide_size))
 			set_glide_size(var_value)
@@ -321,8 +372,8 @@
 		add_attack_logs(src, pulled_mob, "passively grabbed", ATKLOG_ALMOSTALL)
 		if(!supress_message)
 			pulled_mob.visible_message(
-				span_warning("[capitalize(declent_ru(NOMINATIVE))] схватил[GEND_A_O_I(src)] [pulled_mob.declent_ru(ACCUSATIVE)]!"),
-				span_warning("[capitalize(declent_ru(NOMINATIVE))] схватил[GEND_A_O_I(src)] Вас!"),
+				span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] схватил[GEND_A_O_I(src)] [pulled_mob.declent_ru(ACCUSATIVE)]!"),
+				span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] схватил[GEND_A_O_I(src)] Вас!"),
 			)
 		pulled_mob.LAssailant = iscarbon(src) ? src : null
 	return TRUE
@@ -400,7 +451,7 @@
 		return FALSE
 	if(force < (move_resist * MOVE_FORCE_PULL_RATIO))
 		if(!supress_message && ismob(puller))
-			to_chat(puller, span_warning("[capitalize(declent_ru(NOMINATIVE))] слишком тяжел[GEND_YI_AYA_OE_YE(src)]!"))
+			to_chat(puller, span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] слишком тяжел[GEND_YI_AYA_OE_YE(src)]!"))
 		return FALSE
 	return TRUE
 
@@ -429,7 +480,7 @@
 			if(. >= GRAB_KILL) // Grab got downgraded from kill grab.
 				REMOVE_TRAIT(pulling, TRAIT_FLOORED, CHOKEHOLD_TRAIT)
 		if(GRAB_KILL)
-			if(. <= GRAB_KILL)	// Grab got ugraded from neck grab.
+			if(. <= GRAB_KILL) // Grab got ugraded from neck grab.
 				ADD_TRAIT(pulling, TRAIT_FLOORED, CHOKEHOLD_TRAIT)
 
 /// Use this to override topmost bump thing in [/turf/proc/Enter()].
@@ -471,6 +522,11 @@
  * if you want something to move onto a tile with a beartrap or recycler or tripmine or mouse without that object knowing about it at all, use this
  * most of the time you want forceMove()
  */
+/**
+ * meant for movement with zero side effects. only use for objects that are supposed to move "invisibly" (like eye mobs or ghosts)
+ * if you want something to move onto a tile with a beartrap or recycler or tripmine or mouse without that object knowing about it at all, use this
+ * most of the time you want forceMove()
+ */
 /atom/movable/proc/abstract_move(atom/new_loc)
 	RESOLVE_ACTIVE_MOVEMENT // This should NEVER happen, but, just in case...
 	var/atom/old_loc = loc
@@ -493,7 +549,7 @@
 	if(!direct)
 		direct = get_dir(src, newloc)
 
-	if(set_dir_on_move && dir != direct && update_dir && !face_mouse) //for facing direction on harm - face_mouse
+	if(set_dir_on_move && dir != direct && update_dir && !HAS_TRAIT(src, TRAIT_FACING_TO_MOUSE)) //for facing direction on harm - face_mouse
 		setDir(direct)
 
 	var/is_multi_tile = is_multi_tile_object(src)
@@ -502,10 +558,10 @@
 	if(is_multi_tile && isturf(loc))
 		old_locs = locs // locs is a special list, this is effectively the same as .Copy() but with less steps
 		for(var/atom/exiting_loc as anything in old_locs)
-			if(!exiting_loc.Exit(src, newloc))
+			if(!exiting_loc.Exit(src, direct))
 				return .
 	else
-		if(!loc.Exit(src, newloc))
+		if(!loc.Exit(src, direct))
 			return .
 
 	var/list/new_locs
@@ -515,7 +571,7 @@
 		var/dz = newloc.z
 		new_locs = block(
 			dx, dy, dz,
-			dx + (CEILING(bound_width / ICON_SIZE_X, 1) - 1), dy + (CEILING(bound_height / ICON_SIZE_X, 1) - 1), dz
+			dx + (ceil(bound_width / ICON_SIZE_X) - 1), dy + (ceil(bound_height / ICON_SIZE_X) - 1), dz
 		) // If this is a multi-tile object then we need to predict the new locs and check if they allow our entrance.
 		for(var/atom/entering_loc as anything in new_locs)
 			if(!entering_loc.Enter(src))
@@ -540,11 +596,11 @@
 
 	if(old_locs) // This condition will only be true if it is a multi-tile object.
 		for(var/atom/exited_loc as anything in (old_locs - new_locs))
-			exited_loc.Exited(src, newloc)
+			exited_loc.Exited(src, direct)
 	else // Else there's just one loc to be exited.
-		oldloc.Exited(src, newloc)
+		oldloc.Exited(src, direct)
 	if(oldarea != newarea)
-		oldarea.Exited(src, newarea)
+		oldarea.Exited(src, direct)
 
 	if(new_locs) // Same here, only if multi-tile.
 		for(var/atom/entered_loc as anything in (new_locs - old_locs))
@@ -566,6 +622,8 @@
 		return FALSE
 
 	var/atom/oldloc = loc
+
+	var/face_mouse = HAS_TRAIT(src, TRAIT_FACING_TO_MOUSE)
 
 	//Early override for some cases like diagonal movement
 	if(glide_size_override && glide_size != glide_size_override)
@@ -685,7 +743,7 @@
 		. = FALSE
 
 	var/area/area = get_area(src)
-	if(!no_gravity() && get_gravity() < 0 && area.outdoors && !iswallturf(src)) // If no ceiling above us with antigravity, fall up in space.
+	if(!no_gravity() && has_gravity() < 0 && area.outdoors && !iswallturf(src)) // If no ceiling above us with antigravity, fall up in space.
 		INVOKE_ASYNC(src, TYPE_PROC_REF(/atom/movable, fall_up_in_space))
 		return FALSE
 
@@ -736,9 +794,6 @@
 		var/same_z_layer = (GET_TURF_PLANE_OFFSET(old_turf) == GET_TURF_PLANE_OFFSET(new_turf))
 		on_changed_z_level(old_turf, new_turf, same_z_layer)
 
-	for(var/datum/light_source/light as anything in light_sources) // Cycle through the light sources on this atom and tell them to update.
-		light.source_atom.update_light()
-
 	if(HAS_SPATIAL_GRID_CONTENTS(src))
 		if(old_turf && new_turf && (old_turf.z != new_turf.z \
 			|| GET_SPATIAL_INDEX(old_turf.x) != GET_SPATIAL_INDEX(new_turf.x) \
@@ -753,7 +808,7 @@
 		else if(new_turf && !old_turf)
 			SSspatial_grid.enter_cell(src, new_turf)
 
-	SSdemo.mark_dirty(src)
+	//SSdemo.mark_dirty(src)
 	return TRUE
 
 /**
@@ -849,6 +904,7 @@
 		var/same_loc = oldloc == destination
 		var/area/old_area = get_area(oldloc)
 		var/area/destarea = get_area(destination)
+		var/movement_dir = get_dir(src, destination)
 
 		moving_diagonally = NONE
 
@@ -867,14 +923,14 @@
 				var/dz = destination.z
 				var/list/new_locs = block(
 					dx, dy, dz,
-					dx + (CEILING(bound_width / ICON_SIZE_X, 1) - 1), dy + (CEILING(bound_height / ICON_SIZE_Y, 1) - 1), dz
+					dx + (ceil(bound_width / ICON_SIZE_X) - 1), dy + (ceil(bound_height / ICON_SIZE_Y) - 1), dz
 				)
 
 				if(old_area && old_area != destarea)
-					old_area.Exited(src, destarea)
+					old_area.Exited(src, movement_dir)
 
 				for(var/atom/left_loc as anything in (locs - new_locs))
-					left_loc.Exited(src, destination)
+					left_loc.Exited(src, movement_dir)
 
 				for(var/atom/entering_loc as anything in (new_locs - locs))
 					entering_loc.Entered(src, oldloc)
@@ -885,7 +941,7 @@
 				if(oldloc)
 					oldloc.Exited(src, destination)
 					if(old_area && old_area != destarea)
-						old_area.Exited(src, destarea)
+						old_area.Exited(src, movement_dir)
 
 				destination.Entered(src, oldloc)
 				if(destarea && old_area != destarea)
@@ -902,12 +958,12 @@
 			var/area/old_area = get_area(oldloc)
 			if(is_multi_tile && isturf(oldloc))
 				for(var/atom/old_loc as anything in locs)
-					old_loc.Exited(src, null)
+					old_loc.Exited(src, NONE)
 			else
-				oldloc.Exited(src, null)
+				oldloc.Exited(src, NONE)
 
 			if(old_area)
-				old_area.Exited(src, null)
+				old_area.Exited(src, NONE)
 
 	RESOLVE_ACTIVE_MOVEMENT
 
@@ -1156,7 +1212,7 @@
 	if(z_move_flags & ZMOVE_CAN_FLY_CHECKS && !(movement_type & (FLYING|FLOATING)) && !no_gravity(start))
 		if(z_move_flags & ZMOVE_FEEDBACK)
 			if(rider)
-				to_chat(rider, span_notice("[capitalize(declent_ru(NOMINATIVE))] не способен к полёту."))
+				to_chat(rider, span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] не способен к полёту."))
 			else
 				to_chat(src, span_notice("Вы не Супермен."))
 		return FALSE
@@ -1266,7 +1322,7 @@
 		step(src, AM.dir)
 	..()
 
-/atom/movable/proc/throw_at(atom/target, range, speed, mob/thrower, spin = TRUE, diagonals_first = FALSE, datum/callback/callback, force = INFINITY, dodgeable = TRUE)
+/atom/movable/proc/throw_at(atom/target, range, speed, mob/thrower, spin = TRUE, diagonals_first = FALSE, datum/callback/callback, force = INFINITY, dodgeable = TRUE, block_movement = TRUE)
 	if(throwing || !target || HAS_TRAIT(src, TRAIT_NODROP) || speed <= 0)
 		return FALSE
 
@@ -1295,7 +1351,7 @@
 			if(speed <= 0)
 				return //no throw speed, the user was moving too fast.
 
-	var/datum/thrownthing/thrown_thing = new(src, target, get_dir(src, target), range, speed, thrower, diagonals_first, force, callback, istype(thrower) ? thrower.zone_selected : FALSE, dodgeable)
+	var/datum/thrownthing/thrown_thing = new(src, target, get_dir(src, target), range, speed, thrower, diagonals_first, force, callback, istype(thrower) ? thrower.zone_selected : FALSE, dodgeable, block_movement)
 
 	var/dist_x = abs(target.x - src.x)
 	var/dist_y = abs(target.y - src.y)
@@ -1352,9 +1408,9 @@
 	. = ..()
 	verbs.Cut()
 
-/atom/movable/overlay/attackby(obj/item/I, mob/user, params)
+/atom/movable/overlay/attackby(obj/item/I, mob/user, list/modifiers)
 	if(master)
-		I.melee_attack_chain(user, master, params)
+		I.melee_attack_chain(user, master, modifiers)
 	return ATTACK_CHAIN_BLOCKED_ALL
 
 /atom/movable/overlay/attack_hand(mob/user)
@@ -1375,12 +1431,12 @@
 /atom/movable/proc/force_push(atom/movable/AM, force = move_force, direction, silent = FALSE)
 	. = AM.force_pushed(src, force, direction)
 	if(!silent && .)
-		visible_message(span_warning("[capitalize(declent_ru(NOMINATIVE))] сильно толка[PLUR_ET_YUT(src)] [AM.declent_ru(ACCUSATIVE)]!"), span_warning("Вы сильно толкаете [AM.declent_ru(ACCUSATIVE)]!"))
+		visible_message(span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] сильно толка[PLUR_ET_YUT(src)] [AM.declent_ru(ACCUSATIVE)]!"), span_warning("Вы сильно толкаете [AM.declent_ru(ACCUSATIVE)]!"))
 
 /atom/movable/proc/move_crush(atom/movable/AM, force = move_force, direction, silent = FALSE)
 	. = AM.move_crushed(src, force, direction)
 	if(!silent && .)
-		visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] сокруша[PLUR_ET_YUT(src)] [AM.declent_ru(ACCUSATIVE)]!"), span_danger("Вы сокрушили [AM.declent_ru(ACCUSATIVE)]!"))
+		visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] сокруша[PLUR_ET_YUT(src)] [AM.declent_ru(ACCUSATIVE)]!"), span_danger("Вы сокрушили [AM.declent_ru(ACCUSATIVE)]!"))
 
 /atom/movable/proc/move_crushed(atom/movable/pusher, force = MOVE_FORCE_DEFAULT, direction)
 	return FALSE
@@ -1465,18 +1521,18 @@
 		// Set the direction of the icon animation.
 		var/direction = get_dir(src, attacked_atom)
 		if(direction & NORTH)
-			attack_image.pixel_y = -12
+			attack_image.pixel_z = -12
 		else if(direction & SOUTH)
-			attack_image.pixel_y = 12
+			attack_image.pixel_z = 12
 
 		if(direction & EAST)
-			attack_image.pixel_x = -14
+			attack_image.pixel_w = -14
 		else if(direction & WEST)
-			attack_image.pixel_x = 14
+			attack_image.pixel_w = 14
 
 		if(!direction) // Attacked self?!
-			attack_image.pixel_y = 12
-			attack_image.pixel_x = 5 * (prob(50) ? 1 : -1)
+			attack_image.pixel_z = 12
+			attack_image.pixel_w = 5 * (prob(50) ? 1 : -1)
 
 	if(!attack_image)
 		return
@@ -1533,18 +1589,18 @@
 	if(!can_devour(gourmet))
 		return FALSE
 
-	var/mob/living/victim = src	// its just living mobs now, subject to change later
+	var/mob/living/victim = src // its just living mobs now, subject to change later
 
 	var/target = isturf(loc) ? src : gourmet
 
 	gourmet.setDir(get_dir(gourmet, src))
-	gourmet.visible_message(span_danger("[capitalize(gourmet.declent_ru(NOMINATIVE))] пыта[PLUR_ET_YUT(gourmet)]ся поглотить [capitalize(declent_ru(ACCUSATIVE))]!"))
+	gourmet.visible_message(span_danger("[DECLENT_RU_CAP(gourmet, NOMINATIVE)] пыта[PLUR_ET_YUT(gourmet)]ся поглотить [declent_ru(ACCUSATIVE)]!"))
 
-	if(!do_after(gourmet, get_devour_time(gourmet), target, NONE, extra_checks = CALLBACK(src, PROC_REF(can_devour), gourmet), max_interact_count = 1, cancel_on_max = TRUE, cancel_message = span_notice("Вы прекращаете поглощать [capitalize(declent_ru(ACCUSATIVE))]!")))
-		gourmet.visible_message(span_notice("[capitalize(gourmet.declent_ru(NOMINATIVE))] прекраща[PLUR_ET_YUT(gourmet)] поглощать [capitalize(declent_ru(ACCUSATIVE))]!"))
+	if(!do_after(gourmet, get_devour_time(gourmet), target, NONE, extra_checks = CALLBACK(src, PROC_REF(can_devour), gourmet), max_interact_count = 1, cancel_on_max = TRUE, cancel_message = span_notice("Вы прекращаете поглощать [declent_ru(ACCUSATIVE)]!")))
+		gourmet.visible_message(span_notice("[DECLENT_RU_CAP(gourmet, NOMINATIVE)] прекраща[PLUR_ET_YUT(gourmet)] поглощать [declent_ru(ACCUSATIVE)]!"))
 		return FALSE
 
-	gourmet.visible_message(span_danger("[capitalize(gourmet.declent_ru(NOMINATIVE))] поглоща[PLUR_ET_YUT(gourmet)] [capitalize(declent_ru(ACCUSATIVE))]!"))
+	gourmet.visible_message(span_danger("[DECLENT_RU_CAP(gourmet, NOMINATIVE)] поглоща[PLUR_ET_YUT(gourmet)] [declent_ru(ACCUSATIVE)]!"))
 
 	if(victim.mind)
 		add_attack_logs(gourmet, src, "Devoured")
@@ -1605,19 +1661,6 @@
 /atom/movable/proc/deadchat_plays(mode = DEADCHAT_ANARCHY_MODE, cooldown = 12 SECONDS)
 	return AddComponent(/datum/component/deadchat_control/cardinal_movement, mode, list(), cooldown)
 
-/// Easy way to remove the component when the fun has been played out
-/atom/movable/proc/stop_deadchat_plays()
-	var/datum/component/deadchat_control/comp = GetComponent(/datum/component/deadchat_control)
-	if(!QDELETED(comp))
-		qdel(comp)
-
-/atom/movable/vv_get_dropdown()
-	. = ..()
-	if(!GetComponent(/datum/component/deadchat_control))
-		.["Give deadchat control"] = "byond://?_src_=vars;grantdeadchatcontrol=[UID()]"
-	else
-		.["Remove deadchat control"] = "byond://?_src_=vars;removedeadchatcontrol=[UID()]"
-
 /atom/movable/proc/fall_up_in_space()
 	visible_message(span_boldwarning("[declent_ru(NOMINATIVE)] улетает вверх под воздействием отрицательной гравитации!"),
 					span_userdanger("Вы улетаете вверх под воздействием отрицательной гравитации!"))
@@ -1660,3 +1703,9 @@
 	forceMove(holder_obj.loc)
 	qdel(holder_obj)
 
+/atom/movable/proc/compressor_grind()
+	ex_act(EXPLODE_DEVASTATE)
+
+/// Called when a mob resists while inside a container that is itself inside something.
+/atom/movable/proc/relay_container_resist_act(mob/living/user, obj/container)
+	return

@@ -9,16 +9,16 @@ on:
 
 jobs:
   collect_data:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 5
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     outputs:
       stations: ${{ steps.station_finder.outputs.stations }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Find Stations
         id: station_finder
         run: |
-          STATIONS='["cyberiad", "delta", "cerestation", "celestation", "nova"]'
+          STATIONS='["cyberiad", "delta", "nova"]'
           echo "stations=$STATIONS" >> $GITHUB_OUTPUT

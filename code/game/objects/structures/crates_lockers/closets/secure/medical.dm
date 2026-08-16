@@ -46,7 +46,7 @@
 	new /obj/item/storage/backpack/duffel/medical(src)
 	new /obj/item/clothing/under/rank/medical(src)
 	new /obj/item/clothing/suit/storage/labcoat(src)
-	new /obj/item/clothing/shoes/white(src)
+	new /obj/item/clothing/shoes/color/white(src)
 	new /obj/item/radio/headset/headset_med(src)
 	new /obj/item/clothing/gloves/color/latex/nitrile(src)
 	new /obj/item/clothing/glasses/hud/health(src)
@@ -99,7 +99,7 @@
 
 // Why the hell is this in the closets folder?
 /obj/item/storage/pill_bottle/psychiatrist/populate_contents()
-	for(var/I in 1 to 3)
+	for(var/i in 1 to 3)
 		new /obj/item/reagent_containers/food/pill/haloperidol(src)
 		new /obj/item/reagent_containers/food/pill/methamphetamine(src)
 		new /obj/item/reagent_containers/food/pill/patch/nicotine(src)
@@ -147,8 +147,9 @@
 			new /obj/item/clothing/head/surgery/purple(src)
 	new /obj/item/radio/headset/heads/cmo(src)
 	new /obj/item/defibrillator/compact/advanced/loaded(src)
-	new /obj/item/handheld_defibrillator(src)
+	new /obj/item/handheld_defibrillator/advanced(src)
 	new /obj/item/storage/belt/medical(src)
+	new /obj/item/storage/belt/medical/surgery/loaded(src)
 	new /obj/item/flash(src)
 	new /obj/item/reagent_containers/hypospray/CMO(src)
 	new /obj/item/organ/internal/cyberimp/eyes/hud/medical(src)
@@ -160,6 +161,7 @@
 	new /obj/item/storage/garmentbag/CMO(src)
 	new /obj/item/gun/energy/gun/mini(src)
 	new /obj/item/clothing/accessory/holster(src)
+	new /obj/item/storage/firstaid/premium(src)
 
 /obj/structure/closet/secure_closet/animal
 	name = "animal control locker"
@@ -205,13 +207,16 @@
 	req_access = list(ACCESS_PARAMEDIC)
 
 /obj/structure/closet/secure_closet/paramedic/populate_contents()
-	new /obj/item/clothing/suit/space/eva/paramedic(src)
-	new /obj/item/clothing/head/helmet/space/eva/paramedic(src)
+	new /obj/item/mod/control/pre_equipped/rescue(src)
+	new /obj/item/mod/control/pre_equipped/rescue(src)
 	new /obj/item/sensor_device(src)
-	new /obj/item/key/ambulance(src)
+	new /obj/item/sensor_device(src)
+	new /obj/item/pinpointer/crew(src)
 	new /obj/item/pinpointer/crew(src)
 	new /obj/item/handheld_defibrillator(src)
-	new /obj/item/tank/jetpack/carbondioxide(src)
+	new /obj/item/handheld_defibrillator(src)
+	new /obj/item/defibrillator/loaded(src)
+	new /obj/item/key/ambulance(src)
 
 /obj/structure/closet/secure_closet/reagents
 	name = "chemical storage closet"

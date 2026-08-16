@@ -1,7 +1,38 @@
+/// Convers HIDEX to ITEM_SLOT_X, should be phased out in favor of using latter everywhere later
+/proc/hidden_slots_to_inventory_slots(hidden_slots)
+	var/obscured = NONE
+	if(hidden_slots & HIDENECK)
+		obscured |= ITEM_SLOT_NECK
+	if(hidden_slots & HIDEMASK)
+		obscured |= ITEM_SLOT_MASK
+	/*
+	if(hidden_slots & HIDEBELT)
+		obscured |= ITEM_SLOT_BELT
+	*/
+	if(hidden_slots & HIDEGLASSES)
+		obscured |= ITEM_SLOT_EYES
+	if(hidden_slots & HIDEHEADSETS)
+		obscured |= ITEM_SLOT_EARS
+	if(hidden_slots & HIDEGLOVES)
+		obscured |= ITEM_SLOT_GLOVES
+	if(hidden_slots & HIDEJUMPSUIT)
+		obscured |= ITEM_SLOT_CLOTH_INNER
+	if(hidden_slots & HIDESHOES)
+		obscured |= ITEM_SLOT_FEET
+	if(hidden_slots & HIDESUITSTORAGE)
+		obscured |= ITEM_SLOT_SUITSTORE
+	/*
+	if(hidden_slots & HIDEHEADGEAR)
+		obscured |= ITEM_SLOT_HEAD
+	*/
+	return obscured
+
 /mob/living/carbon/swap_hand()
 	var/obj/item/item_in_hand = get_active_hand()
 
 	if(SEND_SIGNAL(src, COMSIG_MOB_SWAPPING_HANDS, item_in_hand) & COMPONENT_BLOCK_SWAP)
+		if(item_in_hand)
+			SEND_SIGNAL(item_in_hand, COMSIG_ITEM_SWAP_BLOCKED, src)
 		balloon_alert(src, "ваши руки заняты!")
 		return FALSE
 
@@ -25,6 +56,7 @@
 		restraints = legcuffed
 	if(restraints)
 		cuff_resist(restraints)
+
 
 /// Simple helper used to equip passed item to the predefined slots.
 /mob/living/carbon/proc/apply_restraints(cuffs, slot_flag, qdel_on_fail = FALSE, silent = FALSE)
@@ -88,7 +120,8 @@
 /// General proc to resist passed item.
 /mob/living/carbon/proc/cuff_resist(obj/item/cuffs, cuff_break = FALSE)
 	. = FALSE
-	var/breakout_time = cuff_break ? 5 SECONDS : cuffs.breakout_time
+	var/breakout_time = cuff_break ? 10 SECONDS : cuffs.breakout_time
+	var/breakout_flags = cuffs.breakout_flags
 	var/breakout_mod = 1
 	var/list/breakouttime_modifiers = list()
 	SEND_SIGNAL(src, COMSIG_GET_BREAKOUTTIME_MODIFIERS, breakouttime_modifiers)
@@ -96,7 +129,7 @@
 		breakout_mod *= mod
 
 	breakout_time *= breakout_mod
-	var/breakout_iter = (5 SECONDS) * breakout_mod
+	var/breakout_iter = (10 SECONDS) * breakout_mod
 
 	var/is_processed = LAZYACCESS(do_afters, src)
 
@@ -109,15 +142,15 @@
 		else
 			visible_message(
 				span_warning("[name] пыта[PLUR_ET_YUT(src)]ся сломать [cuffs.declent_ru(ACCUSATIVE)]!"),
-				span_notice("Вы пытаетесь сломать [cuffs.declent_ru(ACCUSATIVE)]. Это займёт примерно 5 секунд."),
+				span_notice("Вы пытаетесь сломать [cuffs.declent_ru(ACCUSATIVE)]. Это займёт примерно 10 секунд."),
 			)
-		if(do_after(src, breakout_time, src, DA_IGNORE_USER_LOC_CHANGE|DEFAULT_DOAFTER_IGNORE|DA_IGNORE_HELD_ITEM, max_interact_count = 1,
+		if(do_after(src, breakout_time, src, breakout_flags, max_interact_count = 1,
 			cancel_on_max = TRUE, cancel_message = ""))
 			. = clear_cuffs(cuffs, cuff_break)
 		else
 			balloon_alert(src, "не вышло снять [cuffs.declent_ru(ACCUSATIVE)]!!")
 
-	else if(istype(cuffs, /obj/item/restraints/handcuffs))
+	else if(ishandcuffs(cuffs) || isstraightjacket(cuffs))
 		if(is_processed)
 			visible_message(
 				span_warning("[name] перестал[GEND_A_O_I(src)] пытаться снять [cuffs.declent_ru(ACCUSATIVE)]!"),
@@ -126,10 +159,10 @@
 		else
 			balloon_alert(src, "попытка снять [cuffs.declent_ru(ACCUSATIVE)]...")
 
-		while(do_after(src, breakout_iter, src, DA_IGNORE_USER_LOC_CHANGE|DEFAULT_DOAFTER_IGNORE|DA_IGNORE_HELD_ITEM, max_interact_count = 1,
+		while(do_after(src, breakout_iter, src, breakout_flags, max_interact_count = 1,
 			cancel_on_max = TRUE, cancel_message = ""))
 			cuff_breakout_attempts++
-			if(!handcuffed) //if someone uncuffs us
+			if(!handcuffed && !wear_suit?.breakout_time) //if someone uncuffs us
 				break
 			if(cuff_breakout_attempts * breakout_iter >= breakout_time)
 				. = clear_cuffs(cuffs, cuff_break)
@@ -257,6 +290,9 @@
 		return FALSE
 
 	else if(hand_id == ITEM_SLOT_HAND_RIGHT && !has_right_hand())
+		return FALSE
+
+	if((hand_id == ITEM_SLOT_HAND_RIGHT && right_hand_bleed_suppress_lib) || (hand_id == ITEM_SLOT_HAND_LEFT && left_hand_bleed_suppress_lib))
 		return FALSE
 
 	if(!isnull(pull_hand) && pull_hand != PULL_WITHOUT_HANDS && ((hand_id == ITEM_SLOT_HAND_LEFT && pull_hand == PULL_HAND_LEFT) || (hand_id == ITEM_SLOT_HAND_RIGHT && pull_hand == PULL_HAND_RIGHT)))
@@ -389,6 +425,17 @@
 		. |= ITEM_SLOT_CLOTH_OUTER
 	if(head)
 		. |= ITEM_SLOT_HEAD
+
+// Returns items which are currently visible on the mob
+/mob/living/carbon/proc/get_visible_items()
+	var/list/obscured = check_obscured_slots()
+	var/list/visible_items = list()
+
+	for(var/obj/item/thing in get_equipped_items(INCLUDE_HELD))
+		if(!(get_slot_by_item(thing) & obscured))
+			visible_items += thing
+
+	return visible_items
 
 /mob/living/carbon/update_equipment_speed_mods()
 	. = ..()

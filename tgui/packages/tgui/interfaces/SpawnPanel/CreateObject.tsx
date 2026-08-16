@@ -1,5 +1,5 @@
 import { storage } from 'common/storage';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Button,
   DmIcon,
@@ -55,10 +55,19 @@ export const CreateObject = (props: CreateObjectProps) => {
   const currentList = objList;
   const currentType = allObjects[data.copied_type ?? '']?.type || 'Objects';
 
+  const getSearchString = useCallback(
+    (key: string) => {
+      const item = allObjects[key];
+      if (!item) return key;
+      return searchBy ? key : `${key} ${item.name || ''}`;
+    },
+    [searchBy, allObjects]
+  );
+
   const { query, setQuery, results } = useFuzzySearch({
     searchArray: Object.keys(allObjects),
     matchStrategy: 'smart',
-    getSearchString: (key) => (searchBy ? key : allObjects[key]?.name || ''),
+    getSearchString,
   });
 
   const filteredResults = results.filter((obj) => {
@@ -116,14 +125,15 @@ export const CreateObject = (props: CreateObjectProps) => {
       if (storedHideMapping !== undefined) setHideMapping(storedHideMapping);
       if (storedShowIcons !== undefined) setshowIcons(storedShowIcons);
       if (storedShowPreview !== undefined) setshowPreview(storedShowPreview);
-      if (storedSelectedObj) {
-        if (allObjects[storedSelectedObj]) {
-          setSelectedObj(storedSelectedObj);
-          props.onIconSettingsChange?.({
-            icon: allObjects[storedSelectedObj].icon,
-            iconState: allObjects[storedSelectedObj].icon_state,
-          });
-        }
+      if (storedSelectedObj && allObjects[storedSelectedObj]) {
+        act('selected-atom-changed', {
+          newObj: storedSelectedObj,
+        });
+        setSelectedObj(storedSelectedObj);
+        props.onIconSettingsChange?.({
+          icon: allObjects[storedSelectedObj].icon,
+          iconState: allObjects[storedSelectedObj].icon_state,
+        });
       }
     };
 
@@ -297,7 +307,8 @@ export const CreateObject = (props: CreateObjectProps) => {
                     italic
                     style={{ color: 'rgba(200, 200, 200, 0.7)' }}
                   >
-                    {allObjects[selectedObj].description || 'no description'}
+                    {allObjects[selectedObj].description ||
+                      'описание отсутствует'}
                   </Stack.Item>
                 </Stack>
               </Stack.Item>
@@ -319,7 +330,7 @@ export const CreateObject = (props: CreateObjectProps) => {
                     const nextIndex = (currentIndex + 1) % types.length;
                     updateSortBy(types[nextIndex]);
                   }}
-                  tooltip={`Cycle the searching target (objects, mobs, turfs)`}
+                  tooltip={`Смена типа искомого атома (объекты, мобы, турфы)`}
                 >
                   {
                     listNames[
@@ -336,9 +347,9 @@ export const CreateObject = (props: CreateObjectProps) => {
                   onClick={() => {
                     updateSearchBy(!searchBy);
                   }}
-                  tooltip={`Cycle the search method (by name, by type)`}
+                  tooltip={`Смена метода поиска (по имени, по типу)`}
                 >
-                  {searchBy ? 'By type' : 'By name'}
+                  {searchBy ? 'По типу' : 'По имени'}
                 </Button>
               </Stack.Item>
               <Stack.Item>
@@ -348,9 +359,9 @@ export const CreateObject = (props: CreateObjectProps) => {
                   }}
                   color={!hideMapping && 'good'}
                   checked={!hideMapping}
-                  tooltip={`Toggle mapping objects visibility`}
+                  tooltip={`Переключить видимость объектов маппинга`}
                 >
-                  Mapping
+                  Маппинг
                 </Button.Checkbox>
               </Stack.Item>
               <Stack.Item>
@@ -360,9 +371,9 @@ export const CreateObject = (props: CreateObjectProps) => {
                   }}
                   color={showIcons && 'good'}
                   checked={showIcons}
-                  tooltip={`Toggle preview icons on hovering`}
+                  tooltip={`Переключить отображение иконок при наведении`}
                 >
-                  Icons
+                  Иконки
                 </Button.Checkbox>
               </Stack.Item>
               <Stack.Item>
@@ -372,9 +383,9 @@ export const CreateObject = (props: CreateObjectProps) => {
                   }}
                   color={showPreview && 'good'}
                   checked={showPreview}
-                  tooltip={`Toggle the large object preview panel`}
+                  tooltip={`Переключить панель предпросмотра объекта`}
                 >
-                  Preview
+                  Предпросмотр
                 </Button.Checkbox>
               </Stack.Item>
               <Stack.Item>
@@ -388,7 +399,7 @@ export const CreateObject = (props: CreateObjectProps) => {
             </Stack>
             <Stack.Item grow>
               <Input
-                placeholder="Search here..."
+                placeholder="Поиск..."
                 value={query}
                 onChange={(value) => updateSearchText(value)}
                 fluid
@@ -402,11 +413,11 @@ export const CreateObject = (props: CreateObjectProps) => {
         <Section fill scrollable={filteredResults.length !== 0}>
           {query === '' ? (
             <NoticeBox textAlign="center" color="blue" width="100%">
-              Begin typing to search...
+              Начните писать для поиска...
             </NoticeBox>
           ) : !filteredResults.length ? (
             <NoticeBox textAlign="center" color="blue" width="100%">
-              Nothing found
+              Ничего не найдено
             </NoticeBox>
           ) : (
             <VirtualList>

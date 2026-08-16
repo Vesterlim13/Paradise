@@ -12,7 +12,7 @@
 	var/time_last_drone = 500
 
 /obj/machinery/drone_fabricator/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "фабрикатор дронов",
 		GENITIVE = "фабрикатора дронов",
 		DATIVE = "фабрикатору дронов",
@@ -56,11 +56,11 @@
 	drone_progress = round((elapsed/CONFIG_GET(number/drone_build_time))*100)
 
 	if(drone_progress >= 100)
-		visible_message("[capitalize(declent_ru(NOMINATIVE))] издаёт резкий звуковой сигнал, указывая на готовность шасси дрона.")
+		visible_message("[DECLENT_RU_CAP(src, NOMINATIVE)] издаёт резкий звуковой сигнал, указывая на готовность шасси дрона.")
 
 /obj/machinery/drone_fabricator/examine(mob/user)
 	. = ..()
-	if(produce_drones && drone_progress >= 100 && istype(user,/mob/dead) && CONFIG_GET(flag/allow_drone_spawn) && count_drones() < CONFIG_GET(number/max_maint_drones))
+	if(produce_drones && drone_progress >= 100 && isdead(user) && CONFIG_GET(flag/allow_drone_spawn) && count_drones() < CONFIG_GET(number/max_maint_drones))
 		. += span_notice("<br><b>Дрон готов. Выберите 'Присоединиться как дрон' во вкладке Ghost, чтобы появиться как дрон обслуживания.</b>")
 
 /obj/machinery/drone_fabricator/proc/count_drones()
@@ -78,10 +78,10 @@
 	if(!produce_drones || !CONFIG_GET(flag/allow_drone_spawn) || count_drones() >= CONFIG_GET(number/max_maint_drones))
 		return
 
-	if(!player || !istype(player.mob,/mob/dead))
+	if(!player || !isdead(player.mob))
 		return
 
-	visible_message("[capitalize(declent_ru(NOMINATIVE))] гудит и скрипит, начиная движение, и через несколько мгновений выпускает нового блестящего дрона.")
+	visible_message("[DECLENT_RU_CAP(src, NOMINATIVE)] гудит и скрипит, начиная движение, и через несколько мгновений выпускает нового блестящего дрона.")
 	flick("h_lathe_leave",src)
 
 	time_last_drone = world.time
@@ -94,7 +94,7 @@
 	user.become_drone()
 
 /mob/dead/verb/join_as_drone()
-	set category = STATPANEL_GHOST
+	set category = VERB_CATEGORY_GHOST
 	set name = "Стать дроном"
 	set desc = "If there is a powered, enabled fabricator in the game world with a prepared chassis, join as a maintenance drone."
 	become_drone(src)
@@ -132,7 +132,7 @@
 
 	var/deathtime = world.time - src.timeofdeath
 	var/joinedasobserver = 0
-	if(istype(src,/mob/dead/observer))
+	if(isobserver(src))
 		var/mob/dead/observer/G = src
 		if(cannotPossess(G))
 			to_chat(usr, span_warning("Используя antagHUD, вы отказались от возможности присоединиться к раунду."))

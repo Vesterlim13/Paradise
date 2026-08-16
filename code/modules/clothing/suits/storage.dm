@@ -1,13 +1,15 @@
 /obj/item/clothing/suit/storage
+	var/pockets_count = 2 // two slots by default
+	var/pockets_max_combined_w_class = 4
 	var/obj/item/storage/internal/pockets
 	w_class = WEIGHT_CLASS_NORMAL //we don't want these to be able to fit in their own pockets.
 
 /obj/item/clothing/suit/storage/Initialize(mapload)
 	. = ..()
 	pockets = new/obj/item/storage/internal(src)
-	pockets.storage_slots = 2	//two slots
+	pockets.storage_slots = pockets_count
 	pockets.max_w_class = WEIGHT_CLASS_SMALL		//fit only pocket sized items
-	pockets.max_combined_w_class = 4
+	pockets.max_combined_w_class = pockets_max_combined_w_class
 
 /obj/item/clothing/suit/storage/Destroy()
 	QDEL_NULL(pockets)
@@ -18,8 +20,8 @@
 		return ..()
 
 /obj/item/clothing/suit/storage/mouse_drop_dragged(atom/over_object, mob/user, src_location, over_location, params)
-	if(!pockets || !pockets.handle_mousedrop(usr, over_object))
-		return ..()
+	if(!pockets || !pockets.handle_mousedrop(user, over_object))
+		return
 
 /obj/item/clothing/suit/storage/attackby(obj/item/I, mob/user, params)
 	. = ..()

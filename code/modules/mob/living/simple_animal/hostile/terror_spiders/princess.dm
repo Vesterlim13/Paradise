@@ -35,7 +35,7 @@
 	tts_seed = "Lissandra"
 
 /mob/living/simple_animal/hostile/poison/terror_spider/queen/princess/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "Принцесса Ужаса",
 		GENITIVE = "Принцессы Ужаса",
 		DATIVE = "Принцессе Ужаса",
@@ -129,10 +129,3 @@
 	if(spider_array["all"] >= spider_max_children)
 		return TRUE
 	return FALSE
-
-/obj/projectile/terrorspider/princess
-	name = "princess venom"
-	icon_state = "toxin4"
-	damage = 25
-	stamina = 25
-	damage_type = BURN

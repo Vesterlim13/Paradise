@@ -10,12 +10,12 @@
 
 /obj/item/extraction_pack/contractor
 	name = "black fulton extraction pack"
-	desc = "Модифицированный Фултон, который можно использовать в помещении благодаря блюспейс-технологиям. Пользуется спросом у Контрактников Синдиката."
+	desc = "Модифицированный Фултон, который можно использовать в помещении благодаря блюспейс-технологиям. Пользуется спросом у Контрактников \"Синдиката\"."
 	icon_state = "black"
 	can_use_indoors = TRUE
 
 /obj/item/extraction_pack/contractor/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "система эвакуации \"Фултон\"",
 		GENITIVE = "системы эвакуации \"Фултон\"",
 		DATIVE = "системе эвакуации \"Фултон\"",
@@ -28,9 +28,10 @@
 	name = "fulton extraction kit"
 	gender = MALE
 	icon_state = "box_of_doom"
+	item_state = "syndie"
 
 /obj/item/storage/box/contractor/fulton_kit/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "набор для эвакуации Фултон",
 		GENITIVE = "набора для эвакуации Фултон",
 		DATIVE = "набору для эвакуации Фултон",

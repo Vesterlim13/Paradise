@@ -25,7 +25,7 @@
 	store_nuke_code()
 
 /datum/antagonist/nuclear_operative/proc/store_nuke_code()
-	antag_memory = "<b>Код от боеголовки Синдиката</b>: [nuclear_team?.nuke_code]"
+	antag_memory = "<b>Код от боеголовки \"Синдиката\"</b>: [nuclear_team?.nuke_code]"
 
 /datum/antagonist/nuclear_operative/apply_innate_effects(mob/living/mob_override)
 	. = ..()
@@ -64,7 +64,7 @@
 	return messages
 
 /datum/antagonist/nuclear_operative/proc/code_message()
-	return span_notice("Код от боеголовки Синдиката: <b>[nuclear_team.nuke_code]</b>")
+	return span_notice("Код от боеголовки \"Синдиката\": <b>[nuclear_team.nuke_code]</b>")
 
 /datum/antagonist/nuclear_operative/proc/footer_messages()
 	var/list/messages = list()
@@ -80,7 +80,7 @@
 	if(!outfit)
 		return
 
-	for(var/obj/item/item in human.get_equipped_items(TRUE, TRUE))
+	for(var/obj/item/item in human.get_equipped_items(INCLUDE_POCKETS | INCLUDE_HELD))
 		qdel(item)
 
 	human.equipOutfit(outfit)

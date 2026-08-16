@@ -51,6 +51,18 @@
 				if(user.mob.next_move <= world.time && grabber.hand == grabber.pull_hand)
 					grabber.stop_pulling()
 				return TRUE
+
+		if(ishuman(user.mob))
+			var/mob/living/grabber = user.mob
+			var/suppress_target_bodypart = grabber.hand == ACTIVE_HAND_LEFT ? grabber.left_hand_bleed_suppress_lib : grabber.right_hand_bleed_suppress_lib
+			if(suppress_target_bodypart)
+				if(grabber.hand == ACTIVE_HAND_LEFT)
+					grabber.left_hand_bleed_suppress_lib = null
+				else
+					grabber.right_hand_bleed_suppress_lib = null
+				grabber.update_hands_HUD()
+				return TRUE
+
 		to_chat(user, span_warning("Вы ничего не держите в руке!"))
 	return TRUE
 
@@ -392,3 +404,21 @@
 	if(!gun || !istype(gun))
 		return .
 	SEND_SIGNAL(gun, COMSIG_KEYBINDING_GUN_LASER_SIGHT, human, gun)
+
+/datum/keybinding/mob/toggle_facing_to_mouse
+	name = "Включить/выключить слежку моба за курсором"
+	keys = list("P")
+
+/datum/keybinding/mob/toggle_facing_to_mouse/down(client/user)
+	. = ..()
+	var/mob/living/mob = user.mob
+
+	if(!istype(mob))
+		return .
+
+	if(HAS_TRAIT(mob, TRAIT_FACING_TO_MOUSE))
+		mob.RemoveElement(/datum/element/facing_to_mouse)
+		mob.balloon_alert(mob, "в направлении движения")
+	else
+		mob.AddElement(/datum/element/facing_to_mouse)
+		mob.balloon_alert(mob, "за курсором мыши")

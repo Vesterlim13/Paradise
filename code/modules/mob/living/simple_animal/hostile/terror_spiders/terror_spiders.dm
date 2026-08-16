@@ -133,8 +133,6 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 	var/web_infects = 0
 	var/spider_creation_time = 0
 
-	var/datum/action/innate/terrorspider/web/web_action
-	var/datum/action/innate/terrorspider/wrap/wrap_action
 
 	// DATUM
 	var/datum_type = /datum/antagonist/terror_spider
@@ -146,6 +144,56 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 /mob/living/simple_animal/hostile/poison/terror_spider/Initialize(mapload)
 	. = ..()
 	ADD_TRAIT(src, TRAIT_NEGATES_GRAVITY, INNATE_TRAIT)
+	GLOB.ts_spiderlist += src
+	add_language(LANGUAGE_HIVE_TERRORSPIDER)
+	for(var/spell in special_abillity)
+		src.AddSpell(new spell)
+
+	if(spider_tier >= TS_TIER_2)
+		add_language(LANGUAGE_GALACTIC_COMMON)
+	default_language = GLOB.all_languages[LANGUAGE_HIVE_TERRORSPIDER]
+
+	if(web_type)
+		var/datum/action/innate/terrorspider/web/web_act = new
+		web_act.Grant(src)
+	if(can_wrap)
+		var/datum/action/innate/terrorspider/wrap/wrap_act = new
+		wrap_act.Grant(src)
+	name += " ([rand(1, 1000)])"
+	real_name = name
+	msg_terrorspiders("[DECLENT_RU_CAP(src, NOMINATIVE)] вырастает в локации \"[get_area(src)]\".")
+	if(is_away_level(z))
+		spider_awaymission = 1
+		GLOB.ts_count_alive_awaymission++
+		if(spider_tier >= 3)
+			ai_ventcrawls = FALSE // means that pre-spawned bosses on away maps won't ventcrawl. Necessary to keep prince/mother in one place.
+		if(istype(get_area(src), /area/awaymission/UO71)) // if we are playing the away mission with our special spiders...
+			spider_uo71 = 1
+			if(world.time < 600)
+				// these are static spiders, specifically for the UO71 away mission, make them stay in place
+				ai_ventcrawls = FALSE
+				spider_placed = 1
+	else
+		GLOB.ts_count_alive_station++
+	// after 3 seconds, assuming nobody took control of it yet, offer it to ghosts.
+	addtimer(CALLBACK(src, PROC_REF(CheckFaction)), 20)
+	addtimer(CALLBACK(src, PROC_REF(announcetoghosts)), 30)
+	var/datum/atom_hud/U = GLOB.huds[DATA_HUD_MEDICAL_ADVANCED]
+	U.show_to(src)
+	spider_creation_time = world.time
+
+/mob/living/simple_animal/hostile/poison/terror_spider/Destroy()
+	GLOB.ts_spiderlist -= src
+	var/datum/atom_hud/hud = GLOB.huds[DATA_HUD_MEDICAL_ADVANCED]
+	hud.hide_from(src)
+	handle_dying()
+	cocoon_target = null
+	entry_vent = null
+	exit_vent = null
+	nest_vent = null
+	spider_myqueen = null
+	spider_mymother = null
+	return ..()
 
 /mob/living/simple_animal/hostile/poison/terror_spider/ComponentInitialize()
 	AddComponent( \
@@ -169,13 +217,13 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 			enemies -= target
 		var/mob/living/simple_animal/hostile/poison/terror_spider/T = target
 		if(T.spider_tier > spider_tier)
-			visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] съёживается перед [target.declent_ru(INSTRUMENTAL)]."))
+			visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] съёживается перед [target.declent_ru(INSTRUMENTAL)]."))
 		else if(T.spider_tier == spider_tier)
-			visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] тычется носом в [target.declent_ru(ACCUSATIVE)]."))
+			visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] тычется носом в [target.declent_ru(ACCUSATIVE)]."))
 		else if(T.spider_tier < spider_tier && spider_tier >= 4)
 			target.attack_animal(src)
 		else
-			visible_message(span_notice("[capitalize(declent_ru(NOMINATIVE))] безобидно тычет носом [target.declent_ru(ACCUSATIVE)]."))
+			visible_message(span_notice("[DECLENT_RU_CAP(src, NOMINATIVE)] безобидно тычет носом [target.declent_ru(ACCUSATIVE)]."))
 		T.CheckFaction()
 		CheckFaction()
 	else if(istype(target, /obj/structure/spider/royaljelly))
@@ -186,13 +234,13 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 		var/obj/machinery/door/firedoor/F = target
 		if(F.density)
 			if(F.welded)
-				to_chat(src, "[capitalize(F.declent_ru(NOMINATIVE))] заварен.")
+				to_chat(src, "[DECLENT_RU_CAP(F, NOMINATIVE)] заварен.")
 			else
-				visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] открывает [F.declent_ru(ACCUSATIVE)]!"))
+				visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] открывает [F.declent_ru(ACCUSATIVE)]!"))
 				F.open()
 		else
 			to_chat(src, "Закрытие противопожарных дверей не помогает.")
-	else if(istype(target, /obj/machinery/door/airlock))
+	else if(is_airlock(target))
 		var/obj/machinery/door/airlock/A = target
 		try_open_airlock(A)
 	else if(isliving(target) && (!client || a_intent == INTENT_HARM))
@@ -204,7 +252,7 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 			var/can_poison = 1
 			if(ishuman(G))
 				var/mob/living/carbon/human/H = G
-				if(!(H.dna.species.reagent_tag & PROCESS_ORG) || (!H.dna.species.tox_mod))
+				if(!(H.dna.species.reagent_tag & ORGANIC) || (!H.dna.species.tox_mod))
 					can_poison = 0
 			spider_specialattack(G,can_poison)
 		else
@@ -246,45 +294,6 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 		if(killcount >= 1)
 			. += span_warning("Разбрызгивает во все стороны алую кровь, струяющуюся из пасти.")
 
-/mob/living/simple_animal/hostile/poison/terror_spider/New()
-	..()
-	GLOB.ts_spiderlist += src
-	add_language(LANGUAGE_HIVE_TERRORSPIDER)
-	for(var/spell in special_abillity)
-		src.AddSpell(new spell)
-
-	if(spider_tier >= TS_TIER_2)
-		add_language(LANGUAGE_GALACTIC_COMMON)
-	default_language = GLOB.all_languages[LANGUAGE_HIVE_TERRORSPIDER]
-
-	if(web_type)
-		web_action = new()
-		web_action.Grant(src)
-	if(can_wrap)
-		wrap_action = new()
-		wrap_action.Grant(src)
-	name += " ([rand(1, 1000)])"
-	real_name = name
-	msg_terrorspiders("[capitalize(declent_ru(NOMINATIVE))] вырастает в локации \"[get_area(src)]\".")
-	if(is_away_level(z))
-		spider_awaymission = 1
-		GLOB.ts_count_alive_awaymission++
-		if(spider_tier >= 3)
-			ai_ventcrawls = FALSE // means that pre-spawned bosses on away maps won't ventcrawl. Necessary to keep prince/mother in one place.
-		if(istype(get_area(src), /area/awaymission/UO71)) // if we are playing the away mission with our special spiders...
-			spider_uo71 = 1
-			if(world.time < 600)
-				// these are static spiders, specifically for the UO71 away mission, make them stay in place
-				ai_ventcrawls = FALSE
-				spider_placed = 1
-	else
-		GLOB.ts_count_alive_station++
-	// after 3 seconds, assuming nobody took control of it yet, offer it to ghosts.
-	addtimer(CALLBACK(src, PROC_REF(CheckFaction)), 20)
-	addtimer(CALLBACK(src, PROC_REF(announcetoghosts)), 30)
-	var/datum/atom_hud/U = GLOB.huds[DATA_HUD_MEDICAL_ADVANCED]
-	U.show_to(src)
-	spider_creation_time = world.time
 
 /mob/living/simple_animal/hostile/poison/terror_spider/proc/announcetoghosts()
 	if(spider_awaymission)
@@ -292,15 +301,10 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 	if(stat == DEAD)
 		return
 	if(ckey)
-		notify_ghosts("[capitalize(declent_ru(NOMINATIVE))] (контролируется игроком) появляется в локации \"[get_area(src)]\".")
+		notify_ghosts("[DECLENT_RU_CAP(src, NOMINATIVE)] (контролируется игроком) появляется в локации \"[get_area(src)]\".")
 	else if(ai_playercontrol_allowtype)
 		var/image/alert_overlay = image(icon, icon_state)
-		notify_ghosts("[capitalize(declent_ru(NOMINATIVE))] появляется в локации \"[get_area(src)]\".", enter_link = "<a href=byond://?src=[UID()];activate=1>(Нажмите для взятия контроля)</a>", source = src, alert_overlay = alert_overlay, action = NOTIFY_ATTACK)
-
-/mob/living/simple_animal/hostile/poison/terror_spider/Destroy()
-	GLOB.ts_spiderlist -= src
-	handle_dying()
-	return ..()
+		notify_ghosts("[DECLENT_RU_CAP(src, NOMINATIVE)] появляется в локации \"[get_area(src)]\".", enter_link = "<a href=byond://?src=[UID()];activate=1>(Нажмите для взятия контроля)</a>", source = src, alert_overlay = alert_overlay, action = NOTIFY_ATTACK)
 
 /mob/living/simple_animal/hostile/poison/terror_spider/Life(seconds, times_fired)
 	. = ..()
@@ -330,7 +334,7 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 /mob/living/simple_animal/hostile/poison/terror_spider/death(gibbed)
 	if(can_die())
 		if(!gibbed)
-			msg_terrorspiders("[capitalize(declent_ru(NOMINATIVE))] умирает в локации \"[get_area(src)]\".")
+			msg_terrorspiders("[DECLENT_RU_CAP(src, NOMINATIVE)] умирает в локации \"[get_area(src)]\".")
 		handle_dying()
 		if(mind)
 			SEND_SIGNAL(mind, COMSIG_TERROR_SPIDER_DIED)
@@ -340,7 +344,7 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 	return
 
 /mob/living/simple_animal/hostile/poison/terror_spider/ObjBump(obj/object)
-	if(istype(object, /obj/machinery/door/airlock))
+	if(is_airlock(object))
 		var/obj/machinery/door/airlock/airlock = object
 		if(airlock.density) // must check density here, to avoid rapid bumping of an airlock that is in the process of opening, instantly forcing it closed
 			return try_open_airlock(airlock)
@@ -360,7 +364,7 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 /mob/living/simple_animal/hostile/poison/terror_spider/proc/CheckFaction()
 	if(length(faction) != 2 || (!("terrorspiders" in faction)) || master_commander != null)
 		to_chat(src, span_userdanger("Ваша связь с коллективным разумом разрывается!"))
-		log_runtime(EXCEPTION("Terror spider with incorrect faction list at: [atom_loc_line(src)]"))
+		stack_trace("Terror spider with incorrect faction list at: [atom_loc_line(src)]")
 		gib()
 
 /mob/living/simple_animal/hostile/poison/terror_spider/proc/try_open_airlock(obj/machinery/door/airlock/D)
@@ -381,7 +385,7 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 	else if(!spider_opens_doors)
 		to_chat(src, span_warning("Вы недостаточно сильны, чтобы взломать шлюз."))
 	else
-		visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] открывает дверь силой!"))
+		visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] открывает дверь силой!"))
 		playsound(src.loc, SFX_SPARKS, 100, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 		if(D.density)
 			D.open(TRUE)
@@ -435,9 +439,3 @@ GLOBAL_LIST_EMPTY(ts_spiderling_list)
 /mob/living/simple_animal/hostile/poison/terror_spider/experience_pressure_difference(pressure_difference, direction)
 	if(!HAS_TRAIT(src, TRAIT_NEGATES_GRAVITY))
 		return ..()
-
-/obj/projectile/terrorspider
-	name = "basic"
-	damage = 0
-	icon_state = "toxin"
-	damage_type = TOX

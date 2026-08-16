@@ -14,9 +14,11 @@
 /obj/item/thief_kit
 	name = "набор гильдии воров"
 	desc = "Ничем не примечательная увесистая коробка. Тяжелая. Набор вора-шредингера. Неизвестно что внутри, пока не заглянешь и не определишься."
-	icon = 'icons/obj/storage.dmi'
+	icon = 'icons/obj/storage/boxes.dmi'
+	righthand_file = 'icons/mob/inhands/storage_righthand.dmi'
+	lefthand_file = 'icons/mob/inhands/storage_lefthand.dmi'
 	icon_state = "box_thief"
-	item_state = "syringe_kit"
+	item_state = "theif"
 	w_class = WEIGHT_CLASS_TINY
 	var/possible_uses = 2
 	var/uses = 0
@@ -221,7 +223,7 @@
 		/obj/item/storage/toolbox/syndicate,
 		/obj/item/storage/fancy/cigarettes/cigpack_syndicate,
 		//syndi trash
-		/obj/item/toy/syndicateballoon,
+		/obj/item/toy/balloon/syndicate,
 		/obj/item/soap/syndie,
 		/obj/item/clothing/shoes/combat,
 		/obj/item/clothing/under/syndicate,
@@ -252,7 +254,7 @@
 	desc = "Контроль камер и базы данных служб безопасности"
 	item_list = list(
 		/obj/item/clothing/glasses/hud/security/chameleon,
-		/obj/item/camera_bug,
+		/obj/item/camera_bug/syndicate,
 	)
 
 /datum/thief_kit/gas
@@ -328,7 +330,7 @@
 
 /datum/thief_kit/spai_kit
 	name = "Набор ПИИ"
-	desc = "Украденная технология персонального ИИ синдиката, которая была перепрошита под нужды гильдии воров."
+	desc = "Украденная технология персонального ИИ \"Синдиката\", которая была перепрошита под нужды гильдии воров."
 	item_list = list(
 		/obj/item/storage/box/syndie_kit/pai,
 	)
@@ -336,7 +338,7 @@
 	name = "Набор Donksoft SMG"
 	desc = "В набор включен пистолет-пулемёт, стреляющий пенными дротиками, которые при попадании снижают выносливость противника. Благодаря мягкому материалу пуль, удары безопасны для здоровья и не оставляют синяков."
 	item_list = list(
-		/obj/item/gun/projectile/automatic/c20r/toy/riot,
+		/obj/item/gun/projectile/automatic/smg/c20r/toy/riot,
 		/obj/item/ammo_box/magazine/toy/smgm45/riot,
 		/obj/item/ammo_box/foambox/riot,
 	)

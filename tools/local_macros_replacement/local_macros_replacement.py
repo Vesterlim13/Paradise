@@ -3,8 +3,8 @@ import re
 import os
 import sys
 
-IGNORE_LOCALIZATION_FILE = [
-    "localization.dm",
+IGNORE_LOCALIZATION_HELPERS_DIR = os.path.join("code", "__HELPERS", "localization")
+IGNORE_FILES = [
     "golem.dm"
 ]
 
@@ -106,6 +106,10 @@ REPLACEMENTS = [
 
     (r'genderize_ru\(([^,]+)\.gender,\s*"ий",\s*"ая",\s*"ий",\s*"ие"\)', r'GEND_II_AYA_II_IE(\1)', 'GEND_II_AYA_II_IE'),
     (r'genderize_ru\(gender,\s*"ий",\s*"ая",\s*"ий",\s*"ие"\)', r'GEND_II_AYA_II_IE(src)', 'GEND_II_AYA_II_IE'),
+
+    # capitalize(declent_ru())
+    (r'capitalize\(declent_ru\((\w+)\)\)', r'DECLENT_RU_CAP(src, \1)', 'DECLENT_RU_CAP'),
+    (r'capitalize\((\w+)\.declent_ru\((\w+)\)\)', r'DECLENT_RU_CAP(\1, \2)', 'DECLENT_RU_CAP'),
 ]
 
 COMPILED_PATTERNS = [(re.compile(pattern), replacement, name) for pattern, replacement, name in REPLACEMENTS]
@@ -144,7 +148,11 @@ def main():
         dm_files = [sys.argv[1]]
     else:
         all_dm_files = glob.glob("**/*.dm", recursive=True)
-        dm_files = [f for f in all_dm_files if os.path.basename(f) not in IGNORE_LOCALIZATION_FILE]
+        dm_files = [
+            f for f in all_dm_files
+            if os.path.dirname(f) != IGNORE_LOCALIZATION_HELPERS_DIR
+            and os.path.basename(f) not in IGNORE_FILES
+        ]
 
     error_count = 0
     for filepath in dm_files:

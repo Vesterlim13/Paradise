@@ -9,6 +9,7 @@
 	volume = 100
 	throwforce = 15
 	item_state = "broken_beer" //Generic held-item sprite until unique ones are made.
+	custom_price = PAYCHECK_LOWER
 	var/const/duration = 13 //Directly relates to the 'weaken' duration. Lowered by armor (i.e. helmets)
 	var/isGlass = 1 //Whether the 'bottle' is made of glass or not so that milk cartons dont shatter when someone gets hit by it
 
@@ -124,7 +125,7 @@
 
 /obj/item/reagent_containers/food/drinks/bottle/proc/SplashReagents(mob/M)
 	if(reagents?.total_volume)
-		M.visible_message(span_danger("Содержимое [src.declent_ru(GENITIVE)] разбрызгивается по [M.declent_ru(PREPOSITIONAL)]!"))
+		M.visible_message(span_danger("Содержимое [declent_ru(GENITIVE)] разбрызгивается по [M.declent_ru(PREPOSITIONAL)]!"))
 		reagents.reaction(M, REAGENT_TOUCH)
 		reagents.clear_reagents()
 
@@ -155,7 +156,7 @@
 	embedded_ignore_throwspeed_threshold = TRUE
 
 /obj/item/broken_bottle/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "разбитая бутылка",
 		GENITIVE = "разбитой бутылки",
 		DATIVE = "разбитой бутылке",
@@ -176,7 +177,7 @@
 	list_reagents = list("gin" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/gin/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "джин \"Гриффитер\"",
 		GENITIVE = "джина \"Гриффитер\"",
 		DATIVE = "джину \"Гриффитер\"",
@@ -192,7 +193,7 @@
 	list_reagents = list("whiskey" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/whiskey/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "виски \"Особые Запасы Дяди Гита\"",
 		GENITIVE = "виски \"Особые Запасы Дяди Гита\"",
 		DATIVE = "виски \"Особые Запасы Дяди Гита\"",
@@ -208,7 +209,7 @@
 	list_reagents = list("vodka" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/vodka/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "водка \"Тунгуска Тройной Перегонки\"",
 		GENITIVE = "водки \"Тунгуска Тройной Перегонки\"",
 		DATIVE = "водке \"Тунгуска Тройной Перегонки\"",
@@ -224,7 +225,7 @@
 	list_reagents = list("vodka" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/vodka/badminka/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "водка \"Бадминка\"",
 		GENITIVE = "водки \"Бадминка\"",
 		DATIVE = "водке \"Бадминка\"",
@@ -240,7 +241,7 @@
 	list_reagents = list("tequila" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/tequila/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "текила \"Гарантированно Качественная Каккаво\"",
 		GENITIVE = "текилы \"Гарантированно Качественная Каккаво\"",
 		DATIVE = "текиле \"Гарантированно Качественная Каккаво\"",
@@ -256,7 +257,7 @@
 	list_reagents = list("nothing" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/bottleofnothing/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "бутылка \"Ничего\"",
 		GENITIVE = "бутылки \"Ничего\"",
 		DATIVE = "бутылке \"Ничего\"",
@@ -272,7 +273,7 @@
 	list_reagents = list("banana" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/bottleofbanana/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кувшин бананового сока",
 		GENITIVE = "кувшина бананового сока",
 		DATIVE = "кувшину бананового сока",
@@ -288,7 +289,7 @@
 	list_reagents = list("patron" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/patron/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "текила \"Рока Патрон Сильвер\"",
 		GENITIVE = "текилы \"Рока Патрон Сильвер\"",
 		DATIVE = "текиле \"Рока Патрон Сильвер\"",
@@ -304,7 +305,7 @@
 	list_reagents = list("rum" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/rum/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ром \"Кубинский Пряный Капитана Пита\"",
 		GENITIVE = "рома \"Кубинский Пряный Капитана Пита\"",
 		DATIVE = "рому \"Кубинский Пряный Капитана Пита\"",
@@ -320,7 +321,7 @@
 	list_reagents = list("holywater" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/holywater/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кувшин святой воды",
 		GENITIVE = "кувшина святой воды",
 		DATIVE = "кувшину святой воды",
@@ -340,7 +341,7 @@
 	list_reagents = list("vermouth" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/vermouth/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "вермут \"Золотой Глаз\"",
 		GENITIVE = "вермута \"Золотой Глаз\"",
 		DATIVE = "вермуту \"Золотой Глаз\"",
@@ -356,7 +357,7 @@
 	list_reagents = list("kahlua" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/kahlua/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ликёр \"Роберт Робаст\"",
 		GENITIVE = "ликёра \"Роберт Робаст\"",
 		DATIVE = "ликёру \"Роберт Робаст\"",
@@ -372,7 +373,7 @@
 	list_reagents = list("goldschlager" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/goldschlager/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "шнапс \"Голдшлягер Студенческий\"",
 		GENITIVE = "шнапса \"Голдшлягер Студенческий\"",
 		DATIVE = "шнапсу \"Голдшлягер Студенческий\"",
@@ -388,7 +389,7 @@
 	list_reagents = list("cognac" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/cognac/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "коньяк \"Шато Дэ Батон\"",
 		GENITIVE = "коньяка \"Шато Дэ Батон\"",
 		DATIVE = "коньяку \"Шато Дэ Батон\"",
@@ -404,7 +405,7 @@
 	list_reagents = list("wine" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/wine/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "вино \"Особое Двухбородое\"",
 		GENITIVE = "вина \"Особое Двухбородое\"",
 		DATIVE = "вину \"Особое Двухбородое\"",
@@ -420,7 +421,7 @@
 	list_reagents = list("absinthe" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/absinthe/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "абсент \"Жёлтый Шахтёр\"",
 		GENITIVE = "абсента \"Жёлтый Шахтёр\"",
 		DATIVE = "абсенту \"Жёлтый Шахтёр\"",
@@ -435,7 +436,7 @@
 	icon_state = "absinthepremium"
 
 /obj/item/reagent_containers/food/drinks/bottle/absinthe/premium/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "абсент \"Премиальный от Гвена\"",
 		GENITIVE = "абсента \"Премиальный от Гвена\"",
 		DATIVE = "абсенту \"Премиальный от Гвена\"",
@@ -452,7 +453,7 @@
 	list_reagents = list("suicider" = 50)
 
 /obj/item/reagent_containers/food/drinks/bottle/hcider/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сидр \"Цзянь Крепкий\"",
 		GENITIVE = "сидра \"Цзянь Крепкий\"",
 		DATIVE = "сидру \"Цзянь Крепкий\"",
@@ -468,7 +469,7 @@
 	list_reagents = list("fernet" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/fernet/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "фернет \"Фернет Бронка\"",
 		GENITIVE = "фернета \"Фернет Бронка\"",
 		DATIVE = "фернету \"Фернет Бронка\"",
@@ -484,7 +485,7 @@
 	list_reagents = list("champagne" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/champagne/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "шампанское \"Сверкающее Солнце\"",
 		GENITIVE = "шампанского \"Сверкающее Солнце\"",
 		DATIVE = "шампанскому \"Сверкающее Солнце\"",
@@ -500,7 +501,7 @@
 	list_reagents = list("aperol" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/aperol/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "апероль \"Джунгли Аперитив\"",
 		GENITIVE = "апероля \"Джунгли Аперитив\"",
 		DATIVE = "аперолю \"Джунгли Аперитив\"",
@@ -516,7 +517,7 @@
 	list_reagents = list("jagermeister" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/jagermeister/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ягермейстер \"Космически Настоенный\"",
 		GENITIVE = "ягермейстера \"Космически Настоенный\"",
 		DATIVE = "ягермейстеру \"Космически Настоенный\"",
@@ -532,7 +533,7 @@
 	list_reagents = list("schnaps" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/schnaps/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "шнапс \"Мятный Зерновой\"",
 		GENITIVE = "шнапса \"Мятный Зерновой\"",
 		DATIVE = "шнапсу \"Мятный Зерновой\"",
@@ -548,7 +549,7 @@
 	list_reagents = list("sheridan" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/sheridan/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ликёр \"Шериданс Кофейный\"",
 		GENITIVE = "ликёра \"Шериданс Кофейный\"",
 		DATIVE = "ликёру \"Шериданс Кофейный\"",
@@ -564,7 +565,7 @@
 	list_reagents = list("bitter" = 50)
 
 /obj/item/reagent_containers/food/drinks/bottle/bitter/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "битер \"Вакуумный Вишнёвый\"",
 		GENITIVE = "битера \"Вакуумный Вишнёвый\"",
 		DATIVE = "битеру \"Вакуумный Вишнёвый\"",
@@ -580,7 +581,7 @@
 	list_reagents = list("bluecuracao" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/bluecuracao/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "кюрасао \"Гренадёрский Синий\"",
 		GENITIVE = "кюрасао \"Гренадёрский Синий\"",
 		DATIVE = "кюрасао \"Гренадёрский Синий\"",
@@ -596,7 +597,7 @@
 	list_reagents = list("sambuka" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/sambuka/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "самбука \"Безголовый Всадник\"",
 		GENITIVE = "самбуки \"Безголовый Всадник\"",
 		DATIVE = "самбуке \"Безголовый Всадник\"",
@@ -612,7 +613,7 @@
 	list_reagents = list("wine" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/arrogant_green_rat/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "вино \"Высокомерная Зелёная Крыса\"",
 		GENITIVE = "вина \"Высокомерная Зелёная Крыса\"",
 		DATIVE = "вину \"Высокомерная Зелёная Крыса\"",
@@ -633,7 +634,7 @@
 	list_reagents = list("orangejuice" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/orangejuice/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "пачка апельсинового сока",
 		GENITIVE = "пачки апельсинового сока",
 		DATIVE = "пачке апельсинового сока",
@@ -652,7 +653,7 @@
 	list_reagents = list("cream" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/cream/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "пачка сливок",
 		GENITIVE = "пачки сливок",
 		DATIVE = "пачке сливок",
@@ -671,7 +672,7 @@
 	list_reagents = list("tomatojuice" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/tomatojuice/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "пачка томатного сока",
 		GENITIVE = "пачки томатного сока",
 		DATIVE = "пачке томатного сока",
@@ -690,7 +691,7 @@
 	list_reagents = list("limejuice" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/limejuice/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "пачка лаймового сока",
 		GENITIVE = "пачки лаймового сока",
 		DATIVE = "пачке лаймового сока",
@@ -709,7 +710,7 @@
 	list_reagents = list("milk" = 100)
 
 /obj/item/reagent_containers/food/drinks/bottle/milk/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "пачка молока",
 		GENITIVE = "пачки молока",
 		DATIVE = "пачке молока",
@@ -737,7 +738,7 @@
 	var/active = FALSE
 
 /obj/item/reagent_containers/food/drinks/bottle/molotov/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "коктейль Молотова",
 		GENITIVE = "коктейля Молотова",
 		DATIVE = "коктейлю Молотова",
@@ -781,18 +782,20 @@
 	SplashReagents(target)
 	if(firestarter && active)
 		target.fire_act()
-		new /obj/effect/hotspot(get_turf(target))
+		var/obj/effect/hotspot/hotspot = new /obj/effect/hotspot/fake(target)
+		hotspot.temperature = 1000
+		hotspot.recolor()
 	..()
 
 /obj/item/reagent_containers/food/drinks/bottle/molotov/attackby(obj/item/I, mob/user, params)
 	. = ..()
 
-	if(ATTACK_CHAIN_CANCEL_CHECK(.) || !I.get_heat())
+	if(ATTACK_CHAIN_CANCEL_CHECK(.) || !I.get_temperature())
 		return .
 
 	add_fingerprint(user)
 	if(active)
-		to_chat(user, span_warning("[capitalize(declent_ru(NOMINATIVE))] уже горит."))
+		to_chat(user, span_warning("[DECLENT_RU_CAP(src, NOMINATIVE)] уже горит."))
 		return .
 	. |= ATTACK_CHAIN_SUCCESS
 	active = TRUE
@@ -800,8 +803,8 @@
 	message_admins("[ADMIN_LOOKUP(user)] has primed a [name] for detonation at [ADMIN_COORDJMP(bombturf)].")
 	add_game_logs("has primed a [name] for detonation at [AREACOORD(bombturf)].", user)
 	user.visible_message(
-		span_danger("[user] поджигает [src.declent_ru(ACCUSATIVE)]!"),
-		span_notice("Вы поджигаете [src.declent_ru(ACCUSATIVE)]."),
+		span_danger("[user] поджигает [declent_ru(ACCUSATIVE)]!"),
+		span_notice("Вы поджигаете [declent_ru(ACCUSATIVE)]."),
 	)
 	add_overlay(GLOB.fire_overlay)
 	if(!isGlass)
@@ -826,6 +829,6 @@
 		if(!isGlass)
 			to_chat(user, span_danger("Пламя распространилось уже слишком далеко!"))
 			return
-		to_chat(user, span_notice("Вы гасите пламя у [src.declent_ru(GENITIVE)]."))
+		to_chat(user, span_notice("Вы гасите пламя у [declent_ru(GENITIVE)]."))
 		active = FALSE
 		update_icon(UPDATE_OVERLAYS)

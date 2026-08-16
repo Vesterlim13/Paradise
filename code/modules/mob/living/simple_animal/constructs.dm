@@ -11,7 +11,6 @@
 	speed = 0
 	stop_automated_movement = TRUE
 	nightvision = 8
-	see_invisible = SEE_INVISIBLE_HIDDEN_RUNES
 	attack_sound = 'sound/weapons/punch1.ogg'
 	atmos_requirements = list("min_oxy" = 0, "max_oxy" = 0, "min_tox" = 0, "max_tox" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
 	faction = list("cult")
@@ -27,9 +26,9 @@
 	var/playstyle_string = "<b>You are a generic construct! Your job is to not exist, and you should probably adminhelp this.</b>"
 	var/holy = FALSE
 	healable = FALSE
-	light_system = MOVABLE_LIGHT
+	light_system = OVERLAY_LIGHT
 
-/mob/living/simple_animal/hostile/construct/New()
+/mob/living/simple_animal/hostile/construct/Initialize(mapload)
 	. = ..()
 	if(cult_icon_changing)
 		if(!SSticker.mode)//work around for maps with runes and cultdat is not loaded all the way
@@ -55,6 +54,7 @@
 	else
 		ADD_TRAIT(src, TRAIT_HEALS_FROM_CULT_PYLONS, INNATE_TRAIT)
 	ADD_TRAIT(src, TRAIT_NO_FLOATING_ANIM, INNATE_TRAIT)
+	ADD_TRAIT(src, TRAIT_CULT_VEIL_SIGHT, INNATE_TRAIT)
 	AddElement(/datum/element/simple_flying)
 
 /mob/living/simple_animal/hostile/construct/ComponentInitialize()
@@ -83,17 +83,17 @@
 			if(src != M)
 				Beam(M,icon_state="sendbeam",time=4)
 				M.visible_message(
-					"<span class='danger'>[M] repairs some of \the <b>[src]'s</b> dents.</span>", \
-					"<span class='cult'>You repair some of <b>[src]'s</b> dents, leaving <b>[src]</b> at <b>[health]/[maxHealth]</b> health.</span>"
+					span_danger("[M] repairs some of \the <b>[src]'s</b> dents."), \
+					span_cult("You repair some of <b>[src]'s</b> dents, leaving <b>[src]</b> at <b>[health]/[maxHealth]</b> health.")
 				)
 			else
 				M.visible_message(
 					span_danger("[M] repairs some of its own dents."), \
-					"<span class='cult'>You repair some of your own dents, leaving you at <b>[M.health]/[M.maxHealth]</b> health.</span>"
+					span_cult("You repair some of your own dents, leaving you at <b>[M.health]/[M.maxHealth]</b> health.")
 				)
 		else
 			if(src != M)
-				to_chat(M, "<span class='cult'>You cannot repair <b>[src]'s</b> dents, as it has none!</span>")
+				to_chat(M, span_cult("You cannot repair <b>[src]'s</b> dents, as it has none!"))
 			else
 				to_chat(M, span_cult("You cannot repair your own dents, as you have none!"))
 	else if(src != M)

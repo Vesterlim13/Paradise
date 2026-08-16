@@ -3,7 +3,7 @@
 	name = "colossus chest"
 
 /obj/structure/closet/crate/necropolis/colossus/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "сундук колосса",
 		GENITIVE = "сундука колосса",
 		DATIVE = "сундуку колосса",
@@ -23,7 +23,7 @@
 	name = "angelic colossus chest"
 
 /obj/structure/closet/crate/necropolis/colossus/crusher/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "ангельский сундук колосса",
 		GENITIVE = "ангельского сундука колосса",
 		DATIVE = "ангельскому сундуку колосса",
@@ -56,7 +56,7 @@
 	var/activation_sound = 'sound/effects/break_stone.ogg'
 
 /obj/machinery/anomalous_crystal/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "аномальный кристалл",
 		GENITIVE = "аномального кристалла",
 		DATIVE = "аномальному кристаллу",
@@ -129,12 +129,12 @@
 		var/mob/living/carbon/human/H = user
 		for(var/obj/item/W in H)
 			H.drop_item_ground(W)
-		var/datum/job/clown/C = SSjobs.GetJob(JOB_TITLE_CLOWN)
+		var/datum/job/service/clown/C = SSjobs.GetJob(JOB_TITLE_CLOWN)
 		C.equip(H)
 		affected_targets.Add(H)
 
-/obj/machinery/anomalous_crystal/honk/New()
-	..()
+/obj/machinery/anomalous_crystal/honk/Initialize(mapload)
+	. = ..()
 	activation_method = pick("mob_bump","speech")
 
 /obj/machinery/anomalous_crystal/theme_warp //Warps the area you're in to look like a new one
@@ -186,9 +186,6 @@
 					var/turf/T = Stuff
 					if((isspaceturf(T) || isfloorturf(T)) && NewTerrainFloors)
 						var/turf/simulated/O = T.ChangeTurf(NewTerrainFloors)
-						if(O.air)
-							var/datum/gas_mixture/G = O.air
-							G.copy_from(O.air)
 						if(prob(florachance) && length(NewFlora) && !O.is_blocked_turf())
 							var/atom/Picked = pick(NewFlora)
 							new Picked(O)
@@ -202,7 +199,7 @@
 					C.dir = Original.dir
 					qdel(Stuff)
 					continue
-				if(istype(Stuff, /obj/structure/table) && NewTerrainTables)
+				if(istable(Stuff) && NewTerrainTables)
 					var/obj/structure/table/Original = Stuff
 					var/obj/structure/table/T = new NewTerrainTables(Original.loc)
 					T.dir = Original.dir
@@ -264,7 +261,7 @@
 /obj/machinery/anomalous_crystal/helpers/ActivationReaction(mob/user, method)
 	if(..() && !ready_to_deploy)
 		ready_to_deploy = 1
-		notify_ghosts("Аномальный кристалл активирован в [get_area(src)]! Теперь призраки могут использовать его в любое время.", enter_link = "<a href='byond://?src=\ref[src];ghostjoin=1'>(Нажмите для входа)</a>", source = src, action = NOTIFY_ATTACK)
+		notify_ghosts("Аномальный кристалл активирован в [get_area(src)]! Теперь призраки могут использовать его в любое время.", enter_link = "<a href='byond://?src=[UID()];ghostjoin=1'>(Нажмите для входа)</a>", source = src, action = NOTIFY_ATTACK)
 
 /obj/machinery/anomalous_crystal/helpers/attack_ghost(mob/dead/observer/user)
 	..()
@@ -312,7 +309,7 @@
 	var/heal_power = 5
 
 /mob/living/simple_animal/hostile/lightgeist/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "дух света",
 		GENITIVE = "духа света",
 		DATIVE = "духу света",
@@ -359,7 +356,8 @@
 	var/list/banned_items_typecache = list(
 		/obj/item/storage, /obj/item/implant, /obj/item/implanter, /obj/item/disk/nuclear,
 		/obj/projectile, /obj/item/spellbook, /obj/item/clothing/mask/facehugger, /obj/item/contractor_uplink,
-		/obj/item/dice/d20/fate, /obj/item/gem, /obj/item/guardiancreator, /obj/item/dna_upgrader
+		/obj/item/dice/d20/fate, /obj/item/gem, /obj/item/guardiancreator, /obj/item/dna_upgrader, /obj/item/mod,
+		/obj/item/autoimplanter
 	)
 
 /obj/machinery/anomalous_crystal/refresher/Initialize(mapload)
@@ -406,7 +404,7 @@
 	var/mob/living/simple_animal/holder_animal
 
 /obj/structure/closet/stasis/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "квантовое стазисное поле",
 		GENITIVE = "квантового стазисного поля",
 		DATIVE = "квантовому стазисному полю",

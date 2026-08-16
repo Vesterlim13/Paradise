@@ -1,5 +1,5 @@
 /client/verb/randomtip()
-	set category = STATPANEL_OOC
+	set category = VERB_CATEGORY_OOC
 	set name = "Случайный совет"
 	set desc = "Shows you a random tip"
 
@@ -13,4 +13,4 @@
 		m = pick(memetips)
 
 	if(m)
-		to_chat(src, chat_box_purple(span_purple("<b>Совет: </b>[html_encode(m)]")))
+		to_chat(src, custom_boxed_message("purple_box", span_purple("<b>Совет: </b>[html_encode(m)]")))

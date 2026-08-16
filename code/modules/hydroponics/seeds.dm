@@ -14,6 +14,7 @@ GLOBAL_LIST_EMPTY(plant_seeds)
 	icon_state = "seed"				// Unknown plant seed - these shouldn't exist in-game.
 	w_class = WEIGHT_CLASS_TINY
 	resistance_flags = FLAMMABLE
+	abstract_type = /obj/item/seeds
 	var/plantname = "Plants"		// Name of plant when planted.
 	var/product						// A type path. The thing that is created when the plant is harvested.
 	var/species = ""				// Used to update icons. Should match the name in the sprites unless all icon_* are overriden.
@@ -44,10 +45,15 @@ GLOBAL_LIST_EMPTY(plant_seeds)
 	var/weed_chance = 5 //Percentage chance per tray update to grow weeds
 	var/nogenes = FALSE
 
-/obj/item/seeds/New(loc, nogenes = FALSE)
-	..()
-	pixel_x = rand(-8, 8)
-	pixel_y = rand(-8, 8)
+/obj/item/seeds/get_short_name()
+	if(!plantname)
+		return declent_ru(NOMINATIVE)
+	return plantname
+
+/obj/item/seeds/Initialize(mapload, nogenes = FALSE)
+	. = ..()
+	pixel_x = base_pixel_x + rand(-8, 8)
+	pixel_y = base_pixel_y + rand(-8, 8)
 
 	if(!icon_grow)
 		icon_grow = "[species]-grow"
@@ -57,11 +63,10 @@ GLOBAL_LIST_EMPTY(plant_seeds)
 
 	if(!icon_harvest && !get_gene(/datum/plant_gene/trait/plant_type/fungal_metabolism) && yield != -1)
 		icon_harvest = "[species]-harvest"
+
 	src.nogenes = nogenes
 	GLOB.plant_seeds += src
 
-/obj/item/seeds/Initialize(mapload)
-	. = ..()
 	if(!nogenes) // not used on Copy()
 		genes += new /datum/plant_gene/core/lifespan(lifespan)
 		genes += new /datum/plant_gene/core/endurance(endurance)
@@ -73,13 +78,21 @@ GLOBAL_LIST_EMPTY(plant_seeds)
 		if(potency != -1)
 			genes += new /datum/plant_gene/core/potency(potency)
 
-		for(var/p in genes)
-			if(ispath(p))
-				genes -= p
-				genes += new p
+		for(var/plant_gene in genes)
+			if(ispath(plant_gene))
+				genes -= plant_gene
+				genes += new plant_gene
 
 		for(var/reag_id in reagents_add)
 			genes += new /datum/plant_gene/reagent(reag_id, reagents_add[reag_id])
+
+	var/static/list/hovering_item_typechecks = list(
+		/obj/item/plant_analyzer = list(
+			SCREENTIP_CONTEXT_LMB = "Сканировать параметры семян",
+		),
+	)
+
+	AddElement(/datum/element/contextual_screentip_item_typechecks, hovering_item_typechecks)
 
 /obj/item/seeds/Destroy()
 	QDEL_LIST(genes)
@@ -361,7 +374,7 @@ GLOBAL_LIST_EMPTY(plant_seeds)
 		GetComponent(/datum/component/label).apply_label() // Don't delete labels
 
 // Checks plants for broken tray icons. Use Advanced Proc Call to activate.
-// Maybe some day it would be used as game test.
+// Maybe some day it would be used as unit test.
 /proc/check_plants_growth_stages_icons()
 	var/list/states = icon_states('icons/obj/hydroponics/growing.dmi')
 	states |= icon_states('icons/obj/hydroponics/growing_fruits.dmi')

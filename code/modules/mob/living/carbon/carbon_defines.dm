@@ -1,10 +1,13 @@
 /mob/living/carbon
+	abstract_type = /mob/living/carbon
 	gender = MALE
 	pressure_resistance = 15
 	mobility_flags = MOBILITY_FLAGS_CARBON_DEFAULT
 	blood_volume = BLOOD_VOLUME_NORMAL
 	rotate_on_lying = TRUE
 	pull_hand = null
+	throw_range = 3
+	blocks_emissive = EMISSIVE_BLOCK_NONE
 	var/list/stomach_contents
 	var/list/processing_patches
 	var/list/internal_organs	= list()
@@ -26,6 +29,9 @@
 
 	var/wetlevel = 0 //how wet the mob is
 
+	/// Last mind to control this mob, for blood-based cloning
+	var/datum/mind/last_mind = null
+
 	var/co2overloadtime = null
 	var/dreaming = 0 //How many dream images we have left to send
 	var/nightmare = 0
@@ -43,3 +49,20 @@
 	COOLDOWN_DECLARE(pain_cd)
 
 	var/list/overlays_standing[TOTAL_LAYERS]
+
+	/// Obscured hide flags (hideflags that can't be seen AND can't be interacted with)
+	var/obscured_slots = NONE
+	/// Covered hide flags (hideflags that can be seen, BUT can't be interacted with)
+	var/covered_slots = NONE
+
+/mob/living/carbon/vv_edit_var(var_name, var_value)
+	switch(var_name)
+		if(NAMEOF(src, handcuffed))
+			set_handcuffed(var_value)
+			. = TRUE
+
+	if(!isnull(.))
+		datum_flags |= DF_VAR_EDITED
+		return
+
+	return ..()

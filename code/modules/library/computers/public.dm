@@ -79,7 +79,7 @@
 		else
 			query.title = null
 	if(href_list["setcategory"])
-		var/newcategory = tgui_input_list(usr, "Choose a category to search for:", (list("Any") + GLOB.library_section_names))
+		var/newcategory = tgui_input_list(usr, "Choose a category to search for:", "Select category", (list("Any") + GLOB.library_section_names))
 		if(newcategory == "Any")
 			query.category = null
 		else if(newcategory)
@@ -99,7 +99,7 @@
 
 	if(href_list["search"])
 		num_results = src.get_num_results()
-		num_pages = CEILING(num_results/LIBRARY_BOOKS_PER_PAGE, 1)
+		num_pages = ceil(num_results/LIBRARY_BOOKS_PER_PAGE)
 		page_num = 1
 
 		screenstate = 1

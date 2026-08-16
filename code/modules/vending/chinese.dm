@@ -1,5 +1,5 @@
 /obj/machinery/vending/chinese
-	name = "\"Мистер Чанг\""
+	name = "Mr. Chang"
 	desc = "Машина самообслуживания, созданная специально для удовлетворения вашей потребности в азиатской кухне."
 	slogan_list = list(
 		"Попр+обуйте 5000 лет культ+уры!",
@@ -32,20 +32,9 @@
 		/obj/item/clothing/head/rice_hat = 3,
 		/obj/item/clothing/under/martialsuit/random = 1,
 	)
-	prices = list(
-		/obj/item/reagent_containers/food/snacks/chinese/chowmein = 49,
-		/obj/item/reagent_containers/food/snacks/chinese/tao = 49,
-		/obj/item/reagent_containers/food/snacks/chinese/sweetsourchickenball = 49,
-		/obj/item/reagent_containers/food/snacks/chinese/newdles = 49,
-		/obj/item/reagent_containers/food/snacks/chinese/rice = 49,
-		/obj/item/reagent_containers/food/snacks/fortunecookie = 49,
-		/obj/item/storage/box/crayfish_bucket = 249,
-		/obj/item/storage/box/mr_cheng = 199,
-		/obj/item/clothing/under/martialsuit/random = 249,
-	)
 
 /obj/machinery/vending/chinese/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат \"Мистер Чанг\"",
 		GENITIVE = "торгового автомата \"Мистер Чанг\"",
 		DATIVE = "торговому автомату \"Мистер Чанг\"",
@@ -53,6 +42,3 @@
 		INSTRUMENTAL = "торговым автоматом \"Мистер Чанг\"",
 		PREPOSITIONAL = "торговом автомате \"Мистер Чанг\"",
 	)
-
-/obj/machinery/vending/chinese/free
-	prices = list()

@@ -6,6 +6,8 @@
 #define TRAIT_BLOCK_RADIATION "block_radiation"
 /// Is this atom being actively shocked? Used to prevent repeated shocks.
 #define TRAIT_BEING_SHOCKED "being_shocked" // Used together with WAS_SHOCKED instead of flag SHOCKED_2 from the Official Paradise.
+/// Trait that determines, if object under floor.
+#define TRAIT_UNDERFLOOR "underfloor"
 
 /// Weather immunities, also protect mobs inside them.
 #define TRAIT_LAVA_IMMUNE "lava_immune" //Used by lava turfs and The Floor Is Lava.
@@ -39,6 +41,8 @@
 #define TRAIT_TURF_IGNORE_SLIPPERY "turf_ignore_slippery"
 ///Chasms will be safe to cross while they've this trait.
 #define TRAIT_CHASM_STOPPED "chasm_stopped"
+///The effects of the immerse element will be halted while this trait is present.
+#define TRAIT_IMMERSE_STOPPED "immerse_stopped"
 ///Lava will be safe to cross while it has this trait.
 #define TRAIT_LAVA_STOPPED "lava_stopped"
 
@@ -55,21 +59,31 @@
 #define TRAIT_DEAF "deaf"
 #define TRAIT_SECDEATH "secdeath"
 #define TRAIT_AI_UNTRACKABLE "AI_untrackable"
-#define TRAIT_FAKEDEATH "fakedeath"	//Makes the owner appear as dead to most forms of medical examination
+/// Does nothing on its own, applied via status effect.
+#define TRAIT_STASIS "in_stasis"
+/// Makes the owner appear as dead to most forms of medical examination
+#define TRAIT_FAKEDEATH "fakedeath"
 #define TRAIT_XENO_HOST "xeno_host"	//Tracks whether we're gonna be a baby alien's mummy.
 #define TRAIT_LEGION_TUMOUR "legion_tumour" //used in huds for special icon
 #define TRAIT_NO_SPELLS "no_spells"	// Used to prevent cast or use any spells
 /// Are we immune to shocks?
 #define TRAIT_SHOCKIMMUNE "shock_immunity"
+#define TRAIT_BATON_RESISTANCE "baton_resistance"
 /// Are we immune to specifically tesla / SM shocks?
 #define TRAIT_TESLA_SHOCKIMMUNE "tesla_shock_immunity"
 /// Are we immune to wet effect
 #define TRAIT_WET_IMMUNITY "wet_immunity"
+/// This just means that the carbon will always have functional liverless metabolism
+#define TRAIT_LIVERLESS_METABOLISM "liverless_metabolism"
 
+/// Makes the user handcuff others faster
+#define TRAIT_FAST_CUFFING "fast_cuffing"
 /// We place people into a fireman carry quicker than standard
 #define TRAIT_QUICK_CARRY "quick-carry"
 /// We place people into a fireman carry especially quickly compared to quick_carry
 #define TRAIT_QUICKER_CARRY "quicker-carry"
+/// Make some build actions quicker
+#define TRAIT_QUICK_BUILD "quick-build"
 /// Prevents mob from riding mobs when buckled onto something
 #define TRAIT_CANT_RIDE "cant_ride"
 #define TRAIT_CHUNKYFINGERS "chunkyfingers"	//means that you can't use weapons with normal trigger guards.
@@ -114,6 +128,11 @@
 #define TRAIT_HEALS_FROM_CULT_PYLONS "heals_from_cult_pylons"
 /// This mob heals from holy pylons.
 #define TRAIT_HEALS_FROM_HOLY_PYLONS "heals_from_holy_pylons"
+/// This mob heals from bingle holes.
+#define TRAIT_HEALS_FROM_BINGLE_HOLES "heals_from_bingle_holes"
+#define TRAIT_CULT_VEIL_SIGHT "cult_veil_sight"
+#define TRAIT_CULT_CONCEALED "cult_concealed"
+
 #define TRAIT_LASEREYES "laser_eyes"	//traits that should be properly converted to genetic mutations one day
 /// Forces the user to stay unconscious.
 #define TRAIT_KNOCKEDOUT "knockedout"
@@ -160,6 +179,8 @@
 #define TRAIT_BADASS "trait_badass"
 /// Mantis blades trait for lunging
 #define TRAIT_CANT_LUNGE "cant_lunge"
+/// Trait for Mindshield HUD in sec HUDs
+#define TRAIT_MINDSHIELD_HUD "mindshield_hud"
 
 /**
  * Traits for ventcrawling.
@@ -176,6 +197,18 @@
 #define TRAIT_VENTCRAWLER_ITEM_BASED "ventcrawler_item"
 
 #define TRAIT_VENTCRAWLING_EXIT "ventcrawler_exit"
+
+/// Trait applied when the MMI component is added to an [/obj/item/integrated_circuit]
+#define TRAIT_COMPONENT_MMI "component_mmi"
+
+/// Trait applied when an integrated circuit/module becomes undupable
+#define TRAIT_CIRCUIT_UNDUPABLE "circuit_undupable"
+
+/// Trait applied when an integrated circuit opens a UI on a player (see list pick component)
+#define TRAIT_CIRCUIT_UI_OPEN "circuit_ui_open"
+
+/// Trait applied when the wire bundle component is added to an [/obj/item/integrated_circuit]
+#define TRAIT_COMPONENT_WIRE_BUNDLE "component_wire_bundle"
 
 /// Negates our gravity, letting us move normally on floors in 0-g
 #define TRAIT_NEGATES_GRAVITY "negates_gravity"
@@ -198,14 +231,26 @@
 #define TRAIT_TRANSFORM_ACTIVE "active_transform"
 /// A surgical tool; when in hand in help intent (and with a surgery in progress) won't attack the user
 #define TRAIT_SURGICAL "surgical_tool"
+/// A surgical tool; when in hand in help intent (and with a surgery in progress) won't attack the user
+#define TRAIT_SURGERY_INITIATOR "surgery_initiator"
 /// An advanced surgical tool. If a surgical tool has this flag, it will be able to automatically repeat steps until they succeed.
 #define TRAIT_ADVANCED_SURGICAL "advanced_surgical"
 /// This trait makes it so that an item literally cannot be removed at all, or at least that's how it should be. Only deleted.
 #define TRAIT_NODROP "nodrop"
 /// Applied with attachment to the cyberimplant when it is inserted in mob with TRAIT_ADVANCED_CYBERIMPLANTS
 #define TRAIT_CYBERIMP_IMPROVED "cyberimp_improved"
+/// This item will not be cloned in the experimentator
+#define TRAIT_NO_CLONE_IN_EXPERIMENTATOR "no_clone_in_experimentator"
+/// Combat exoframe EMP nutrition shield flag
+#define TRAIT_COMBAT_EXOFRAME_EMP_SHIELD "combat_exoframe_emp_shield"
+/// Item still allows you to examine items while blind and actively held.
+#define TRAIT_BLIND_TOOL "blind_tool"
+/// A melee weapon, for this items work combat/melee skill damage mod
+#define TRAIT_MELEE_WEAPON "melee_weapon"
 
 #define TRAIT_SHRAPNEL "shrapnel"
+/// Trait for items that can be attached to tripwire. Dont forget about on_tripwire_trigger(obj/item/tripwire/base, mob/user) proc for each item
+#define TRAIT_CAN_ATTACH_TO_TRIPWIRE "tripwire_attachable"
 
 ///Movement type traits for movables. See elements/movetype_handler.dm
 #define TRAIT_MOVE_GROUND "move_ground"
@@ -269,8 +314,6 @@
 #define TRAIT_PLANT_ORIGIN "plant_origin"
 /// Another damn biotype
 #define TRAIT_NO_INTORGANS "no_internal_organs"
-/// This mob is completely immune to the radiation damage and effects
-#define TRAIT_RADIMMUNE "rad_immunity"
 /// This mob is completely immune to viruses and diseases, unless they ignore us
 #define TRAIT_VIRUSIMMUNE "virus_immunity"
 /// This mob is completely immune to viruses and diseases
@@ -287,6 +330,8 @@
 #define TRAIT_PIERCEIMMUNE "pierce_immunity"
 /// This human mob will not be affected by embedding of the thrown items
 #define TRAIT_EMBEDIMMUNE "embed_immunity"
+/// This human mob will not be affected by fracture effects
+#define TRAIT_IGNORE_FRACTURE "ignore_fracture"
 /// This human mob will never suffer from the malnutrition
 #define TRAIT_NO_HUNGER "no_hunger"
 /// This human mob will not obtain additional bonuses/penalties from nutrition level (look at /datum/element/nutrition_effects)
@@ -316,9 +361,15 @@
 
 #define TRAIT_BLOB_ZOMBIFIED "blob_zombified"
 
+#define TRAIT_BLOB_WAS_BURSTED "blob_was_bursted"
+
 #define TRAIT_BEING_OFFERED "offered"
 
 #define TRAIT_TOXIC_FUEL_PROTECTED "toxic_fuel_protected"
+
+#define TRAIT_SLEEPIMMUNE "sleep_immunity"
+
+#define TRAIT_NO_FIRE "nonflammable"
 
 /// Ignore Crew monitor Z levels
 #define TRAIT_MULTIZ_SUIT_SENSORS "multiz_suit_sensors"
@@ -351,8 +402,17 @@
 
 #define TRAIT_BALD "bald"
 
+
+#define TRAIT_NOSELFIGNITION_HEAD_ONLY "no_selfignition_head_only"
+#define TRAIT_XRAY_VISION "xray_vision"
+#define TRAIT_THERMAL_VISION "thermal_vision"
+#define TRAIT_MESON_VISION "meson_vision"
+#define TRAIT_FLASH_PROTECTION "flash_protection"
+#define TRAIT_NIGHT_VISION "night_vision"
+
 /// Owner mob sometimes will headbutts airlocks as if it had 60+ braindamage.
 #define TRAIT_AIRLOCK_HIT "airlock_hit"
+
 
 /// Anti stun reagent in blood
 #define TRAIT_ANTI_STUN_REAGENT "anti_stun_reagent"
@@ -363,13 +423,17 @@
 /// Temporally  trait when target tasered
 #define TRAIT_TASERED "tasered"
 
-#define TRAIT_SUPERMATTERIMMUNE "supermatter_immune"
+///Immune to the SM / makes you immune to it when worn
+#define TRAIT_SUPERMATTER_IMMUNE "supermatter_immune"
 
 /// Used to play an alarm when the gun is out of ammo
 #define TRAIT_AMMO_ALARMED "ammo_alarm"
 
 /// Ignores darkness for hearing
 #define TRAIT_HEAR_THROUGH_DARKNESS "hear_through_darkness"
+
+/// Ignores darkness for hearing
+#define TRAIT_HIJACK "hijack"
 
 //important_recursive_contents traits
 /*
@@ -382,3 +446,196 @@
 
 /// If any of the owner's robotic parts are being repaired right now
 #define TRAIT_REPAIRING_LIMB "repairing_limb"
+
+/// Mob with this trait will not suffer from radiation effects
+#define TRAIT_NO_RADIATION_EFFECTS "no_radiation_effects"
+
+/// Mob with this trait heals from radiation
+#define TRAIT_RAD_HEAL "rad_heal"
+
+#define TRAIT_TWOHANDED_BLOCKED "twohandec_blocked"
+
+#define TRAIT_CLEAVE_BLOCKED "cleave_blocked"
+
+#define TRAIT_PRESSURE_VISION "pressure_vision"
+
+/// GLOB trait, applied whenever something in the world wants to use the distortion plane
+/// Distortion is an expensive effect, so it's worthwhile to keep it off until we care
+#define TRAIT_DISTORTION_IN_USE(z_layer) "distortion_in_use_#[z_layer]"
+
+/// Traits given by station traits
+#define STATION_TRAIT_CARP_INFESTATION "station_trait_carp_infestation"
+#define STATION_TRAIT_LATE_ARRIVALS "station_trait_late_arrivals"
+#define STATION_TRAIT_RANDOM_ARRIVALS "station_trait_random_arrivals"
+#define STATION_TRAIT_HANGOVER "station_trait_hangover"
+#define STATION_TRAIT_EMPTY_MAINT "station_trait_empty_maint"
+#define STATION_TRAIT_BOTS_GLITCHED "station_trait_bot_glitch"
+#define STATION_TRAIT_REVOLUTIONARY_TRASHING "station_trait_revolutionary_trashing"
+#define STATION_TRAIT_POST_WAR_TRASH "station_trait_post_war_trash"
+#define STATION_TRAIT_CRAMPED_INTERNALS "station_trait_cramped_internals"
+#define STATION_TRAIT_LOOTED_ARMORY "station_trait_looted_armory"
+#define STATION_TRAIT_SPIKED_DRINKS "station_trait_spiked_drinks"
+#define STATION_TRAIT_BANANIUM_SHIPMENTS "station_trait_bananium_shipments"
+#define STATION_TRAIT_MIMANIUM_SHIPMENTS "station_trait_mimanium_shipments"
+#define STATION_TRAIT_UNIQUE_AI "station_trait_unique_ai"
+#define STATION_TRAIT_PDA_GLITCHED "station_trait_pda_glitched"
+#define STATION_TRAIT_CLASSIC_ASSISTANTS "station_trait_classic_assistants"
+#define STATION_TRAIT_BIRTHDAY "station_trait_birthday"
+#define STATION_TRAIT_PREMIUM_INTERNALS "station_trait_premium_internals"
+#define STATION_TRAIT_FILLED_MAINT "station_trait_filled_maint"
+#define STATION_TRAIT_CYBERNETIC_REVOLUTION "station_trait_cybernetic_revolution"
+#define STATION_TRAIT_MEDBOT_MANIA "station_trait_medbot_mania"
+#define STATION_TRAIT_UPGRADED_ARMORY "station_trait_upgraded_armory"
+#define STATION_TRAIT_GREEN_ENERGY "station_trait_green_energy"
+#define STATION_TRAIT_OUTDATED_HARDSUITS "station_trait_outdated_hardsuits"
+
+// Radiation defines
+/// Marks that this object is irradiated
+#define TRAIT_IRRADIATED "irradiated"
+/// Immune to being irradiated
+#define TRAIT_RADIMMUNE "rad_immunity"
+/// Harmful radiation effects, the toxin damage and the burns, will not occur while this trait is active
+#define TRAIT_HALT_RADIATION_EFFECTS "halt_radiation_effects"
+/// This clothing protects the user from radiation.
+/// This should not be used on clothing_traits, but should be applied to the clothing itself.
+#define TRAIT_RADIATION_PROTECTED_CLOTHING "radiation_protected_clothing"
+/// Whether or not this item will allow the radiation SS to go through standard
+/// radiation processing as if this wasn't already irradiated.
+/// Basically, without this, COMSIG_IN_RANGE_OF_IRRADIATION won't fire once the object is irradiated.
+#define TRAIT_BYPASS_EARLY_IRRADIATED_CHECK "radiation_bypass_early_irradiated_check"
+
+// METABOLISMS
+// Various jobs on the station have historically had better reactions
+// to various drinks and foodstuffs. Security liking donuts is a classic
+// example. Through years of training/abuse, their livers have taken
+// a liking to those substances. Steal a sec officer's liver, eat donuts good.
+
+// These traits are applied to /obj/item/organ/internal/liver
+#define TRAIT_BALLMER_SCIENTIST "ballmer_scientist"
+#define TRAIT_COMEDY_METABOLISM "comedy_metabolism"
+#define TRAIT_CORONER_METABOLISM "coroner_metabolism"
+#define TRAIT_CULINARY_METABOLISM "culinary_metabolism"
+#define TRAIT_ENGINEER_METABOLISM "engineer_metabolism"
+#define TRAIT_HUMAN_AI_METABOLISM "human_ai_metabolism"
+#define TRAIT_LAW_ENFORCEMENT_METABOLISM "law_enforcement_metabolism"
+#define TRAIT_MAINTENANCE_METABOLISM "maintenance_metabolism"
+#define TRAIT_MEDICAL_METABOLISM "medical_metabolism"
+#define TRAIT_PRETENDER_ROYAL_METABOLISM "pretender_royal_metabolism"
+#define TRAIT_ROYAL_METABOLISM "royal_metabolism"
+
+/// Trait used to ensure that things don't get animated as falling in multiple times
+#define TRAIT_FALLING_INTO_BINGLE_HOLE "falling_into_bingle_pit"
+
+/// Immune to being afflicted by time stop (spell)
+#define TRAIT_TIME_STOP_IMMUNE "time_stop_immune"
+
+#define TRAIT_LUNGE_HAS_ATTACKED "trait_lunge_has_attacked"
+
+// prevents explosion implants from auto activating upon death
+#define TRAIT_PREVENT_IMPLANT_AUTO_EXPLOSION "prevent_implant_auto_explosion"
+
+/// Mob is an echolocator
+#define TRAIT_ECHOLOCATOR "echolocator"
+
+/// eignore blindness or blurriness or nearsightedness
+#define TRAIT_SIGHT_BYPASS "perfect_sight"
+
+// Hud traits
+/// This hud is owned by a client with an open escape menu
+#define TRAIT_ESCAPE_MENU_OPEN "escape_menu_open"
+/// This hud has parallax displayed on it
+#define TRAIT_PARALLAX_DISPLAYED "parallax_displayed"
+
+/// If a human has a fracture in their legs or feet (for optimization)
+#define TRAIT_FRACTURE_FALL "fracture_fall"
+/// Suppression implant trait
+#define TRAIT_MARTIAL_ARTS_SUPPRESSED "martial_arts_suppressed"
+
+///Trait applied to turf blocked by a containment field
+#define TRAIT_CONTAINMENT_FIELD "containment_field"
+
+/// Prevents the projectile itself from ricocheting.
+#define TRAIT_NO_RICOCHET "no_ricochet"
+
+#define TRAIT_FACING_TO_MOUSE "facing_to_mouse"
+
+/// An item is ALWAYS considered baseline reachable and will pipe into CanBeReached().
+#define TRAIT_SKIP_BASIC_REACH_CHECK "skip_basic_reach_check"
+
+#define TRAIT_GUN_BURST_FIRING "burst_firing"
+
+/// Does the mob ignore elevation? (e.g. xeno larvas on hiding)
+#define TRAIT_IGNORE_ELEVATION "ignore_elevation"
+/// Is the mob currently elevated? (eg standing on a table)
+#define TRAIT_MOB_ELEVATED "mob_elevated"
+
+/// From [/datum/element/elevation] for purpose of checking if the object causes things in its turf to become elevated
+#define TRAIT_ELEVATING_OBJECT "elevating_object"
+/// From [/datum/element/elevation_core] for purpose of checking if the turf has the trait from an instance of the element
+#define TRAIT_ELEVATED_TURF "elevated_turf"
+
+/// Climbable trait, given and taken by the climbable element when added or removed. Exists to be easily checked via HAS_TRAIT().
+#define TRAIT_CLIMBABLE "trait_climbable"
+
+/// Trait which lets you clamber over a barrier
+#define TRAIT_FENCE_CLIMBER "can_climb_fences"
+
+/// Trait that means you are capable of holding items in some form
+#define TRAIT_CAN_HOLD_ITEMS "can_hold_items"
+
+///Attached to objects currently on tables and such, allowing them to walk on other objects without the climbing delay
+#define TRAIT_ON_CLIMBABLE "on_climbable"
+
+#define TRAIT_DISK_VERIFIER "disk-verifier"
+
+/// Trait which means whatever has this is dancing by a dance machine
+#define TRAIT_DISCO_DANCER "disco_dancer"
+
+#define TRAIT_GIVE_READY "give_ready"
+
+/// Mob has fov applied to it
+#define TRAIT_FOV_APPLIED "fov_applied"
+
+/// Used for managing KEEP_TOGETHER in [/atom/var/appearance_flags]
+#define TRAIT_KEEP_TOGETHER "keep-together"
+
+///Trait given to a mob with a ckey currently in a temporary body, allowing people to know someone will re-enter the round later.
+#define TRAIT_MIND_TEMPORARILY_GONE "temporarily_gone"
+
+/// Similar trait given to temporary bodies inhabited by players
+#define TRAIT_TEMPORARY_BODY "temporary_body"
+
+///Deathmatch traits
+#define TRAIT_DEATHMATCH_EXPLOSIVE_IMPLANTS "deathmath_explosive_implants"
+
+/// Marks an atom when the cleaning of it is first started, so that the cleaning overlay doesn't get removed prematurely
+#define TRAIT_CURRENTLY_CLEANING "currently_cleaning"
+
+/// Apply to movables to say "hey, this movable is technically flat on the floor, so it'd be mopped up by a mop"
+#define TRAIT_MOPABLE "mopable"
+
+#define TRAIT_EVIL "evil"
+
+/// Mobs with this trait do care about a few grisly things, such as digging up graves. They also really do not like bringing people back to life or tending wounds, but love autopsies and amputations.
+#define TRAIT_MORBID "morbid"
+
+/// Mobs that hate showers, being sprayed with water etc.
+#define TRAIT_WATER_HATER "water_hater"
+/// Improved boons from showers and some features centered around water, should also suppress TRAIT_WATER_HATER
+#define TRAIT_WATER_ADAPTATION "water_adaptation"
+
+/// If this movable is currently treading in a turf with the immerse element.
+#define TRAIT_IMMERSED "immersed"
+/// Mob doesn't take stamina damage from deep water and doesn't get slowdown from swimming
+#define TRAIT_SWIMMER "swimmer"
+
+/// Mob doesn't take oxygen damage in deep water
+#define TRAIT_NODROWN "amphibious"
+
+/// Trait given to objects with the wallmounted component
+#define TRAIT_WALLMOUNTED "wallmounted"
+
+/// Makes an item active, this is generally used by energy based weapons or toggle based items.
+#define TRAIT_ITEM_ACTIVE "item_active"
+
+#define TRAIT_HAS_ANTAG_SKILLS "has_antag_skills"

@@ -21,11 +21,11 @@
 	attack_verb = list("атаковал", "ударил", "огрел")
 	toolbox_radial_menu_compatibility = TRUE
 
-	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 0, RAD = 0, FIRE = 50, ACID = 30)
+	armor = list(MELEE = 0, BULLET = 0, LASER = 0, ENERGY = 0, BOMB = 0, BIO = 0, FIRE = 50, ACID = 30)
 	tool_behaviour = TOOL_CROWBAR
 
 /obj/item/crowbar/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "монтировка",
 		GENITIVE = "монтировки",
 		DATIVE = "монтировке",
@@ -52,7 +52,7 @@
 	toolspeed = 3
 
 /obj/item/crowbar/small/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "титановая мини-монтировка",
 		GENITIVE = "титановой мини-монтировки",
 		DATIVE = "титановой мини-монтировке",
@@ -80,7 +80,7 @@
 	resistance_flags = FIRE_PROOF | ACID_PROOF
 
 /obj/item/crowbar/brass/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "латунная монтировка",
 		GENITIVE = "латунной монтировки",
 		DATIVE = "латунной монтировке",
@@ -103,7 +103,7 @@
 	origin_tech = "combat=4;engineering=4;abductor=3"
 
 /obj/item/crowbar/abductor/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "чужеродная монтировка",
 		GENITIVE = "чужеродной монтировки",
 		DATIVE = "чужеродной монтировке",
@@ -128,7 +128,7 @@
 	toolspeed = 0.5
 
 /obj/item/crowbar/large/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "большая монтировка",
 		GENITIVE = "большой монтировки",
 		DATIVE = "большой монтировке",
@@ -146,7 +146,7 @@
 	toolspeed = 0.5
 
 /obj/item/crowbar/cyborg/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "гидравлическая монтировка",
 		GENITIVE = "гидравлической монтировки",
 		DATIVE = "гидравлической монтировке",
@@ -171,7 +171,7 @@
 	var/airlock_open_time = 100
 
 /obj/item/crowbar/power/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "челюсти жизни",
 		GENITIVE = "челюстей жизни",
 		DATIVE = "челюстям жизни",
@@ -199,3 +199,25 @@
 	user.visible_message(span_suicide("[user] помеща[PLUR_ET_YUT(user)] свою голову между лезвиями [declent_ru(GENITIVE)]. Это похоже на попытку самоубийства!"))
 	playsound(loc, 'sound/items/jaws_pry.ogg', 50, TRUE, -1)
 	return BRUTELOSS
+
+/obj/item/crowbar/industrial
+	name = "industrial crowbar"
+	desc = "Инструмент, предназначенный для использования в качестве рычага. \
+			Дополнительные прорезиненные накладки на рукояти облегчают хват."
+	icon_state = "crowbar_industrial"
+	toolspeed = 0.6
+	resistance_flags = FIRE_PROOF | ACID_PROOF
+	greyscale_config = null
+	greyscale_config_inhand_left = null
+	greyscale_config_inhand_right = null
+	greyscale_colors = null
+
+/obj/item/crowbar/industrial/get_ru_names()
+	return alist(
+		NOMINATIVE = "продвинутая монтировка",
+		GENITIVE = "продвинутой монтировки",
+		DATIVE = "продвинутой монтировке",
+		ACCUSATIVE = "продвинутую монтировку",
+		INSTRUMENTAL = "продвинутой монтировкой",
+		PREPOSITIONAL = "продвинутой монтировке"
+	)

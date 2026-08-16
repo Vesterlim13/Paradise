@@ -17,6 +17,7 @@
 	broken_overlay = "seeds_broken"
 	broken_lightmask_overlay = "seeds_broken_lightmask"
 	refill_canister = /obj/item/vending_refill/hydroseeds
+	default_price = PAYCHECK_MIN * 0.5
 
 	products = list(
 		/obj/item/seeds/aloe = 3,
@@ -92,7 +93,7 @@
 	)
 
 /obj/machinery/vending/hydroseeds/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "торговый автомат MegaSeed Servitor",
 		GENITIVE = "торгового автомата MegaSeed Servitor",
 		DATIVE = "торговому автомату MegaSeed Servitor",

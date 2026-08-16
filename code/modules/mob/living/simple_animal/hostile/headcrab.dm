@@ -49,7 +49,7 @@
 					continue
 				if(faction_check_mob(L) && !attack_same)
 					return
-	visible_message("<span class='danger'><b>[src]</b> [ranged_message] at [A]!</span>")
+	visible_message(span_danger("<b>[src]</b> [ranged_message] at [A]!"))
 	throw_at(A, jumpdistance, jumpspeed, spin = FALSE, diagonals_first = TRUE)
 	ranged_cooldown = world.time + ranged_cooldown_time
 
@@ -113,9 +113,6 @@
 		else if(host_species == SPECIES_GREY)
 			I = image('icons/mob/headcrab.dmi', icon_state = "[crab_head_overlay]_gray")
 		add_overlay(I)
-
-		if(blocks_emissive)
-			add_overlay(get_emissive_block())
 
 /mob/living/simple_animal/hostile/headcrab/CanAttack(atom/the_target)
 	if(stat_attack == DEAD && isliving(the_target) && !ishuman(the_target))

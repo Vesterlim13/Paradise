@@ -62,6 +62,7 @@
 	owner.current.create_log(CONVERSION_LOG, "De-vampired")
 	draining = null
 	QDEL_NULL(subclass)
+	QDEL_NULL(diablerie)
 	return ..()
 
 /datum/antagonist/vampire/greet()
@@ -295,7 +296,7 @@
 
 			if(STATE_BITE)
 				vampire.visible_message(span_danger("[vampire] вонзает [GEND_HIS_HER(vampire)] клыки!"), \
-					span_danger("Вы вонзаете клыки в шею [target] и начинаете высасывать [GEND_HIS_HER(target)] кровь."), \
+					span_danger("Вы вонзаете клыки в шею [target] и начинаете высасывать [GEND_HIS_HER(target)] кровь."), \
 					span_italics("Вы слышите тихий звук прокола и влажные хлюпающие звуки."))
 				bite_animation(target, vampire_dir)
 				time_per_action = suck_rate_final
@@ -342,7 +343,7 @@
 				break
 
 		// Everything else - we draining sentient monkey, borer controlled non-player human or non-player human, corpses and all other shit
-		to_chat(vampire, span_boldnotice("Питьё крови у [target] насыщает вас, но доступной крови от этого вы не получаете."))
+		to_chat(vampire, span_boldnotice("Питьё крови у [target] насыщает вас, но доступной крови от этого вы не получаете."))
 		vampire.set_nutrition(min(NUTRITION_LEVEL_WELL_FED, vampire.nutrition + 5))
 		target.AdjustBlood(-sucking_amount)
 		if(check_blood_volume(vampire, target))
@@ -390,8 +391,7 @@
 		pixel_x_diff = 8
 	else if(vampire_dir & WEST)
 		pixel_x_diff = -8
-	animate(owner.current, pixel_x = owner.current.pixel_x + pixel_x_diff, pixel_y = owner.current.pixel_y + pixel_y_diff, time = 0.5)
-	animate(pixel_x = owner.current.pixel_x - pixel_x_diff, pixel_y = owner.current.pixel_y - pixel_y_diff, time = 7)
+	owner.current.add_offsets(UID(), x_add = pixel_x_diff, y_add = pixel_y_diff)
 	owner.current.do_item_attack_animation(target, ATTACK_EFFECT_BITE)
 
 /// Checks vampire's sucking target blood volume and sends a warning message if it's low. Returns FALSE if the target is drained dry
@@ -428,8 +428,7 @@
 	if(draining)
 		to_chat(owner.current, span_notice("Вы прекращаете пить кровь [draining.name]."))
 		draining = null
-		owner.current.pixel_x = owner.current.base_pixel_x + owner.current.body_position_pixel_x_offset
-		owner.current.pixel_y = owner.current.base_pixel_y + owner.current.body_position_pixel_y_offset
+		owner.current.remove_offsets(UID())
 		owner.current.layer = initial(owner.current.layer)
 
 #undef BLOOD_GAINED_MODIFIER
@@ -558,7 +557,7 @@
 		vamp_burn(10)
 
 	else		//You're in trouble, get out of the sun NOW
-		to_chat(owner.current, span_userdanger("Ваше тело обугливается, превращаясь в пепел! Укройтесь от звёздного света!"))
+		to_chat(owner.current, span_userdanger("Ваше тело обугливается, превращаясь в пепел! Укройтесь от звёздного света!"))
 		owner.current.adjustCloneLoss(10)	//I'm melting!
 		vamp_burn(85)
 		if(owner.current.cloneloss >= 100 && dust_in_space)
@@ -790,7 +789,7 @@
 
 /datum/antagonist/mindslave/thrall/farewell()
 	if(issilicon(owner.current))
-		to_chat(owner.current, span_userdanger("Вы превратились в робота! Вы больше не очарованы…"))
+		to_chat(owner.current, span_userdanger("Вы превратились в робота! Вы больше не очарованы…"))
 	else
 		to_chat(owner.current, span_userdanger("Ваш разум очищен! Вы больше не очарованы."))
 

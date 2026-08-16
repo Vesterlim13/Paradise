@@ -44,7 +44,7 @@
 		var/image/I = image(icon = src.icon , icon_state = src.icon_state, loc = user)
 		I.override = 1
 		I.color = color
-		user.add_alt_appearance("sneaking_mission", I, GLOB.player_list)
+		add_alt_appearance(/datum/atom_hud/alternate_appearance/basic/everyone, "sneaking_mission", I)
 		return
 	user.remove_alt_appearance("sneaking_mission")
 
@@ -54,7 +54,7 @@
 
 /obj/item/twohanded/cardboard_cutout/attackby(obj/item/I, mob/living/user, params)
 	add_fingerprint(user)
-	if(istype(I, /obj/item/toy/crayon))
+	if(iscrayon(I))
 		change_appearance(I, user)
 		return ATTACK_CHAIN_PROCEED_SUCCESS
 
@@ -108,7 +108,8 @@
 		return
 	if(!new_appearance || !crayon)
 		return
-	if(!do_after(user, 1 SECONDS, src, DEFAULT_DOAFTER_IGNORE|DA_IGNORE_HELD_ITEM))
+	CALCULATE_SKILL_MOD(user, CONSTRUCTING_SPEED_MOD, construction_mod)
+	if(!do_after(user, 1 SECONDS * construction_mod, src, DEFAULT_DOAFTER_IGNORE|DA_IGNORE_HELD_ITEM))
 		return
 	user.visible_message(span_notice("[user] gives [src] a new look."), span_notice("Voila! You give [src] a new look."))
 	alpha = 255

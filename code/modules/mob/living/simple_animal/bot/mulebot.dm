@@ -63,7 +63,7 @@
 	var/currentDNA = null
 
 /mob/living/simple_animal/bot/mulebot/get_ru_names()
-	return list(
+	return alist(
 		NOMINATIVE = "МУЛбот",
 		GENITIVE = "МУЛбота",
 		DATIVE = "МУЛботу",
@@ -75,7 +75,7 @@
 /mob/living/simple_animal/bot/mulebot/Initialize(mapload)
 	. = ..()
 	wires = new /datum/wires/mulebot(src)
-	var/datum/job/cargo_tech/J = new/datum/job/cargo_tech
+	var/datum/job/supply/cargo_tech/J = new/datum/job/supply/cargo_tech
 	access_card.access = J.get_access()
 	prev_access = access_card.access
 	cell = new /obj/item/stock_parts/cell/upgraded(src)
@@ -89,6 +89,8 @@
 	unload(0)
 	QDEL_NULL(wires)
 	QDEL_NULL(cell)
+	passenger = null
+	target = null
 	return ..()
 
 /mob/living/simple_animal/bot/mulebot/get_cell()
@@ -116,7 +118,7 @@
 			)
 		return .
 
-	if(istype(I,/obj/item/stock_parts/cell))
+	if(iscell(I))
 		add_fingerprint(user)
 		if(!open)
 			balloon_alert(user, "техпанель закрыта!")
@@ -228,7 +230,7 @@
 	. = ..()
 	if(load && !ismob(load))//buckling handles the mob offsets
 		var/image/load_overlay = image(icon = load.icon, icon_state = load.icon_state)
-		load_overlay.pixel_y = initial(load.pixel_y) + 9
+		load_overlay.pixel_z = initial(load.pixel_y) + 9
 		if(load.layer < layer)
 			load_overlay.layer = layer + 0.1
 		load_overlay.overlays = load.overlays
@@ -409,24 +411,22 @@
 /mob/living/simple_animal/bot/mulebot/proc/buzz(type)
 	switch(type)
 		if(SIGH)
-			audible_message("[capitalize(declent_ru(NOMINATIVE))] разочарованно гудит.")
+			audible_message("[DECLENT_RU_CAP(src, NOMINATIVE)] разочарованно гудит.")
 			playsound(loc, 'sound/machines/buzz-sigh.ogg', 50, FALSE)
 		if(ANNOYED)
-			audible_message("[capitalize(declent_ru(NOMINATIVE))] раздражённо жужжит.")
+			audible_message("[DECLENT_RU_CAP(src, NOMINATIVE)] раздражённо жужжит.")
 			playsound(loc, 'sound/machines/buzz-two.ogg', 50, FALSE)
 		if(DELIGHT)
-			audible_message("[capitalize(declent_ru(NOMINATIVE))] восторженно звенит!")
+			audible_message("[DECLENT_RU_CAP(src, NOMINATIVE)] восторженно звенит!")
 			playsound(loc, 'sound/machines/ping.ogg', 50, FALSE)
 
 // mousedrop a crate to load the bot
 // can load anything if hacked
-/mob/living/simple_animal/bot/mulebot/MouseDrop_T(atom/movable/AM, mob/user, params)
-
+/mob/living/simple_animal/bot/mulebot/mouse_drop_receive(atom/movable/AM, mob/user, params)
 	if(!istype(AM) || user.incapacitated() || HAS_TRAIT(user, TRAIT_HANDS_BLOCKED) || !in_range(user, src))
-		return FALSE
+		return
 
 	load(AM)
-	return TRUE
 
 // called to load a crate
 /mob/living/simple_animal/bot/mulebot/proc/load(atom/movable/AM)
@@ -441,7 +441,7 @@
 		return
 
 	var/obj/structure/closet/crate/CRATE
-	if(istype(AM,/obj/structure/closet/crate))
+	if(is_crate(AM))
 		CRATE = AM
 	else
 		if(!wires.is_cut(WIRE_LOADCHECK) && !hijacked)
@@ -477,14 +477,14 @@
 	return FALSE
 
 /mob/living/simple_animal/bot/mulebot/post_buckle_mob(mob/living/target)
-	target.pixel_y = target.base_pixel_y + 9
+	add_offsets(UID(), y_add = 9)
 	if(target.layer < layer)
 		target.layer = layer + 0.01
 
 /mob/living/simple_animal/bot/mulebot/post_unbuckle_mob(mob/living/target)
 	load = null
 	target.layer = initial(target.layer)
-	target.pixel_y = target.base_pixel_y + target.body_position_pixel_y_offset
+	remove_offsets(UID())
 
 // called to unload the bot
 // argument is optional direction to unload
@@ -538,7 +538,7 @@
 
 	// 2 / 1.5 / 1 seconds, depending on how many wires we have cut
 	step_delay = initial(step_delay) - wires.is_cut(WIRE_MOTOR1) * 0.5 SECONDS - wires.is_cut(WIRE_MOTOR2) * 0.5 SECONDS
-	if(!isprocessing)
+	if(!(datum_flags & DF_ISPROCESSING))
 		START_PROCESSING(SSfastprocess, src)
 
 /mob/living/simple_animal/bot/mulebot/process()
@@ -669,14 +669,14 @@
 /mob/living/simple_animal/bot/mulebot/proc/at_target()
 	if(!reached_target)
 		radio_channel = SUP_FREQ_NAME //Supply channel
-		audible_message("[capitalize(declent_ru(NOMINATIVE))] громко звенит!")
+		audible_message("[DECLENT_RU_CAP(src, NOMINATIVE)] громко звенит!")
 		playsound(loc, 'sound/machines/chime.ogg', 50, FALSE)
 		reached_target = 1
 
 		if(pathset) //The AI called us here, so notify it of our arrival.
 			loaddir = dir //The MULE will attempt to load a crate in whatever direction the MULE is "facing".
 			if(calling_ai)
-				to_chat(calling_ai, span_notice("[icon2html(src, calling_ai)] [capitalize(declent_ru(NOMINATIVE))] удалённо проигрывает звук звонка!"))
+				to_chat(calling_ai, span_notice("[get_examine_icon(calling_ai)] [DECLENT_RU_CAP(src, NOMINATIVE)] удалённо проигрывает звук звонка!"))
 				playsound(calling_ai, 'sound/machines/chime.ogg',40, FALSE)
 				calling_ai = null
 				radio_channel = AI_FREQ_NAME //Report on AI Private instead if the AI is controlling us.
@@ -684,9 +684,9 @@
 		if(load)		// if loaded, unload at target
 			if(report_delivery)
 				speak("Пункт назначения <b>[destination]</b> достигнут. Выгружаю [load].", radio_channel)
-			if(istype(load, /obj/structure/closet/crate))
+			if(is_crate(load))
 				var/obj/structure/closet/crate/C = load
-				C.notifyRecipient(destination)
+				C.notify_recipient(destination)
 			unload(loaddir)
 		else
 			// not loaded
@@ -746,22 +746,22 @@
 
 	// usually just bumps, but if avoidance disabled knock over mobs
 	if(isrobot(bumped_living))
-		visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] врезается в [bumped_living]!"))
+		visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] врезается в [bumped_living]!"))
 		return .
 
 	if(paicard)
 		return .
 
 	add_attack_logs(src, bumped_living, "Knocked down")
-	visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] сбивает [bumped_living]!"))
+	visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] сбивает [bumped_living]!"))
 	bumped_living.Weaken(16 SECONDS)
 
 /mob/living/simple_animal/bot/mulebot/proc/RunOver(mob/living/carbon/human/H)
 	if(H.player_logged)//No running over SSD people
 		return
 	add_attack_logs(src, H, "Run over (DAMTYPE: [uppertext(BRUTE)])")
-	H.visible_message(span_danger("[capitalize(declent_ru(NOMINATIVE))] переезжает [H]!"),
-					span_userdanger("[capitalize(declent_ru(NOMINATIVE))] переезжает вас!"))
+	H.visible_message(span_danger("[DECLENT_RU_CAP(src, NOMINATIVE)] переезжает [H]!"),
+					span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] переезжает вас!"))
 	playsound(loc, 'sound/effects/splat.ogg', 50, TRUE)
 
 	var/damage = rand(5, 15)
@@ -898,7 +898,7 @@
 	..()
 
 /mob/living/simple_animal/bot/mulebot/explode()
-	visible_message(span_userdanger("[capitalize(declent_ru(NOMINATIVE))] разлетается на части!"))
+	visible_message(span_userdanger("[DECLENT_RU_CAP(src, NOMINATIVE)] разлетается на части!"))
 	var/turf/Tsec = get_turf(src)
 
 	new /obj/item/assembly/prox_sensor(Tsec)
@@ -915,18 +915,12 @@
 	new /obj/effect/decal/cleanable/blood/oil(loc)
 	return ..()
 
-/mob/living/simple_animal/bot/mulebot/remove_air(amount) //To prevent riders suffocating
-	if(loc)
-		return loc.remove_air(amount)
-	else
-		return null
-
-/mob/living/simple_animal/bot/mulebot/run_resist()
+/mob/living/simple_animal/bot/mulebot/execute_resist()
 	. = ..()
 	if(load)
 		unload()
 
-/mob/living/simple_animal/bot/mulebot/OnUnarmedAttack(atom/A)
+/mob/living/simple_animal/bot/mulebot/OnUnarmedAttack(atom/A, proximity_flag, list/modifiers)
 	if(isturf(A) && isturf(loc) && loc.Adjacent(A) && load)
 		unload(get_dir(loc, A))
 	else
